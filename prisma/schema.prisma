@@ -1,0 +1,1021 @@
+// Prisma schema for The Paseo Website CMS
+// Generated from DATABASE.md — all tables use UUID, createdAt/updatedAt, and soft delete (deletedAt).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  EDITOR
+  MARKETING
+  VIEWER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum MediaType {
+  IMAGE
+  PDF
+  VIDEO
+}
+
+enum ContactStatus {
+  NEW
+  IN_PROGRESS
+  RESOLVED
+  SPAM
+}
+
+enum PostKind {
+  NEWS
+  PUBLIC_RELATIONS
+  CENTER_UPDATE
+  ARTICLE
+}
+
+enum PromotionCategory {
+  FOOD
+  DRINKS_BAKERY
+  MISC
+  EDUCATION
+}
+
+enum RedirectStatusCode {
+  MOVED_PERMANENTLY
+  FOUND
+  TEMPORARY_REDIRECT
+  PERMANENT_REDIRECT
+  GONE
+}
+
+enum SeoSchemaType {
+  ARTICLE
+  NEWS_ARTICLE
+  BLOG_POSTING
+  FAQ_PAGE
+  EVENT
+  CUSTOM
+}
+
+enum SeoTwitterCard {
+  SUMMARY
+  SUMMARY_LARGE_IMAGE
+}
+
+enum SitemapChangeFrequency {
+  ALWAYS
+  HOURLY
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+  NEVER
+}
+
+// ---------------------------------------------------------------------------
+// Models
+// ---------------------------------------------------------------------------
+
+model User {
+  id        String     @id @default(uuid())
+  name      String
+  email     String     @unique
+  password  String
+  avatar    String?
+  role      Role       @default(VIEWER)
+  status    UserStatus @default(ACTIVE)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  deletedAt DateTime?
+
+  posts      Post[]
+  events     Event[]
+  promotions Promotion[]
+
+  @@map("users")
+}
+
+model Page {
+  id             String        @id @default(uuid())
+  title          String
+  slug           String        @unique
+  content        String        @db.LongText
+  excerpt        String?       @db.Text
+  featuredImage  String?
+  seoTitle       String?
+  seoDescription String?       @db.Text
+  status         ContentStatus @default(DRAFT)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  publishedAt    DateTime?
+  deletedAt      DateTime?
+
+  @@map("pages")
+}
+
+// Front-website "News" reuses Post (filtered by Category) rather than a
+// separate table, since DATABASE.md only defines `posts` + `categories`.
+// Revisit this assumption if News needs fields Posts don't have.
+model Post {
+  id                 String        @id @default(uuid())
+  categoryId         String?
+  authorId           String?
+  title              String
+  slug               String        @unique
+  kind               PostKind      @default(NEWS)
+  excerpt            String?       @db.Text
+  subtitle           String?       @db.Text
+  content            String        @db.LongText
+  h1                 String?
+  tableOfContents    Json?
+  readingTimeMinutes Int?
+  featuredImage      String?
+  coverImageAlt      String?       @db.Text
+  coverImageCaption  String?       @db.Text
+  bannerDesktop      String?
+  bannerMobile       String?
+  showOnHome         Boolean       @default(false)
+  status             ContentStatus @default(DRAFT)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  publishedAt        DateTime?
+  reviewedAt         DateTime?
+  expiresAt          DateTime?
+  deletedAt          DateTime?
+
+  category Category? @relation(fields: [categoryId], references: [id])
+  author   User?     @relation(fields: [authorId], references: [id])
+  seo      PostSeo?
+
+  tags           PostTag[]
+  branches       PostBranch[]
+  relatedFrom    PostRelated[]     @relation("PostRelatedFrom")
+  relatedTo      PostRelated[]     @relation("PostRelatedTo")
+  navigation     PostNavigation?
+  previousLinks  PostNavigation[]  @relation("PostPrevious")
+  nextLinks      PostNavigation[]  @relation("PostNext")
+  slugHistory    PostSlugHistory[]
+  alternateLinks PostAlternate[]
+  faqs           PostFaq[]
+  images         PostImage[]
+  seoAudits      SeoAudit[]
+
+  @@index([status, publishedAt])
+  @@index([kind, status, publishedAt])
+  @@index([categoryId, status, publishedAt])
+  @@index([deletedAt, status])
+  @@map("posts")
+}
+
+model Category {
+  id        String    @id @default(uuid())
+  name      String
+  slug      String    @unique
+  image     String?
+  color     String?
+  sortOrder Int       @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  posts  Post[]
+  stores Store[]
+
+  @@index([sortOrder])
+  @@map("categories")
+}
+
+model Tag {
+  id          String    @id @default(uuid())
+  name        String
+  slug        String    @unique
+  description String?   @db.Text
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  posts      PostTag[]
+  events     EventTag[]
+  promotions PromotionTag[]
+
+  @@index([deletedAt])
+  @@map("tags")
+}
+
+model PostTag {
+  postId    String
+  tagId     String
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, tagId])
+  @@index([tagId])
+  @@map("post_tags")
+}
+
+model Branch {
+  id        String    @id @default(uuid())
+  name      String
+  nameTh    String?
+  nameEn    String?
+  slug      String    @unique
+  image     String?
+  thumbnail String?
+  shortDescription String? @db.Text
+  address   String?   @db.Text
+  phone     String?
+  leasingPhone1 String?
+  leasingPhone2 String?
+  mapsUrl   String?
+  latitude  Float?
+  longitude Float?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  stores             Store[]
+  storeFloors        StoreFloor[]
+  posts              PostBranch[]
+  events             EventBranch[]
+  promotions         PromotionBranch[]
+  leasingSubmissions LeasingSubmission[]
+
+  @@map("branches")
+}
+
+model PostBranch {
+  postId    String
+  branchId  String
+  createdAt DateTime @default(now())
+
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  @@id([postId, branchId])
+  @@index([branchId])
+  @@map("post_branches")
+}
+
+model PostSeo {
+  id                    String                  @id @default(uuid())
+  postId                String                  @unique
+  seoTitle              String?
+  seoDescription        String?                 @db.Text
+  keywords              String?                 @db.Text
+  focusKeyword          String?
+  secondaryKeywords     Json?
+  canonicalUrl          String?
+  ogTitle               String?
+  ogDescription         String?                 @db.Text
+  ogImage               String?
+  twitterTitle          String?
+  twitterDescription    String?                 @db.Text
+  twitterImage          String?
+  twitterCard           SeoTwitterCard          @default(SUMMARY_LARGE_IMAGE)
+  noindex               Boolean                 @default(false)
+  nofollow              Boolean                 @default(false)
+  noarchive             Boolean                 @default(false)
+  nosnippet             Boolean                 @default(false)
+  maxSnippet            Int?
+  maxImagePreview       String?
+  maxVideoPreview       Int?
+  schemaType            SeoSchemaType           @default(ARTICLE)
+  customJsonLd          Json?
+  includeInSitemap      Boolean                 @default(true)
+  includeInNewsSitemap  Boolean                 @default(false)
+  includeInImageSitemap Boolean                 @default(true)
+  sitemapPriority       Float?
+  changeFrequency       SitemapChangeFrequency?
+  metadata              Json?
+  schemaOverrides       Json?
+  robotsDirectives      Json?
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([noindex, includeInSitemap])
+  @@index([includeInNewsSitemap])
+  @@map("post_seo")
+}
+
+model PostSlugHistory {
+  id         String             @id @default(uuid())
+  postId     String
+  oldSlug    String
+  newSlug    String
+  statusCode RedirectStatusCode @default(MOVED_PERMANENTLY)
+  createdAt  DateTime           @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([oldSlug])
+  @@index([postId])
+  @@map("post_slug_history")
+}
+
+model SeoRedirect {
+  id         String             @id @default(uuid())
+  fromPath   String             @unique
+  toPath     String?
+  statusCode RedirectStatusCode @default(MOVED_PERMANENTLY)
+  isActive   Boolean            @default(true)
+  hits       Int                @default(0)
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+  deletedAt  DateTime?
+
+  @@index([isActive, deletedAt])
+  @@map("seo_redirects")
+}
+
+model PostRelated {
+  postId        String
+  relatedPostId String
+  sortOrder     Int      @default(0)
+  createdAt     DateTime @default(now())
+
+  post        Post @relation("PostRelatedFrom", fields: [postId], references: [id], onDelete: Cascade)
+  relatedPost Post @relation("PostRelatedTo", fields: [relatedPostId], references: [id], onDelete: Cascade)
+
+  @@id([postId, relatedPostId])
+  @@index([relatedPostId])
+  @@map("post_related")
+}
+
+model PostNavigation {
+  postId         String   @id
+  previousPostId String?
+  nextPostId     String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  post         Post  @relation(fields: [postId], references: [id], onDelete: Cascade)
+  previousPost Post? @relation("PostPrevious", fields: [previousPostId], references: [id])
+  nextPost     Post? @relation("PostNext", fields: [nextPostId], references: [id])
+
+  @@index([previousPostId])
+  @@index([nextPostId])
+  @@map("post_navigation")
+}
+
+model PostAlternate {
+  id        String   @id @default(uuid())
+  postId    String
+  locale    String
+  url       String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, locale])
+  @@index([locale])
+  @@map("post_alternates")
+}
+
+model PostFaq {
+  id        String    @id @default(uuid())
+  postId    String
+  question  String    @db.Text
+  answer    String    @db.LongText
+  sortOrder Int       @default(0)
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId, isActive])
+  @@map("post_faqs")
+}
+
+model PostImage {
+  id        String    @id @default(uuid())
+  postId    String
+  url       String
+  alt       String?   @db.Text
+  caption   String?   @db.Text
+  credit    String?
+  width     Int?
+  height    Int?
+  sortOrder Int       @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId, sortOrder])
+  @@map("post_images")
+}
+
+model SeoAudit {
+  id          String   @id @default(uuid())
+  postId      String?
+  eventId     String?
+  promotionId String?
+  score       Int?
+  readability Int?
+  checks      Json?
+  suggestions Json?
+  analyzedAt  DateTime @default(now())
+
+  post      Post?      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  event     Event?     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  promotion Promotion? @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+
+  @@index([postId, analyzedAt])
+  @@index([eventId, analyzedAt])
+  @@index([promotionId, analyzedAt])
+  @@map("seo_audits")
+}
+
+model StoreFloor {
+  id             String    @id @default(uuid())
+  branchId       String
+  name           String
+  nameTh         String?
+  nameEn         String?
+  sortOrder      Int       @default(0)
+  floorPlanImage String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+
+  branch Branch      @relation(fields: [branchId], references: [id])
+  zones  StoreZone[]
+
+  @@index([branchId, deletedAt])
+  @@map("store_floors")
+}
+
+model StoreZone {
+  id             String    @id @default(uuid())
+  floorId        String
+  name           String
+  nameTh         String?
+  nameEn         String?
+  sortOrder      Int       @default(0)
+  floorPlanImage String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+
+  floor     StoreFloor      @relation(fields: [floorId], references: [id])
+  locations StoreLocation[]
+  stores    Store[]
+
+  @@index([floorId, deletedAt])
+  @@map("store_zones")
+}
+
+model StoreLocation {
+  id        String    @id @default(uuid())
+  zoneId    String
+  name      String
+  nameTh    String?
+  nameEn    String?
+  sortOrder Int       @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  zone   StoreZone @relation(fields: [zoneId], references: [id])
+  stores Store[]
+
+  @@index([zoneId, deletedAt])
+  @@map("store_locations")
+}
+
+model Store {
+  id              String    @id @default(uuid())
+  branchId        String
+  categoryId      String?
+  zoneId          String?
+  locationId      String?
+  name            String
+  nameTh          String?
+  nameEn          String?
+  slug            String    @unique
+  logo            String?
+  cover           String?
+  description     String?   @db.Text
+  phone1          String?
+  phone2          String?
+  operatingHours  Json?
+  storeType       String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+
+  branch        Branch         @relation(fields: [branchId], references: [id])
+  category      Category?      @relation(fields: [categoryId], references: [id])
+  storeZone     StoreZone?     @relation(fields: [zoneId], references: [id])
+  storeLocation StoreLocation? @relation(fields: [locationId], references: [id])
+
+  @@index([branchId])
+  @@index([categoryId])
+  @@index([zoneId])
+  @@index([locationId])
+  @@map("stores")
+}
+
+model Promotion {
+  id                 String            @id @default(uuid())
+  authorId           String?
+  title              String
+  slug               String            @unique
+  category           PromotionCategory @default(FOOD)
+  excerpt            String?           @db.Text
+  subtitle           String?           @db.Text
+  content            String            @db.LongText
+  h1                 String?
+  featuredImage      String?
+  coverImageAlt      String?           @db.Text
+  coverImageCaption  String?           @db.Text
+  showOnHome         Boolean           @default(false)
+  status             ContentStatus     @default(DRAFT)
+  startDate          DateTime
+  endDate            DateTime
+  readingTimeMinutes Int?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  publishedAt        DateTime?
+  reviewedAt         DateTime?
+  expiresAt          DateTime?
+  deletedAt          DateTime?
+
+  author         User?                @relation(fields: [authorId], references: [id])
+  seo            PromotionSeo?
+  tags           PromotionTag[]
+  branches       PromotionBranch[]
+  relatedFrom    PromotionRelated[]   @relation("PromotionRelatedFrom")
+  relatedTo      PromotionRelated[]   @relation("PromotionRelatedTo")
+  alternateLinks PromotionAlternate[]
+  faqs           PromotionFaq[]
+  seoAudits      SeoAudit[]
+
+  @@index([status, startDate, endDate])
+  @@index([category, status])
+  @@index([deletedAt, status])
+  @@map("promotions")
+}
+
+model PromotionTag {
+  promotionId String
+  tagId       String
+  createdAt   DateTime @default(now())
+
+  promotion Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  tag       Tag       @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([promotionId, tagId])
+  @@index([tagId])
+  @@map("promotion_tags")
+}
+
+model PromotionBranch {
+  promotionId String
+  branchId    String
+  createdAt   DateTime @default(now())
+
+  promotion Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  branch    Branch    @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  @@id([promotionId, branchId])
+  @@index([branchId])
+  @@map("promotion_branches")
+}
+
+model PromotionSeo {
+  id                    String                  @id @default(uuid())
+  promotionId           String                  @unique
+  seoTitle              String?
+  seoDescription        String?                 @db.Text
+  keywords              String?                 @db.Text
+  focusKeyword          String?
+  secondaryKeywords     Json?
+  canonicalUrl          String?
+  ogTitle               String?
+  ogDescription         String?                 @db.Text
+  ogImage               String?
+  twitterTitle          String?
+  twitterDescription    String?                 @db.Text
+  twitterImage          String?
+  twitterCard           SeoTwitterCard          @default(SUMMARY_LARGE_IMAGE)
+  noindex               Boolean                 @default(false)
+  nofollow              Boolean                 @default(false)
+  noarchive             Boolean                 @default(false)
+  nosnippet             Boolean                 @default(false)
+  maxSnippet            Int?
+  maxImagePreview       String?
+  maxVideoPreview       Int?
+  schemaType            SeoSchemaType           @default(ARTICLE)
+  customJsonLd          Json?
+  includeInSitemap      Boolean                 @default(true)
+  includeInNewsSitemap  Boolean                 @default(false)
+  includeInImageSitemap Boolean                 @default(true)
+  sitemapPriority       Float?
+  changeFrequency       SitemapChangeFrequency?
+  metadata              Json?
+  schemaOverrides       Json?
+  robotsDirectives      Json?
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+
+  promotion Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+
+  @@index([noindex, includeInSitemap])
+  @@map("promotion_seo")
+}
+
+model PromotionRelated {
+  promotionId        String
+  relatedPromotionId String
+  sortOrder          Int      @default(0)
+  createdAt          DateTime @default(now())
+
+  promotion        Promotion @relation("PromotionRelatedFrom", fields: [promotionId], references: [id], onDelete: Cascade)
+  relatedPromotion Promotion @relation("PromotionRelatedTo", fields: [relatedPromotionId], references: [id], onDelete: Cascade)
+
+  @@id([promotionId, relatedPromotionId])
+  @@index([relatedPromotionId])
+  @@map("promotion_related")
+}
+
+model PromotionAlternate {
+  id          String   @id @default(uuid())
+  promotionId String
+  locale      String
+  url         String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  promotion Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+
+  @@unique([promotionId, locale])
+  @@index([locale])
+  @@map("promotion_alternates")
+}
+
+model PromotionFaq {
+  id          String    @id @default(uuid())
+  promotionId String
+  question    String    @db.Text
+  answer      String    @db.LongText
+  sortOrder   Int       @default(0)
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  promotion Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+
+  @@index([promotionId, isActive])
+  @@map("promotion_faqs")
+}
+
+model Event {
+  id                 String        @id @default(uuid())
+  authorId           String?
+  title              String
+  slug               String        @unique
+  excerpt            String?       @db.Text
+  subtitle           String?       @db.Text
+  content            String        @db.LongText
+  h1                 String?
+  featuredImage      String?
+  coverImageAlt      String?       @db.Text
+  coverImageCaption  String?       @db.Text
+  showOnHome         Boolean       @default(false)
+  status             ContentStatus @default(DRAFT)
+  eventDate          DateTime
+  eventEndDate       DateTime?
+  location           String?
+  readingTimeMinutes Int?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  publishedAt        DateTime?
+  reviewedAt         DateTime?
+  expiresAt          DateTime?
+  deletedAt          DateTime?
+
+  author         User?            @relation(fields: [authorId], references: [id])
+  seo            EventSeo?
+  tags           EventTag[]
+  branches       EventBranch[]
+  relatedFrom    EventRelated[]   @relation("EventRelatedFrom")
+  relatedTo      EventRelated[]   @relation("EventRelatedTo")
+  alternateLinks EventAlternate[]
+  faqs           EventFaq[]
+  images         EventImage[]
+  seoAudits      SeoAudit[]
+
+  @@index([status, eventDate])
+  @@index([deletedAt, status])
+  @@map("events")
+}
+
+model EventTag {
+  eventId   String
+  tagId     String
+  createdAt DateTime @default(now())
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  tag   Tag   @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([eventId, tagId])
+  @@index([tagId])
+  @@map("event_tags")
+}
+
+model EventBranch {
+  eventId   String
+  branchId  String
+  createdAt DateTime @default(now())
+
+  event  Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  @@id([eventId, branchId])
+  @@index([branchId])
+  @@map("event_branches")
+}
+
+model EventSeo {
+  id                    String                  @id @default(uuid())
+  eventId               String                  @unique
+  seoTitle              String?
+  seoDescription        String?                 @db.Text
+  keywords              String?                 @db.Text
+  focusKeyword          String?
+  secondaryKeywords     Json?
+  canonicalUrl          String?
+  ogTitle               String?
+  ogDescription         String?                 @db.Text
+  ogImage               String?
+  twitterTitle          String?
+  twitterDescription    String?                 @db.Text
+  twitterImage          String?
+  twitterCard           SeoTwitterCard          @default(SUMMARY_LARGE_IMAGE)
+  noindex               Boolean                 @default(false)
+  nofollow              Boolean                 @default(false)
+  noarchive             Boolean                 @default(false)
+  nosnippet             Boolean                 @default(false)
+  maxSnippet            Int?
+  maxImagePreview       String?
+  maxVideoPreview       Int?
+  schemaType            SeoSchemaType           @default(EVENT)
+  customJsonLd          Json?
+  includeInSitemap      Boolean                 @default(true)
+  includeInNewsSitemap  Boolean                 @default(false)
+  includeInImageSitemap Boolean                 @default(true)
+  sitemapPriority       Float?
+  changeFrequency       SitemapChangeFrequency?
+  metadata              Json?
+  schemaOverrides       Json?
+  robotsDirectives      Json?
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([noindex, includeInSitemap])
+  @@map("event_seo")
+}
+
+model EventRelated {
+  eventId        String
+  relatedEventId String
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+
+  event        Event @relation("EventRelatedFrom", fields: [eventId], references: [id], onDelete: Cascade)
+  relatedEvent Event @relation("EventRelatedTo", fields: [relatedEventId], references: [id], onDelete: Cascade)
+
+  @@id([eventId, relatedEventId])
+  @@index([relatedEventId])
+  @@map("event_related")
+}
+
+model EventAlternate {
+  id        String   @id @default(uuid())
+  eventId   String
+  locale    String
+  url       String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, locale])
+  @@index([locale])
+  @@map("event_alternates")
+}
+
+model EventFaq {
+  id        String    @id @default(uuid())
+  eventId   String
+  question  String    @db.Text
+  answer    String    @db.LongText
+  sortOrder Int       @default(0)
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId, isActive])
+  @@map("event_faqs")
+}
+
+model EventImage {
+  id        String    @id @default(uuid())
+  eventId   String
+  url       String
+  alt       String?   @db.Text
+  caption   String?   @db.Text
+  sortOrder Int       @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId, sortOrder])
+  @@map("event_images")
+}
+
+model Gallery {
+  id        String    @id @default(uuid())
+  album     String
+  image     String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@map("gallery")
+}
+
+model Banner {
+  id            String    @id @default(uuid())
+  title         String
+  subtitle      String?
+  description   String?   @db.Text
+  image         String
+  linkUrl       String?
+  linkLabel     String?
+  showOnHome    Boolean   @default(false)
+  showOnBranch1 Boolean   @default(false)
+  showOnBranch2 Boolean   @default(false)
+  showOnBranch3 Boolean   @default(false)
+  showOnAbout   Boolean   @default(false)
+  sortOrder     Int       @default(0)
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+
+  @@index([isActive, sortOrder])
+  @@map("banners")
+}
+
+model BrandPartner {
+  id            String    @id @default(uuid())
+  name          String
+  logo          String
+  linkUrl       String?
+  showOnHome    Boolean   @default(false)
+  showOnBranch1 Boolean   @default(false)
+  showOnBranch2 Boolean   @default(false)
+  showOnBranch3 Boolean   @default(false)
+  sortOrder     Int       @default(0)
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+
+  @@index([isActive, sortOrder])
+  @@map("brand_partners")
+}
+
+model MediaFolder {
+  id        String    @id @default(uuid())
+  name      String
+  slug      String    @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  media Media[]
+
+  @@index([deletedAt])
+  @@map("media_folders")
+}
+
+model Media {
+  id        String     @id @default(uuid())
+  folderId  String?
+  filename  String
+  path      String
+  type      MediaType
+  size      Int
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  deletedAt DateTime?
+
+  folder MediaFolder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
+
+  @@index([folderId])
+  @@index([deletedAt])
+  @@map("media")
+}
+
+model Menu {
+  id        String    @id @default(uuid())
+  title     String
+  url       String
+  parentId  String?
+  order     Int       @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  parent   Menu?  @relation("MenuToMenu", fields: [parentId], references: [id])
+  children Menu[] @relation("MenuToMenu")
+
+  @@map("menus")
+}
+
+model Setting {
+  id        String    @id @default(uuid())
+  key       String    @unique
+  value     String    @db.Text
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@map("settings")
+}
+
+model ContactSubmission {
+  id        String        @id @default(uuid())
+  name      String
+  email     String
+  phone     String?
+  subject   String
+  message   String        @db.Text
+  status    ContactStatus @default(NEW)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  deletedAt DateTime?
+
+  @@map("contact_submissions")
+}
+
+model LeasingSubmission {
+  id              String        @id @default(uuid())
+  name            String
+  email           String
+  phone           String
+  details         String?       @db.Text
+  branchId        String
+  productCategory String
+  productDetails  String        @db.Text
+  status          ContactStatus @default(NEW)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  deletedAt       DateTime?
+
+  branch Branch @relation(fields: [branchId], references: [id])
+
+  @@index([branchId])
+  @@index([status])
+  @@map("leasing_submissions")
+}

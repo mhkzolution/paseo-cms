@@ -1,0 +1,72 @@
+<h2>Design §2 — กิจกรรมน่าสนใจ + บทความน่าสนใจ</h2>
+<p class="subtitle">ดู mock แล้วตอบ OK หรือจุดที่อยากแก้</p>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">#events · กิจกรรมน่าสนใจ</div>
+    <div class="mockup-body" style="font-size:12px;display:grid;gap:12px">
+      <div>
+        <div class="label">Title</div>
+        <strong style="font-size:16px">กิจกรรมน่าสนใจ</strong>
+        <span style="color:#8a8782"> · Event</span>
+      </div>
+      <div style="display:grid;gap:8px">
+        <div style="display:grid;grid-template-columns:88px 1fr;gap:10px;border:1px solid #e5e1d8;border-radius:8px;overflow:hidden">
+          <div class="placeholder" style="height:72px;margin:0;border-radius:0"></div>
+          <div style="padding:8px 8px 8px 0">
+            <div style="font-weight:600">Event title</div>
+            <div style="color:#8a8782;margin-top:4px">12 ก.ค. 2569 · 18:00 · สาขาลาดกระบัง</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:88px 1fr;gap:10px;border:1px solid #e5e1d8;border-radius:8px;overflow:hidden;opacity:.75">
+          <div class="placeholder" style="height:72px;margin:0;border-radius:0"></div>
+          <div style="padding:8px 8px 8px 0"><div style="font-weight:600">…</div><div style="color:#8a8782;margin-top:4px">date · time · branch</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:88px 1fr;gap:10px;border:1px solid #e5e1d8;border-radius:8px;overflow:hidden;opacity:.55">
+          <div class="placeholder" style="height:72px;margin:0;border-radius:0"></div>
+          <div style="padding:8px 8px 8px 0"><div style="font-weight:600">…</div><div style="color:#8a8782;margin-top:4px">date · time · branch</div></div>
+        </div>
+      </div>
+      <button class="mock-button" style="justify-self:start">ดูทั้งหมด → /events</button>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">#news · บทความน่าสนใจ</div>
+    <div class="mockup-body" style="font-size:12px;display:grid;gap:12px">
+      <div>
+        <div class="label">Title</div>
+        <strong style="font-size:16px">บทความน่าสนใจ</strong>
+        <span style="color:#8a8782"> · News</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <div>
+          <div class="placeholder" style="aspect-ratio:16/9;margin:0;border-radius:6px"></div>
+          <div style="font-weight:600;margin-top:6px">Post title</div>
+          <div style="color:#8a8782;margin-top:2px">5 ก.ค. 2569</div>
+        </div>
+        <div style="opacity:.8">
+          <div class="placeholder" style="aspect-ratio:16/9;margin:0;border-radius:6px"></div>
+          <div style="font-weight:600;margin-top:6px">…</div>
+          <div style="color:#8a8782;margin-top:2px">date</div>
+        </div>
+        <div style="opacity:.6">
+          <div class="placeholder" style="aspect-ratio:16/9;margin:0;border-radius:6px"></div>
+          <div style="font-weight:600;margin-top:6px">…</div>
+          <div style="color:#8a8782;margin-top:2px">date</div>
+        </div>
+      </div>
+      <button class="mock-button" style="justify-self:start">ดูทั้งหมด → /news</button>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:1rem">
+  <h3>Spec</h3>
+  <ul>
+    <li><strong>Events:</strong> 3 รายการล่าสุด · รูป · title · date · time · สาขา · ปุ่มดูทั้งหมด → <code>/events</code></li>
+    <li>ขยาย <code>ArchiveEvent</code> ให้มี branch name (จาก EventBranch) + format time จาก <code>eventDate</code></li>
+    <li><strong>News:</strong> 3 โพสต์ล่าสุด published · รูป 16:9 · title · date · ปุ่ม → <code>/news</code></li>
+    <li>Mobile: events เป็น list แนวตั้ง · news เป็น 1 คอลัมน์หรือเลื่อนแนวนอน</li>
+  </ul>
+</div>

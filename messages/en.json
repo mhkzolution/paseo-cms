@@ -1,0 +1,89 @@
+{
+  "common": {
+    "search": "Search",
+    "closeMenu": "Close menu",
+    "closeSearch": "Close search",
+    "mainMenu": "Main menu",
+    "exploreSite": "Explore {siteName}",
+    "homeMenu": "Home menu",
+    "categories": "Categories",
+    "changeLanguage": "Change language",
+    "loading": "Loading…",
+    "viewAll": "View all",
+    "readMore": "Read more",
+    "brandPrefix": "The Paseo",
+    "brandPrefixEn": "THE PASEO"
+  },
+  "language": {
+    "th": "TH",
+    "en": "EN"
+  },
+  "nav": {
+    "branchMall": "Lat Krabang",
+    "branchTown": "Ramkhamhaeng",
+    "branchPark": "Kanchanaphisek",
+    "stores": "Stores",
+    "about": "About us",
+    "news": "News",
+    "leasing": "Leasing",
+    "location": "Location",
+    "events": "Events",
+    "promotions": "Promotions"
+  },
+  "footer": {
+    "ourLocations": "Our Locations",
+    "brandName": "The Paseo",
+    "leasingTitle": "Leasing inquiries",
+    "leasingDesc": "Ask about spaces and locations for your business",
+    "followUs": "Follow us",
+    "followDesc": "Follow news, events, and promotions from The Paseo",
+    "privacy": "Privacy policy",
+    "terms": "Terms of use",
+    "copyright": "© {year} TBN Property. All rights reserved."
+  },
+  "home": {
+    "eventsTitle": "Featured events",
+    "newsTitle": "Featured stories",
+    "directoryTitle": "Directory",
+    "membershipTitle": "Membership PaseoLife",
+    "introTitle": "About The Paseo"
+  },
+  "about": {
+    "title": "About us",
+    "branchesHeading": "Our branches"
+  },
+  "leasing": {
+    "title": "Leasing"
+  },
+  "location": {
+    "title": "Location"
+  },
+  "legal": {
+    "privacyTitle": "Privacy policy",
+    "termsTitle": "Terms of use"
+  },
+  "stores": {
+    "title": "Stores",
+    "empty": "No stores found",
+    "searchPlaceholder": "Search stores, restaurants, or categories..."
+  },
+  "news": {
+    "title": "News",
+    "empty": "No news yet",
+    "storiesFrom": "Stories from {name}",
+    "storiesDefault": "Stories from The Paseo"
+  },
+  "events": {
+    "title": "Events",
+    "empty": "No events yet"
+  },
+  "promotions": {
+    "title": "Promotions",
+    "empty": "No promotions yet"
+  },
+  "search": {
+    "placeholder": "Search news, events, stores…",
+    "noResults": "No results found",
+    "viewAllResults": "View all results"
+  }
+}

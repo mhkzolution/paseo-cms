@@ -1,0 +1,43 @@
+<h2>Homepage navbar ควรอยู่ตรงไหน?</h2>
+<p class="subtitle">หน้าแรกจะมีเมนู anchor ไปแต่ละ section — เลือกรูปแบบที่ชอบ</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>แทนที่ Site Header ทั้งหน้า</h3>
+      <p>หน้าแรกใช้แค่ navbar section (กิจกรรม / บทความ / Introduction …) ไม่มีเมนูสำรวจ One Bangkok แบบหน้าอื่น</p>
+    </div>
+  </div>
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Site Header + Section Navbar ซ้อน</h3>
+      <p>เก็บเมนูสำรวจ/โลโก้/โซเชียลเหมือนเดิม แล้วมีแถบเมนู section sticky ด้านล่างหรือทับ hero</p>
+    </div>
+  </div>
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Site Header เบา + Section Navbar เป็นหลัก</h3>
+      <p>แถบบนเหลือโลโก้/ค้นหา/โซเชียลสั้นๆ ส่วนเมนูหลักของหน้าแรกคือ section links</p>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:1.5rem">
+  <div class="mockup">
+    <div class="mockup-header">Preview ความต่างโดยย่อ</div>
+    <div class="mockup-body" style="display:grid;gap:12px;font-size:13px">
+      <div style="border:1px solid var(--border);padding:10px;border-radius:8px">
+        <strong>A</strong> — [กิจกรรม] [บทความ] [Intro] [Directory] [PaseoLife]
+      </div>
+      <div style="border:1px solid var(--border);padding:10px;border-radius:8px">
+        <strong>B</strong> — [สำรวจ] 🔍 LOGO เครือข่าย<br/>แล้วค่อย [กิจกรรม] [บทความ] …
+      </div>
+      <div style="border:1px solid var(--border);padding:10px;border-radius:8px">
+        <strong>C</strong> — LOGO 🔍 เครือข่าย<br/>[กิจกรรม] [บทความ] [Intro] [Directory] [PaseoLife]
+      </div>
+    </div>
+  </div>
+</div>

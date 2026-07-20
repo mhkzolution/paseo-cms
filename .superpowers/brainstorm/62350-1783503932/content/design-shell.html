@@ -1,0 +1,35 @@
+<h2>Design §1 — Page shell & section navbar</h2>
+<p class="subtitle">ดูแล้วตอบในแชทว่า OK หรืออยากแก้จุดไหน</p>
+
+<div class="mockup">
+  <div class="mockup-header">Home (/) — Approach 1</div>
+  <div class="mockup-body" style="padding:0;font-size:12px">
+    <div style="position:sticky;top:0;background:#fff;border-bottom:1px solid #e5e1d8;padding:12px 16px;display:flex;gap:16px;justify-content:center;flex-wrap:wrap">
+      <span style="font-weight:600;color:#688e22">กิจกรรมน่าสนใจ</span>
+      <span>บทความน่าสนใจ</span>
+      <span>Introduction</span>
+      <span>Directory</span>
+      <span>Membership PaseoLife</span>
+    </div>
+    <div class="placeholder" style="height:140px;margin:0;border-radius:0;display:flex;align-items:center;justify-content:center">BannerCarousel</div>
+    <div style="padding:16px;display:grid;gap:10px">
+      <div style="border:1px dashed #ccc;padding:12px;border-radius:8px">#events · กิจกรรมน่าสนใจ</div>
+      <div style="border:1px dashed #ccc;padding:12px;border-radius:8px">#news · บทความน่าสนใจ</div>
+      <div style="border:1px dashed #ccc;padding:12px;border-radius:8px">#introduction</div>
+      <div style="border:1px dashed #ccc;padding:12px;border-radius:8px">#directory</div>
+      <div style="border:1px dashed #ccc;padding:12px;border-radius:8px">#membership</div>
+    </div>
+    <div style="padding:12px 16px;background:#f7f5f2;border-top:1px solid #e5e1d8;text-align:center;color:#8a8782">SiteFooter (แชร์กับหน้าอื่น)</div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:1rem">
+  <h3>Spec</h3>
+  <ul>
+    <li><code>app/page.tsx</code> = home เดียว · ลบ <code>app/(site)/page.tsx</code> เพื่อไม่ซ้ำ route</li>
+    <li>Navbar sticky · anchor scroll ไป section id</li>
+    <li>Active link ไฮไลต์ตาม scroll (IntersectionObserver)</li>
+    <li>Mobile: เมนูเลื่อนแนวนอนได้</li>
+    <li>ไม่มี Site Header (สำรวจ / tier2) บนหน้าแรก</li>
+  </ul>
+</div>

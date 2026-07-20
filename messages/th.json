@@ -1,0 +1,89 @@
+{
+  "common": {
+    "search": "ค้นหา",
+    "closeMenu": "ปิดเมนู",
+    "closeSearch": "ปิดค้นหา",
+    "mainMenu": "เมนูหลัก",
+    "exploreSite": "สำรวจ {siteName}",
+    "homeMenu": "เมนูหน้าแรก",
+    "categories": "หมวดหมู่",
+    "changeLanguage": "เปลี่ยนภาษา",
+    "loading": "กำลังโหลด…",
+    "viewAll": "ดูทั้งหมด",
+    "readMore": "อ่านเพิ่มเติม",
+    "brandPrefix": "เดอะพาซิโอ",
+    "brandPrefixEn": "THE PASEO"
+  },
+  "language": {
+    "th": "TH",
+    "en": "EN"
+  },
+  "nav": {
+    "branchMall": "สาขาลาดกระบัง",
+    "branchTown": "สาขารามคำแหง",
+    "branchPark": "สาขากาญจนาภิเษก",
+    "stores": "ร้านค้า",
+    "about": "เกี่ยวกับเรา",
+    "news": "ข่าวสาร",
+    "leasing": "พื้นที่ให้เช่า",
+    "location": "ที่ตั้ง",
+    "events": "กิจกรรม",
+    "promotions": "โปรโมชัน"
+  },
+  "footer": {
+    "ourLocations": "Our Locations",
+    "brandName": "เดอะพาซิโอ",
+    "leasingTitle": "ติดต่อเช่าพื้นที่",
+    "leasingDesc": "สอบถามรายละเอียดพื้นที่และทำเลสำหรับธุรกิจของคุณ",
+    "followUs": "ติดตามเรา",
+    "followDesc": "ติดตามข่าวสาร กิจกรรม และโปรโมชั่นจากเดอะพาซิโอ",
+    "privacy": "นโยบายความเป็นส่วนตัว",
+    "terms": "ข้อกำหนดการใช้งาน",
+    "copyright": "© {year} TBN Property. All rights reserved."
+  },
+  "home": {
+    "eventsTitle": "กิจกรรมน่าสนใจ",
+    "newsTitle": "บทความน่าสนใจ",
+    "directoryTitle": "Directory",
+    "membershipTitle": "Membership PaseoLife",
+    "introTitle": "เกี่ยวกับเดอะพาซิโอ"
+  },
+  "about": {
+    "title": "เกี่ยวกับเรา",
+    "branchesHeading": "สาขาของเรา"
+  },
+  "leasing": {
+    "title": "พื้นที่ให้เช่า"
+  },
+  "location": {
+    "title": "ที่ตั้ง"
+  },
+  "legal": {
+    "privacyTitle": "นโยบายความเป็นส่วนตัว",
+    "termsTitle": "ข้อกำหนดการใช้งาน"
+  },
+  "stores": {
+    "title": "ร้านค้า",
+    "empty": "ไม่พบร้านค้า",
+    "searchPlaceholder": "ค้นหาร้านค้า ร้านอาหาร หรือหมวดหมู่..."
+  },
+  "news": {
+    "title": "ข่าวสาร",
+    "empty": "ยังไม่มีข่าวสาร",
+    "storiesFrom": "เรื่องราวจาก {name}",
+    "storiesDefault": "เรื่องราวจาก The Paseo"
+  },
+  "events": {
+    "title": "กิจกรรม",
+    "empty": "ยังไม่มีกิจกรรม"
+  },
+  "promotions": {
+    "title": "โปรโมชัน",
+    "empty": "ยังไม่มีโปรโมชัน"
+  },
+  "search": {
+    "placeholder": "ค้นหาข่าว กิจกรรม ร้านค้า…",
+    "noResults": "ไม่พบผลลัพธ์",
+    "viewAllResults": "ดูผลลัพธ์ทั้งหมด"
+  }
+}
