@@ -150,3 +150,4 @@ See `AI_RULES.md` for the full set of conventions this scaffold follows
 (TypeScript strict mode, no `any`, named exports, early returns, SOLID,
 next/image, accessible HTML, etc.) — keep following them as you build out
 Phases 3–5.
+# paseo-cms
