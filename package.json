@@ -14,7 +14,8 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "prisma:seed": "tsx prisma/seed.ts",
-    "import:paseolife-stores": "tsx scripts/import-paseolife-stores.ts"
+    "import:paseolife-stores": "tsx scripts/import-paseolife-stores.ts",
+    "media:backfill": "tsx scripts/media-backfill.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
