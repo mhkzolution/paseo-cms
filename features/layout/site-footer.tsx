@@ -2,6 +2,7 @@ import Image from "next/image";
 import { getLocale, getTranslations } from "next-intl/server";
 import { FaPhone } from "react-icons/fa6";
 
+import { CookieSettingsButton } from "@/components/integrations/cookie-settings-button";
 import { LineFooterLink } from "@/components/integrations/line-footer-link";
 import { resolveLineOaUrl } from "@/components/integrations/resolve-line-oa";
 import { SiteSocialIcons } from "@/features/layout/site-social-icons";
@@ -243,6 +244,8 @@ export async function SiteFooter() {
             <Link href="/terms" className="transition-colors hover:text-foreground">
               {t("terms")}
             </Link>
+
+            <CookieSettingsButton />
           </div>
         </div>
       </div>

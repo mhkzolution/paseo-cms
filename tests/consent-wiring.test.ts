@@ -36,4 +36,20 @@ describe("consent wiring", () => {
     assert.doesNotMatch(read("app/layout.tsx"), /ConsentProvider/);
     assert.doesNotMatch(read("app/admin/layout.tsx"), /ConsentProvider/);
   });
+
+  it("footer exposes Cookie Settings reopen control", () => {
+    const footer = read("features/layout/site-footer.tsx");
+    assert.match(footer, /CookieSettingsButton|cookieSettings/);
+  });
+
+  it("CookieSettingsButton uses openPreferences without localStorage", () => {
+    const source = read("components/integrations/cookie-settings-button.tsx");
+    assert.match(source, /openPreferences/);
+    assert.doesNotMatch(source, /localStorage/);
+    assert.doesNotMatch(source, /writeStoredConsent|readStoredConsent/);
+  });
+
+  it("admin layout has no Cookie Settings UI", () => {
+    assert.doesNotMatch(read("app/admin/layout.tsx"), /CookieSettingsButton|ConsentBanner|ConsentProvider/);
+  });
 });
