@@ -4,7 +4,8 @@ import path from "path";
 
 import { NextResponse } from "next/server";
 
-import { checkRole } from "@/lib/rbac";
+import { extractMediaMetadata } from "@/lib/media-metadata";
+import { checkModuleAccess } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 import {
   getUploadKind,
@@ -21,7 +22,7 @@ const KIND_TO_MEDIA_TYPE: Record<UploadKind, "IMAGE" | "PDF" | "VIDEO"> = {
 };
 
 export async function POST(request: Request) {
-  const { authorized, status } = await checkRole(["SUPER_ADMIN", "ADMIN", "EDITOR", "MARKETING"]);
+  const { authorized, status } = await checkModuleAccess("media-library");
   if (!authorized) {
     return NextResponse.json({ error: "Forbidden" }, { status });
   }
@@ -63,6 +64,12 @@ export async function POST(request: Request) {
   const extension = path.extname(file.name) || "";
   const storedFilename = `${randomUUID()}${extension}`;
   const buffer = Buffer.from(await file.arrayBuffer());
+  const mediaType = KIND_TO_MEDIA_TYPE[kind];
+  const meta = extractMediaMetadata(buffer, {
+    mimeType: file.type,
+    originalName: file.name,
+    mediaType,
+  });
 
   await writeFile(path.join(UPLOAD_DIR, storedFilename), buffer);
 
@@ -71,8 +78,13 @@ export async function POST(request: Request) {
       folderId,
       filename: file.name,
       path: `/uploads/${storedFilename}`,
-      type: KIND_TO_MEDIA_TYPE[kind],
+      type: mediaType,
       size: file.size,
+      originalName: meta.originalName,
+      mimeType: meta.mimeType,
+      extension: meta.extension ?? (extension.replace(/^\./, "").toLowerCase() || null),
+      width: meta.width,
+      height: meta.height,
     },
   });
 
