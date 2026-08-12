@@ -3,6 +3,7 @@ import { Cormorant_Garamond, Prompt } from "next/font/google";
 import { getLocale } from "next-intl/server";
 
 import "./globals.css";
+import { resolveOrganizationJsonLd } from "@/lib/seo/organization-schema";
 import { DEFAULT_SETTINGS, getSeoSettings, getSettings, SETTINGS_KEYS } from "@/lib/settings";
 
 const prompt = Prompt({
@@ -52,6 +53,12 @@ export async function generateMetadata(): Promise<Metadata> {
       images: ogImage,
     },
     robots: seo.robots === "noindex,nofollow" ? { index: false, follow: false } : { index: true, follow: true },
+    verification: {
+      google: seo.googleVerification || undefined,
+      other: seo.bingVerification
+        ? { "msvalidate.01": seo.bingVerification }
+        : undefined,
+    },
   };
 }
 
@@ -59,10 +66,18 @@ export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const [seo, locale] = await Promise.all([getSeoSettings(), getLocale().catch(() => "th")]);
+  const organizationJsonLd = resolveOrganizationJsonLd(seo);
 
   return (
     <html lang={locale} className={`${prompt.variable} ${cormorant.variable} site-scrollbar`}>
       <body className="font-sans">
+        {organizationJsonLd ? (
+          <script
+            type="application/ld+json"
+            suppressHydrationWarning
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+          />
+        ) : null}
         {seo.jsonLd ? (
           <script
             type="application/ld+json"
