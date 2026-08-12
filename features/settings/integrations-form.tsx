@@ -32,20 +32,24 @@ export function IntegrationsForm({ defaultValues }: IntegrationsFormProps) {
     setServerMessage(null);
     setIsSuccess(false);
 
-    const response = await fetch("/api/settings/integrations", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(values),
-    });
+    try {
+      const response = await fetch("/api/settings/integrations", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
 
-    if (!response.ok) {
-      const body = (await response.json().catch(() => null)) as { error?: string } | null;
-      setServerMessage(body?.error ?? "Unable to save integrations settings.");
-      return;
+      if (!response.ok) {
+        const body = (await response.json().catch(() => null)) as { error?: string } | null;
+        setServerMessage(body?.error ?? "Unable to save integrations settings.");
+        return;
+      }
+
+      setIsSuccess(true);
+      setServerMessage("Integrations settings saved.");
+    } catch {
+      setServerMessage("Unable to save integrations settings.");
     }
-
-    setIsSuccess(true);
-    setServerMessage("Integrations settings saved.");
   };
 
   return (
