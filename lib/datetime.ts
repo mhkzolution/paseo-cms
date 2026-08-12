@@ -1,3 +1,9 @@
+import {
+  formatDateRangeWithSettings,
+  formatDateWithSettings,
+  formatTimeWithSettings,
+} from "@/lib/datetime-formatters";
+
 export const BANGKOK_TIMEZONE = "Asia/Bangkok";
 
 const DATE_TIME_LOCAL_PATTERN = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/;
@@ -58,38 +64,39 @@ export function startOfTodayBangkok(): Date {
   return parseBangkokDateTime(`${ymd}T00:00`);
 }
 
-function formatStoredDateTime(date: Date, options: Intl.DateTimeFormatOptions) {
-  return new Intl.DateTimeFormat("th-TH", {
-    timeZone: "UTC",
-    ...options,
-  }).format(date);
-}
-
 export function formatBangkokDate(
   date: Date,
   options: Intl.DateTimeFormatOptions = { dateStyle: "medium" },
 ) {
-  return formatStoredDateTime(date, options);
+  void options;
+  return formatDateWithSettings(date, {
+    dateLocale: "th-TH",
+    timezone: "Asia/Bangkok",
+    dateFormat: "DD MMM YYYY",
+    calendarSystem: "buddhist",
+  });
 }
 
 export function formatBangkokTime(date: Date) {
-  return formatStoredDateTime(date, { timeStyle: "short" });
+  return formatTimeWithSettings(date, {
+    timeLocale: "th-TH",
+    timezone: "Asia/Bangkok",
+    timeFormat: "24h",
+  });
 }
 
 export function formatBangkokDateRange(start: Date, end: Date | null) {
-  if (!end) return formatBangkokDate(start);
-
-  const formatter = new Intl.DateTimeFormat("th-TH", {
-    timeZone: "UTC",
-    day: "numeric",
-    month: "short",
-    year: "numeric",
+  return formatDateRangeWithSettings(start, end, {
+    dateLocale: "th-TH",
+    timezone: "Asia/Bangkok",
+    dateFormat: "DD MMM YYYY",
+    calendarSystem: "buddhist",
   });
-
-  const startLabel = formatter.format(start);
-  const endLabel = formatter.format(end);
-
-  if (startLabel === endLabel) return startLabel;
-
-  return `${startLabel} – ${endLabel}`;
 }
+
+export {
+  formatDateRangeWithSettings,
+  formatDateWithSettings,
+  formatDateTimeWithSettings,
+  formatTimeWithSettings,
+} from "@/lib/datetime-formatters";

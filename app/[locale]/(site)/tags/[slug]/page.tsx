@@ -133,11 +133,11 @@ export default async function TagPage({ params }: TagPageProps) {
                     name: store.name,
                     slug: store.slug,
                     logo: store.logo,
+                    cover: store.cover,
                     operatingHours: store.operatingHours,
-                    category: store.category
-                      ? { name: store.category.name, color: store.category.color }
-                      : null,
+                    category: store.category,
                     branchName: store.branch.name,
+                    branch: store.branch,
                   }}
                 />
               ))}

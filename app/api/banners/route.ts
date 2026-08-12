@@ -3,13 +3,11 @@ import { NextResponse } from "next/server";
 import { revalidateBannerPages } from "@/lib/banners-revalidate";
 import { forbiddenError, validationError } from "@/lib/content-api";
 import { prisma } from "@/lib/prisma";
-import { checkRole } from "@/lib/rbac";
+import { checkModuleAccess } from "@/lib/rbac";
 import { bannerSchema } from "@/validators/content.validator";
 
-const MARKETING_ROLES = ["SUPER_ADMIN", "ADMIN", "EDITOR", "MARKETING"] as const;
-
 export async function GET() {
-  const { authorized, status } = await checkRole([...MARKETING_ROLES]);
+  const { authorized, status } = await checkModuleAccess("banners");
   if (!authorized) return forbiddenError(status);
 
   const banners = await prisma.banner.findMany({
@@ -21,7 +19,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const { authorized, status } = await checkRole([...MARKETING_ROLES]);
+  const { authorized, status } = await checkModuleAccess("banners");
   if (!authorized) return forbiddenError(status);
 
   const parsed = bannerSchema.safeParse(await request.json());

@@ -8,13 +8,15 @@ import { AdminPageHeader, AdminTableShell } from "@/components/admin/admin-table
 import { EmptyState } from "@/components/admin/empty-state";
 import { DeleteResourceButton } from "@/features/content/delete-resource-button";
 import { formatDate } from "@/lib/format";
+import { getLocalizationSettings } from "@/lib/settings-cache";
 import { formatPromotionCategory } from "@/lib/promotion-categories";
 import { latestSeoAuditInclude } from "@/lib/seo-audit";
 import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/lib/rbac";
+import { requireModuleAccess } from "@/lib/rbac";
 
 export default async function PromotionsPage() {
-  await requireRole(["SUPER_ADMIN", "ADMIN", "EDITOR", "MARKETING"]);
+  await requireModuleAccess("promotions");
+  const localization = await getLocalizationSettings();
 
   const promotions = await prisma.promotion.findMany({
     where: { deletedAt: null },
@@ -89,7 +91,7 @@ export default async function PromotionsPage() {
                     <td className="px-4 py-3 text-muted">
                       <div>{formatPromotionCategory(promotion.category)}</div>
                       <div className="text-xs">
-                        {formatDate(promotion.startDate)} – {formatDate(promotion.endDate)}
+                        {formatDate(promotion.startDate, localization)} – {formatDate(promotion.endDate, localization)}
                       </div>
                     </td>
                     <td className="px-4 py-3 text-muted">
@@ -109,7 +111,7 @@ export default async function PromotionsPage() {
                     <td className="px-4 py-3">
                       <ContentStatusBadge status={promotion.status} />
                     </td>
-                    <td className="px-4 py-3 text-muted">{formatDate(promotion.updatedAt)}</td>
+                    <td className="px-4 py-3 text-muted">{formatDate(promotion.updatedAt, localization)}</td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex flex-nowrap items-center justify-end gap-1 whitespace-nowrap sm:gap-2">
                         <Link

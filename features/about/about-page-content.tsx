@@ -19,6 +19,7 @@ type AboutSettings = Pick<
   | "aboutDetail1"
   | "aboutDetail2"
   | "aboutDetail3"
+  | "aboutDetail4"
   | "aboutMission"
   | "aboutVision"
   | "siteName"
@@ -106,9 +107,12 @@ export async function AboutPageContent({ settings, banners, branches }: AboutPag
   ]);
   const appLocale = locale as AppLocale;
 
-  const details = [settings.aboutDetail1, settings.aboutDetail2, settings.aboutDetail3].filter(
-    hasHtmlContent,
-  );
+  const details = [
+    settings.aboutDetail1,
+    settings.aboutDetail2,
+    settings.aboutDetail3,
+    settings.aboutDetail4,
+  ].filter(hasHtmlContent);
 
   const hasMission = hasHtmlContent(settings.aboutMission);
   const hasVision = hasHtmlContent(settings.aboutVision);

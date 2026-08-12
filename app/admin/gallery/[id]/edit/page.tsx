@@ -4,7 +4,7 @@ import { ArrowLeft } from "lucide-react";
 
 import { ResourceForm } from "@/features/content/resource-form";
 import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/lib/rbac";
+import { requireModuleAccess } from "@/lib/rbac";
 
 const GALLERY_FIELDS = [
   { name: "album", label: "Album", type: "text" },
@@ -16,7 +16,7 @@ interface EditGalleryPageProps {
 }
 
 export default async function EditGalleryPage({ params }: EditGalleryPageProps) {
-  await requireRole(["SUPER_ADMIN", "ADMIN", "EDITOR", "MARKETING"]);
+  await requireModuleAccess("gallery");
 
   const { id } = await params;
   const item = await prisma.gallery.findFirst({ where: { id, deletedAt: null } });

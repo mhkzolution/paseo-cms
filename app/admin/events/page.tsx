@@ -8,12 +8,14 @@ import { AdminPageHeader, AdminTableShell } from "@/components/admin/admin-table
 import { EmptyState } from "@/components/admin/empty-state";
 import { DeleteResourceButton } from "@/features/content/delete-resource-button";
 import { formatDate } from "@/lib/format";
+import { getLocalizationSettings } from "@/lib/settings-cache";
 import { latestSeoAuditInclude } from "@/lib/seo-audit";
 import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/lib/rbac";
+import { requireModuleAccess } from "@/lib/rbac";
 
 export default async function EventsPage() {
-  await requireRole(["SUPER_ADMIN", "ADMIN", "EDITOR", "MARKETING"]);
+  await requireModuleAccess("events");
+  const localization = await getLocalizationSettings();
 
   const events = await prisma.event.findMany({
     where: { deletedAt: null },
@@ -86,7 +88,7 @@ export default async function EventsPage() {
                     <td className="px-4 py-3 font-medium text-foreground">{event.title}</td>
                     <td className="px-4 py-3 text-muted">{event.author?.name ?? "—"}</td>
                     <td className="px-4 py-3 text-muted">
-                      <div>{formatDate(event.eventDate)}</div>
+                      <div>{formatDate(event.eventDate, localization)}</div>
                       <div className="text-xs">{event.location ?? "No location"}</div>
                     </td>
                     <td className="px-4 py-3 text-muted">
@@ -104,7 +106,7 @@ export default async function EventsPage() {
                     <td className="px-4 py-3">
                       <ContentStatusBadge status={event.status} />
                     </td>
-                    <td className="px-4 py-3 text-muted">{formatDate(event.updatedAt)}</td>
+                    <td className="px-4 py-3 text-muted">{formatDate(event.updatedAt, localization)}</td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex flex-nowrap items-center justify-end gap-1 whitespace-nowrap sm:gap-2">
                         <Link

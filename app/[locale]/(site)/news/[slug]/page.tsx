@@ -14,6 +14,7 @@ import {
   type ArchivePost,
 } from "@/lib/post-archives";
 import { prisma } from "@/lib/prisma";
+import { buildPostHref, decodeSlugParam, resolvePublishedContentSlug } from "@/lib/slug";
 import { DEFAULT_SETTINGS, getSettings, SETTINGS_KEYS } from "@/lib/settings";
 import { buildRobots, toAbsoluteUrl } from "@/lib/seo";
 
@@ -48,7 +49,10 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: NewsPostPageProps): Promise<Metadata> {
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
+  const slug = await resolvePublishedContentSlug(prisma.post, rawSlug);
+  if (!slug) return {};
+
   const [settings, post] = await Promise.all([
     getSettings(SETTINGS_KEYS, DEFAULT_SETTINGS),
     prisma.post.findFirst({
@@ -104,7 +108,19 @@ export async function generateMetadata({ params }: NewsPostPageProps): Promise<M
 }
 
 export default async function NewsPostPage({ params }: NewsPostPageProps) {
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
+  const slug = await resolvePublishedContentSlug(prisma.post, rawSlug);
+
+  if (!slug) {
+    const history = await prisma.postSlugHistory.findUnique({ where: { oldSlug: decodeSlugParam(rawSlug) } });
+    if (history) permanentRedirect(buildPostHref(history.newSlug));
+    notFound();
+  }
+
+  if (decodeSlugParam(rawSlug) !== slug) {
+    permanentRedirect(buildPostHref(slug));
+  }
+
   const [settings, post] = await Promise.all([
     getSettings(SETTINGS_KEYS, DEFAULT_SETTINGS),
     prisma.post.findFirst({
@@ -126,11 +142,7 @@ export default async function NewsPostPage({ params }: NewsPostPageProps) {
     }),
   ]);
 
-  if (!post) {
-    const history = await prisma.postSlugHistory.findUnique({ where: { oldSlug: slug } });
-    if (history) permanentRedirect(`/news/${history.newSlug}`);
-    notFound();
-  }
+  if (!post) notFound();
 
   const baseUrl = settings.siteUrl.replace(/\/$/, "");
   const canonical = post.seo?.canonicalUrl || `${baseUrl}/news/${post.slug}`;
@@ -241,7 +253,7 @@ function buildPostJsonLd({
   return {
     "@context": "https://schema.org",
     "@type": schemaType,
-    headline: post.h1 || post.title,
+    headline: post.title,
     description: post.seo?.seoDescription || post.subtitle || post.excerpt || undefined,
     image: post.featuredImage ? [post.featuredImage] : undefined,
     datePublished: post.publishedAt?.toISOString(),

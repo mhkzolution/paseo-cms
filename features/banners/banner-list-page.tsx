@@ -13,15 +13,18 @@ import {
   type BannerScope,
 } from "@/lib/banners";
 import { formatDate } from "@/lib/format";
+import { getLocalizationSettings } from "@/lib/settings-cache";
 import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/lib/rbac";
+import { requireModuleAccess } from "@/lib/rbac";
 
 interface BannerListPageProps {
   scope: BannerScope;
+  variant?: "page" | "embedded";
 }
 
-export async function BannerListPage({ scope }: BannerListPageProps) {
-  await requireRole(["SUPER_ADMIN", "ADMIN", "EDITOR", "MARKETING"]);
+export async function BannerListPage({ scope, variant = "page" }: BannerListPageProps) {
+  await requireModuleAccess("banners");
+  const localization = await getLocalizationSettings();
 
   const [banners, branchLabels] = await Promise.all([
     prisma.banner.findMany({
@@ -36,25 +39,19 @@ export async function BannerListPage({ scope }: BannerListPageProps) {
   const description =
     scope === "site"
       ? "จัดการ banner สไลด์สำหรับหน้าหลักและหน้าสาขา"
-      : "จัดการ banner สำหรับหน้า About Us (/about)";
+      : "จัดการ banner สไลด์สำหรับหน้า About Us (/about)";
+  const addButton = (
+    <Link
+      href={`${baseHref}/new`}
+      className="inline-flex items-center gap-2 rounded-md bg-paseo px-3 py-2 text-sm font-medium text-foreground hover:bg-paseo-dark hover:text-white sm:px-4"
+    >
+      <Plus className="h-4 w-4" aria-hidden="true" />
+      Add banner
+    </Link>
+  );
 
-  return (
-    <div className="flex flex-col gap-6">
-      <AdminPageHeader
-        title={`Banner — ${scopeLabel}`}
-        description={description}
-        action={
-          <Link
-            href={`${baseHref}/new`}
-            className="inline-flex items-center gap-2 rounded-md bg-paseo px-3 py-2 text-sm font-medium text-foreground hover:bg-paseo-dark hover:text-white sm:px-4"
-          >
-            <Plus className="h-4 w-4" aria-hidden="true" />
-            Add banner
-          </Link>
-        }
-      />
-
-      {banners.length === 0 ? (
+  const tableContent =
+    banners.length === 0 ? (
         <EmptyState icon={ImageIcon} title="No banners yet" description="Add the first banner slide." />
       ) : (
         <AdminTableShell>
@@ -128,7 +125,7 @@ export async function BannerListPage({ scope }: BannerListPageProps) {
                         {banner.isActive ? "Active" : "Inactive"}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-muted">{formatDate(banner.updatedAt)}</td>
+                    <td className="px-4 py-3 text-muted">{formatDate(banner.updatedAt, localization)}</td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex flex-nowrap items-center justify-end gap-1 whitespace-nowrap sm:gap-2">
                         <Link
@@ -146,7 +143,27 @@ export async function BannerListPage({ scope }: BannerListPageProps) {
             </tbody>
           </table>
         </AdminTableShell>
-      )}
+      );
+
+  if (variant === "embedded") {
+    return (
+      <section className="flex flex-col gap-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold text-foreground">Banner</h2>
+            <p className="mt-1 text-sm text-muted">{description}</p>
+          </div>
+          {addButton}
+        </div>
+        {tableContent}
+      </section>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-6">
+      <AdminPageHeader title={`Banner — ${scopeLabel}`} description={description} action={addButton} />
+      {tableContent}
     </div>
   );
 }

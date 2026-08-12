@@ -5,14 +5,14 @@ import { ArrowLeft } from "lucide-react";
 import { BranchEditorForm } from "@/features/branches/branch-editor-form";
 import { getBranchEnglishName, getBranchThaiName } from "@/lib/branches/branch-names";
 import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/lib/rbac";
+import { requireModuleAccess } from "@/lib/rbac";
 
 interface EditBranchPageProps {
   params: Promise<{ id: string }>;
 }
 
 export default async function EditBranchPage({ params }: EditBranchPageProps) {
-  await requireRole(["SUPER_ADMIN", "ADMIN", "EDITOR"]);
+  await requireModuleAccess("branches");
 
   const { id } = await params;
   const branch = await prisma.branch.findFirst({ where: { id, deletedAt: null } });

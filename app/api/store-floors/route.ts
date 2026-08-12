@@ -2,14 +2,12 @@ import { NextResponse } from "next/server";
 
 import { forbiddenError, validationError } from "@/lib/content-api";
 import { prisma } from "@/lib/prisma";
-import { checkRole } from "@/lib/rbac";
+import { checkModuleAccess } from "@/lib/rbac";
 import { toStoreFloorPersistence } from "@/lib/store-zones/names";
 import { storeFloorSchema } from "@/validators/content.validator";
 
-const CONTENT_ROLES = ["SUPER_ADMIN", "ADMIN", "EDITOR"] as const;
-
 export async function GET(request: Request) {
-  const { authorized, status } = await checkRole([...CONTENT_ROLES]);
+  const { authorized, status } = await checkModuleAccess("stores");
   if (!authorized) return forbiddenError(status);
 
   const branchId = new URL(request.url).searchParams.get("branchId");
@@ -55,7 +53,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const { authorized, status } = await checkRole([...CONTENT_ROLES]);
+  const { authorized, status } = await checkModuleAccess("stores");
   if (!authorized) return forbiddenError(status);
 
   const parsed = storeFloorSchema.safeParse(await request.json());

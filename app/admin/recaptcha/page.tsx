@@ -2,11 +2,11 @@ import { KeyRound } from "lucide-react";
 
 import { RecaptchaForm } from "@/features/settings/recaptcha-form";
 import { getRecaptchaEnvStatus } from "@/lib/recaptcha";
-import { requireRole } from "@/lib/rbac";
+import { requireModuleAccess } from "@/lib/rbac";
 import { getRecaptchaSettings } from "@/lib/settings";
 
 export default async function RecaptchaSettingsPage() {
-  await requireRole(["SUPER_ADMIN", "ADMIN"]);
+  await requireModuleAccess("recaptcha");
 
   const recaptcha = await getRecaptchaSettings();
   const envFallback = getRecaptchaEnvStatus();

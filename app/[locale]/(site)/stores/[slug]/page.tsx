@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 
 import { StoreSingleContent } from "@/features/stores/store-single-content";
-import { getStoreBySlug } from "@/lib/stores";
+import { buildStoreDetailHref, getStoreBySlug } from "@/lib/stores";
+import { decodeSlugParam } from "@/lib/slug";
 import { prisma } from "@/lib/prisma";
 
 export const revalidate = 300;
@@ -23,8 +24,8 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: StorePageProps): Promise<Metadata> {
-  const { slug } = await params;
-  const store = await getStoreBySlug(slug);
+  const { slug: rawSlug } = await params;
+  const store = await getStoreBySlug(rawSlug);
 
   if (!store) return {};
 
@@ -39,12 +40,16 @@ export async function generateMetadata({ params }: StorePageProps): Promise<Meta
   };
 }
 
-export default async function StorePage({ params, searchParams }: StorePageProps) {
-  const { slug } = await params;
+export default async function StoreDetailPage({ params, searchParams }: StorePageProps) {
+  const { slug: rawSlug } = await params;
   const { category, branch } = await searchParams;
-  const store = await getStoreBySlug(slug);
+  const store = await getStoreBySlug(rawSlug);
 
   if (!store) notFound();
+
+  if (decodeSlugParam(rawSlug) !== store.slug) {
+    permanentRedirect(buildStoreDetailHref(store.slug, { category, branch }));
+  }
 
   return (
     <StoreSingleContent

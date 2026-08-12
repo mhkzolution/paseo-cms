@@ -1,6 +1,6 @@
 import type { Prisma } from "@prisma/client";
 
-import { analyzeSeoScore, type SeoScoreInput } from "@/lib/seo-score";
+import { analyzeSeoScore, type ContentType, type SeoScoreInput } from "@/lib/seo-score";
 
 type AuditClient = {
   seoAudit: {
@@ -42,20 +42,25 @@ export const latestSeoAuditInclude = {
   },
 };
 
-export function toSeoScoreInput(values: {
-  title?: string | null;
-  slug?: string | null;
-  content?: string | null;
-  excerpt?: string | null;
-  featuredImage?: string | null;
-  coverImageAlt?: string | null;
-  seo?: {
-    seoTitle?: string | null;
-    seoDescription?: string | null;
-    focusKeyword?: string | null;
-    ogImage?: string | null;
-  } | null;
-}): SeoScoreInput {
+export function toSeoScoreInput(
+  values: {
+    title?: string | null;
+    slug?: string | null;
+    content?: string | null;
+    excerpt?: string | null;
+    featuredImage?: string | null;
+    coverImageAlt?: string | null;
+    seo?: {
+      seoTitle?: string | null;
+      seoDescription?: string | null;
+      focusKeyword?: string | null;
+      ogImage?: string | null;
+    } | null;
+  },
+  options?: {
+    contentType?: ContentType;
+  },
+): SeoScoreInput {
   return {
     title: values.title,
     slug: values.slug,
@@ -63,6 +68,7 @@ export function toSeoScoreInput(values: {
     excerpt: values.excerpt,
     featuredImage: values.featuredImage,
     coverImageAlt: values.coverImageAlt,
+    contentType: options?.contentType,
     seo: values.seo
       ? {
           seoTitle: values.seo.seoTitle,

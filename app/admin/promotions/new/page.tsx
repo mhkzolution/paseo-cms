@@ -3,7 +3,10 @@ import { ArrowLeft } from "lucide-react";
 
 import { PromotionEditorForm } from "@/features/content/promotion-editor-form";
 import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/lib/rbac";
+import { resolveInternalLinkSuggestions } from "@/lib/seo-internal-links";
+import { requireModuleAccess } from "@/lib/rbac";
+
+const NEW_PROMOTION_LINK_CONTEXT_ID = "__new_promotion__";
 
 const DEFAULT_SEO = {
   seoTitle: "",
@@ -36,7 +39,7 @@ const DEFAULT_SEO = {
 };
 
 export default async function NewPromotionPage() {
-  await requireRole(["SUPER_ADMIN", "ADMIN", "EDITOR", "MARKETING"]);
+  await requireModuleAccess("promotions");
 
   const [branches, tags, promotions] = await Promise.all([
     prisma.branch.findMany({ where: { deletedAt: null }, orderBy: { name: "asc" } }),
@@ -47,6 +50,14 @@ export default async function NewPromotionPage() {
       select: { id: true, title: true },
     }),
   ]);
+
+  const internalLinkSuggestions = await resolveInternalLinkSuggestions({
+    contentType: "promotion",
+    contentId: NEW_PROMOTION_LINK_CONTEXT_ID,
+    promotionCategory: "FOOD",
+    tagIds: [],
+    branchIds: [],
+  });
 
   return (
     <div className="flex flex-col gap-6">
@@ -63,6 +74,11 @@ export default async function NewPromotionPage() {
         endpoint="/api/promotions"
         returnHref="/admin/promotions"
         submitLabel="Create promotion"
+        internalLinkSuggestions={internalLinkSuggestions}
+        savedInternalLinkContext={{
+          categoryId: "FOOD",
+          tagIds: [],
+        }}
         branches={branches.map((branch) => ({ label: branch.name, value: branch.id }))}
         tags={tags.map((tag) => ({ label: tag.name, value: tag.id }))}
         promotions={promotions.map((promotion) => ({ label: promotion.title, value: promotion.id }))}

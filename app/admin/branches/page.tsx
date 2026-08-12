@@ -6,11 +6,13 @@ import { EmptyState } from "@/components/admin/empty-state";
 import { DeleteResourceButton } from "@/features/content/delete-resource-button";
 import { getBranchAdminLabel, getBranchEnglishName, getBranchThaiName } from "@/lib/branches/branch-names";
 import { formatDate } from "@/lib/format";
+import { getLocalizationSettings } from "@/lib/settings-cache";
 import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/lib/rbac";
+import { requireModuleAccess } from "@/lib/rbac";
 
 export default async function BranchesPage() {
-  await requireRole(["SUPER_ADMIN", "ADMIN", "EDITOR"]);
+  await requireModuleAccess("branches");
+  const localization = await getLocalizationSettings();
 
   const branches = await prisma.branch.findMany({
     where: { deletedAt: null },
@@ -55,7 +57,7 @@ export default async function BranchesPage() {
                   <td className="px-4 py-3 text-muted">{getBranchEnglishName(branch)}</td>
                   <td className="px-4 py-3 text-muted">{branch.phone ?? "-"}</td>
                   <td className="px-4 py-3 text-muted">{branch.slug}</td>
-                  <td className="px-4 py-3 text-muted">{formatDate(branch.updatedAt)}</td>
+                  <td className="px-4 py-3 text-muted">{formatDate(branch.updatedAt, localization)}</td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex flex-nowrap items-center justify-end gap-1 whitespace-nowrap sm:gap-2">
                       <Link

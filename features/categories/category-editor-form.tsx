@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Resolver } from "react-hook-form";
@@ -9,6 +10,7 @@ import type { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { CoverImageField } from "@/features/media/cover-image-field";
+import { POST_KIND_LABELS } from "@/lib/post-archives";
 import { categorySchema } from "@/validators/content.validator";
 
 type CategoryFormValues = z.input<typeof categorySchema>;
@@ -63,6 +65,7 @@ export function CategoryEditorForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="grid max-w-3xl gap-4 md:grid-cols-2">
+      <input type="hidden" {...register("scope")} />
       <div>
         <label htmlFor="name" className="text-sm font-medium text-foreground">
           ชื่อ
@@ -88,6 +91,25 @@ export function CategoryEditorForm({
         <input id="slug" type="text" className={`mt-1.5 ${inputClass}`} {...register("slug")} />
         {errors.slug?.message ? <p className="mt-1 text-sm text-destructive">{errors.slug.message}</p> : null}
       </div>
+
+      {defaultValues.scope === "POST" ? (
+        <div className="md:col-span-2">
+          <label htmlFor="postKind" className="text-sm font-medium text-foreground">
+            ประเภทข่าว (สำหรับจัดกลุ่มบนหน้า News)
+          </label>
+          <select id="postKind" className={`mt-1.5 ${inputClass}`} {...register("postKind")}>
+            <option value="">เลือกอัตโนมัติจาก Slug</option>
+            {Object.entries(POST_KIND_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+          {errors.postKind?.message ? (
+            <p className="mt-1 text-sm text-destructive">{errors.postKind.message}</p>
+          ) : null}
+        </div>
+      ) : null}
 
       <div className="md:col-span-2">
         <label className="text-sm font-medium text-foreground">รูปภาพ</label>

@@ -4,19 +4,18 @@ import { Prisma } from "@prisma/client";
 import { forbiddenError, validationError } from "@/lib/content-api";
 import { buildUniquePromotionSlug, resolveTagIds, syncPromotionRelations } from "@/lib/promotion-write";
 import { prisma } from "@/lib/prisma";
-import { checkRole } from "@/lib/rbac";
+import { checkModuleAccess } from "@/lib/rbac";
+import { enrichSeoForSave } from "@/lib/seo-content-save";
 import { persistSeoAudit, toSeoScoreInput } from "@/lib/seo-audit";
 import { estimateReadingTime, generateSlug, parseJsonObject, splitKeywords } from "@/lib/seo";
 import { promotionSchema } from "@/validators/content.validator";
-
-const MARKETING_ROLES = ["SUPER_ADMIN", "ADMIN", "EDITOR", "MARKETING"] as const;
 
 interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
 export async function PATCH(request: Request, { params }: RouteParams) {
-  const { authorized, status } = await checkRole([...MARKETING_ROLES]);
+  const { authorized, status } = await checkModuleAccess("promotions");
   if (!authorized) return forbiddenError(status);
 
   const { id } = await params;
@@ -35,14 +34,19 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
   const baseSlug = generateSlug(parsed.data.slug ?? parsed.data.title) || "promotion";
   const slug = await buildUniquePromotionSlug(baseSlug, id);
-  const { tagIds, branchIds, relatedPromotionIds, newTags, seo, alternates, faqs, ...promotionInput } = parsed.data;
+  const enriched = await enrichSeoForSave(prisma, parsed.data, {
+    contentType: "promotion",
+    slug,
+    isCreate: false,
+  });
+  const { tagIds, branchIds, relatedPromotionIds, newTags, seo, alternates, faqs, ...promotionInput } = enriched;
 
   const promotion = await prisma.$transaction(async (tx) => {
     const updated = await tx.promotion.update({
       where: { id },
       data: {
         ...promotionInput,
-        slug,
+        slug: enriched.slug,
         readingTimeMinutes: estimateReadingTime(promotionInput.content),
         seo: {
           upsert: {
@@ -70,7 +74,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       faqs,
     });
 
-    await persistSeoAudit(tx, { promotionId: updated.id }, toSeoScoreInput(parsed.data));
+    await persistSeoAudit(tx, { promotionId: updated.id }, toSeoScoreInput(enriched, { contentType: "promotion" }));
 
     return tx.promotion.findUnique({
       where: { id: updated.id },
@@ -82,7 +86,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 }
 
 export async function DELETE(_request: Request, { params }: RouteParams) {
-  const { authorized, status } = await checkRole([...MARKETING_ROLES]);
+  const { authorized, status } = await checkModuleAccess("promotions");
   if (!authorized) return forbiddenError(status);
 
   const { id } = await params;

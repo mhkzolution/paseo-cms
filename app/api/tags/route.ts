@@ -2,11 +2,9 @@ import { NextResponse } from "next/server";
 
 import { conflictError, forbiddenError, validationError } from "@/lib/content-api";
 import { prisma } from "@/lib/prisma";
-import { checkRole } from "@/lib/rbac";
+import { checkModuleAccess } from "@/lib/rbac";
 import { generateSlug } from "@/lib/seo";
 import { tagSchema } from "@/validators/content.validator";
-
-const CONTENT_ROLES = ["SUPER_ADMIN", "ADMIN", "EDITOR"] as const;
 
 async function buildUniqueTagSlug(baseSlug: string, excludeId?: string) {
   let candidate = baseSlug;
@@ -30,7 +28,7 @@ async function buildUniqueTagSlug(baseSlug: string, excludeId?: string) {
 }
 
 export async function GET() {
-  const { authorized, status } = await checkRole([...CONTENT_ROLES]);
+  const { authorized, status } = await checkModuleAccess("tags");
   if (!authorized) return forbiddenError(status);
 
   const tags = await prisma.tag.findMany({
@@ -51,7 +49,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const { authorized, status } = await checkRole([...CONTENT_ROLES]);
+  const { authorized, status } = await checkModuleAccess("tags");
   if (!authorized) return forbiddenError(status);
 
   const parsed = tagSchema.safeParse(await request.json());

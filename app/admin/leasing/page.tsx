@@ -6,11 +6,13 @@ import { DeleteResourceButton } from "@/features/content/delete-resource-button"
 import { LeasingStatusSelect } from "@/features/leasing/leasing-status-select";
 import { getBranchThaiName } from "@/lib/branches/branch-names";
 import { formatDate } from "@/lib/format";
+import { getLocalizationSettings } from "@/lib/settings-cache";
 import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/lib/rbac";
+import { requireModuleAccess } from "@/lib/rbac";
 
 export default async function LeasingAdminPage() {
-  await requireRole(["SUPER_ADMIN", "ADMIN", "EDITOR", "MARKETING"]);
+  await requireModuleAccess("leasing-inquiries");
+  const localization = await getLocalizationSettings();
 
   const submissions = await prisma.leasingSubmission.findMany({
     where: { deletedAt: null },
@@ -69,7 +71,7 @@ export default async function LeasingAdminPage() {
                   <td className="px-4 py-3">
                     <LeasingStatusSelect id={submission.id} status={submission.status} />
                   </td>
-                  <td className="px-4 py-3 text-muted">{formatDate(submission.createdAt)}</td>
+                  <td className="px-4 py-3 text-muted">{formatDate(submission.createdAt, localization)}</td>
                   <td className="px-4 py-3 text-right">
                     <DeleteResourceButton endpoint={`/api/leasing/${submission.id}`} label={submission.name} />
                   </td>

@@ -3,15 +3,18 @@ import type { Prisma } from "@prisma/client";
 import Image from "next/image";
 import { Link } from "@/i18n/navigation";
 import { CalendarDays } from "lucide-react";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 
 import { PromotionArchiveSection } from "@/features/promotions/promotion-archive-section";
 import { ShareMenu } from "@/features/events/share-menu";
+import { CONTENT_PROSE_CLASS } from "@/lib/content-prose";
 import { formatPromotionCategory } from "@/lib/promotion-categories";
 import { formatPromotionDateRange, getPublishedPromotions } from "@/lib/promotions";
 import { prisma } from "@/lib/prisma";
+import { buildPromotionHref, decodeSlugParam, resolvePublishedContentSlug } from "@/lib/slug";
 import { DEFAULT_SETTINGS, getSettings, SETTINGS_KEYS } from "@/lib/settings";
 import { buildRobots, toAbsoluteUrl } from "@/lib/seo";
+import { cn } from "@/lib/utils";
 
 export const revalidate = 300;
 
@@ -42,7 +45,10 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: PromotionPageProps): Promise<Metadata> {
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
+  const slug = await resolvePublishedContentSlug(prisma.promotion, rawSlug);
+  if (!slug) return {};
+
   const [settings, promotion] = await Promise.all([
     getSettings(SETTINGS_KEYS, DEFAULT_SETTINGS),
     prisma.promotion.findFirst({
@@ -98,7 +104,14 @@ export async function generateMetadata({ params }: PromotionPageProps): Promise<
 }
 
 export default async function PromotionPage({ params }: PromotionPageProps) {
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
+  const slug = await resolvePublishedContentSlug(prisma.promotion, rawSlug);
+  if (!slug) notFound();
+
+  if (decodeSlugParam(rawSlug) !== slug) {
+    permanentRedirect(buildPromotionHref(slug));
+  }
+
   const [settings, promotion] = await Promise.all([
     getSettings(SETTINGS_KEYS, DEFAULT_SETTINGS),
     prisma.promotion.findFirst({
@@ -171,7 +184,7 @@ export default async function PromotionPage({ params }: PromotionPageProps) {
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="max-w-3xl">
               <p className="text-sm font-semibold uppercase text-paseo">{formatPromotionCategory(promotion.category)}</p>
-              <h1 className="mt-3 text-4xl font-semibold leading-tight">{promotion.h1 || promotion.title}</h1>
+              <h1 className="mt-3 text-4xl font-semibold leading-tight">{promotion.title}</h1>
               {promotion.subtitle ? <p className="mt-2 text-xl leading-8 text-muted">{promotion.subtitle}</p> : null}
             </div>
             <ShareMenu url={shareUrl} title={promotion.title} />
@@ -208,7 +221,7 @@ export default async function PromotionPage({ params }: PromotionPageProps) {
           </figure>
         ) : null}
 
-        <div className="prose prose-neutral mt-6 max-w-none text-foreground" dangerouslySetInnerHTML={{ __html: promotion.content }} />
+        <div className={cn(CONTENT_PROSE_CLASS, "mt-6 text-foreground")} dangerouslySetInnerHTML={{ __html: promotion.content }} />
 
         {promotion.faqs.length ? (
           <section className="mt-10 border-t border-border pt-8">
@@ -262,7 +275,7 @@ function buildPromotionJsonLd({
   return {
     "@context": "https://schema.org",
     "@type": schemaType,
-    headline: promotion.h1 || promotion.title,
+    headline: promotion.title,
     description: promotion.seo?.seoDescription || promotion.subtitle || promotion.excerpt || undefined,
     image: promotion.featuredImage ? [promotion.featuredImage] : undefined,
     datePublished: promotion.publishedAt?.toISOString(),

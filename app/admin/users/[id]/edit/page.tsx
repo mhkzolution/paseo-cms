@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/lib/rbac";
+import { requireModuleAccess } from "@/lib/rbac";
 import { UserForm } from "@/features/users/user-form";
 
 interface EditUserPageProps {
@@ -11,7 +11,7 @@ interface EditUserPageProps {
 }
 
 export default async function EditUserPage({ params }: EditUserPageProps) {
-  await requireRole(["SUPER_ADMIN", "ADMIN"]);
+  await requireModuleAccess("users");
 
   const { id } = await params;
   const user = await prisma.user.findFirst({ where: { id, deletedAt: null } });

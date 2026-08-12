@@ -3,6 +3,7 @@ import type { Prisma } from "@prisma/client";
 import { BRANCH_SLUGS, DEFAULT_STORE_BRANCH_SLUG } from "@/lib/branches/branch-config";
 import { getBranchThaiName } from "@/lib/branches/branch-names";
 import { prisma } from "@/lib/prisma";
+import { decodeSlugParam, slugMatchesStored } from "@/lib/slug";
 import { parseOperatingHours, type StoreOperatingHour } from "@/lib/stores/operating-hours";
 import { getStoreFloorLabel, getStoreLocationLabel, getStoreZoneLabel } from "@/lib/store-zones/names";
 import { getStoreThaiName } from "@/lib/stores/store-names";
@@ -37,8 +38,8 @@ export type ArchiveStore = {
   zone: string | null;
   location: string | null;
   operatingHours: StoreOperatingHour[];
-  category: { name: string; slug: string; color: string | null } | null;
-  branch: { name: string; slug: string };
+  category: { name: string; slug: string; color: string | null; image?: string | null } | null;
+  branch: { name: string; slug: string; image?: string | null };
 };
 
 export type StoreDetail = {
@@ -58,8 +59,8 @@ export type StoreDetail = {
   location: string | null;
   storeType: string | null;
   operatingHours: StoreOperatingHour[];
-  category: { name: string; slug: string; color: string | null } | null;
-  branch: { name: string; slug: string };
+  category: { name: string; slug: string; color: string | null; image?: string | null } | null;
+  branch: { name: string; slug: string; image?: string | null };
 };
 
 const archiveStoreSelect = {
@@ -84,8 +85,8 @@ const archiveStoreSelect = {
     },
   },
   storeLocation: { select: { id: true, name: true, nameTh: true, nameEn: true } },
-  category: { select: { name: true, slug: true, color: true } },
-  branch: { select: { name: true, nameTh: true, nameEn: true, slug: true } },
+  category: { select: { name: true, slug: true, color: true, image: true } },
+  branch: { select: { name: true, nameTh: true, nameEn: true, slug: true, image: true } },
 } as const;
 
 const storeDetailSelect = {
@@ -114,8 +115,8 @@ const storeDetailSelect = {
     },
   },
   storeLocation: { select: { id: true, name: true, nameTh: true, nameEn: true } },
-  category: { select: { name: true, slug: true, color: true } },
-  branch: { select: { name: true, nameTh: true, nameEn: true, slug: true } },
+  category: { select: { name: true, slug: true, color: true, image: true } },
+  branch: { select: { name: true, nameTh: true, nameEn: true, slug: true, image: true } },
 } as const;
 
 function mapArchiveStore(store: Prisma.StoreGetPayload<{ select: typeof archiveStoreSelect }>): ArchiveStore {
@@ -136,6 +137,7 @@ function mapArchiveStore(store: Prisma.StoreGetPayload<{ select: typeof archiveS
     branch: {
       name: getBranchThaiName(store.branch),
       slug: store.branch.slug,
+      image: store.branch.image,
     },
   };
 }
@@ -162,13 +164,14 @@ function mapStoreDetail(store: Prisma.StoreGetPayload<{ select: typeof storeDeta
     branch: {
       name: getBranchThaiName(store.branch),
       slug: store.branch.slug,
+      image: store.branch.image,
     },
   };
 }
 
 export async function getStoreCategories(branchId?: string): Promise<StoreCategory[]> {
   const categories = await prisma.category.findMany({
-    where: { deletedAt: null },
+    where: { deletedAt: null, scope: "STORE" },
     select: {
       id: true,
       name: true,
@@ -235,7 +238,7 @@ export async function getStoreBranches(): Promise<StoreBranch[]> {
 
 export async function getCategoryBySlug(slug: string) {
   return prisma.category.findFirst({
-    where: { slug, deletedAt: null },
+    where: { slug, deletedAt: null, scope: "STORE" },
     select: { id: true, name: true, slug: true, image: true, color: true, sortOrder: true },
   });
 }
@@ -260,13 +263,24 @@ export async function getPublishedStores(options?: { categorySlug?: string; bran
   return stores.map(mapArchiveStore);
 }
 
-export async function getStoreBySlug(slug: string) {
-  const store = await prisma.store.findFirst({
+export async function getStoreBySlug(rawSlug: string) {
+  const slug = decodeSlugParam(rawSlug);
+
+  const direct = await prisma.store.findFirst({
     where: { slug, deletedAt: null },
     select: storeDetailSelect,
   });
 
-  return store ? mapStoreDetail(store) : null;
+  if (direct) return mapStoreDetail(direct);
+
+  const candidates = await prisma.store.findMany({
+    where: { deletedAt: null },
+    select: storeDetailSelect,
+    take: 2000,
+  });
+
+  const matched = candidates.find((item) => slugMatchesStored(item.slug, slug));
+  return matched ? mapStoreDetail(matched) : null;
 }
 
 export function buildStoresHref(query?: { category?: string; branch?: string }) {

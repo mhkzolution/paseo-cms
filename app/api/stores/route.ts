@@ -2,12 +2,10 @@ import { NextResponse } from "next/server";
 
 import { conflictError, forbiddenError, validationError } from "@/lib/content-api";
 import { prisma } from "@/lib/prisma";
-import { checkRole } from "@/lib/rbac";
+import { checkModuleAccess } from "@/lib/rbac";
 import { validateStoreLocationAssignment, validateStoreZoneAssignment } from "@/lib/store-zones/validation";
 import { toStorePersistence } from "@/lib/stores/store-names";
 import { storeSchema } from "@/validators/content.validator";
-
-const CONTENT_ROLES = ["SUPER_ADMIN", "ADMIN", "EDITOR"] as const;
 
 async function validateStorePlacement(data: {
   branchId: string;
@@ -28,7 +26,7 @@ async function validateStorePlacement(data: {
 }
 
 export async function GET() {
-  const { authorized, status } = await checkRole([...CONTENT_ROLES]);
+  const { authorized, status } = await checkModuleAccess("stores");
   if (!authorized) return forbiddenError(status);
 
   const stores = await prisma.store.findMany({
@@ -41,7 +39,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const { authorized, status } = await checkRole([...CONTENT_ROLES]);
+  const { authorized, status } = await checkModuleAccess("stores");
   if (!authorized) return forbiddenError(status);
 
   const parsed = storeSchema.safeParse(await request.json());

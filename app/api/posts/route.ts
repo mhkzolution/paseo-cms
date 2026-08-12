@@ -2,17 +2,17 @@ import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 
 import { forbiddenError, validationError } from "@/lib/content-api";
+import { resolvePostKindForSave } from "@/lib/categories";
 import { buildUniquePostSlug, resolveTagIds, syncPostRelations } from "@/lib/post-write";
 import { prisma } from "@/lib/prisma";
-import { checkRole } from "@/lib/rbac";
+import { checkModuleAccess } from "@/lib/rbac";
+import { enrichSeoForSave } from "@/lib/seo-content-save";
 import { persistSeoAudit, toSeoScoreInput } from "@/lib/seo-audit";
 import { estimateReadingTime, generateSlug, parseJsonObject, splitKeywords } from "@/lib/seo";
 import { postSchema } from "@/validators/content.validator";
 
-const CONTENT_ROLES = ["SUPER_ADMIN", "ADMIN", "EDITOR"] as const;
-
 export async function GET() {
-  const { authorized, status } = await checkRole([...CONTENT_ROLES]);
+  const { authorized, status } = await checkModuleAccess("news");
   if (!authorized) return forbiddenError(status);
 
   const posts = await prisma.post.findMany({
@@ -31,28 +31,39 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const { authorized, status, session } = await checkRole([...CONTENT_ROLES]);
+  const { authorized, status, session } = await checkModuleAccess("news");
   if (!authorized) return forbiddenError(status);
 
   const parsed = postSchema.safeParse(await request.json());
   if (!parsed.success) return validationError(parsed.error);
 
+  const resolvedKind = await resolvePostKindForSave(parsed.data.categoryId);
+  const postPayload = {
+    ...parsed.data,
+    kind: resolvedKind ?? parsed.data.kind,
+  };
+
   let customJsonLd = null;
   try {
-    customJsonLd = parseJsonObject(parsed.data.seo.customJsonLd);
+    customJsonLd = parseJsonObject(postPayload.seo.customJsonLd);
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Invalid JSON-LD" }, { status: 422 });
   }
 
-  const baseSlug = generateSlug(parsed.data.slug ?? parsed.data.title) || "post";
+  const baseSlug = generateSlug(postPayload.slug ?? postPayload.title) || "post";
   const slug = await buildUniquePostSlug(baseSlug);
-  const { tagIds, branchIds, relatedPostIds, newTags, seo, alternates, faqs, images, ...postInput } = parsed.data;
+  const enriched = await enrichSeoForSave(prisma, postPayload, {
+    contentType: "post",
+    slug,
+    isCreate: true,
+  });
+  const { tagIds, branchIds, relatedPostIds, newTags, seo, alternates, faqs, images, ...postInput } = enriched;
 
   const post = await prisma.$transaction(async (tx) => {
     const created = await tx.post.create({
       data: {
         ...postInput,
-        slug,
+        slug: enriched.slug,
         authorId: session.user.id,
         readingTimeMinutes: estimateReadingTime(postInput.content),
         seo: {
@@ -76,7 +87,7 @@ export async function POST(request: Request) {
       images,
     });
 
-    await persistSeoAudit(tx, { postId: created.id }, toSeoScoreInput(parsed.data));
+    await persistSeoAudit(tx, { postId: created.id }, toSeoScoreInput(enriched, { contentType: "post" }));
 
     return tx.post.findUnique({
       where: { id: created.id },

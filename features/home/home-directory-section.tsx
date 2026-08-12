@@ -14,6 +14,10 @@ import {
   ZoomIn,
 } from "lucide-react";
 
+import {
+  ArchiveBranchTileButtons,
+  ArchiveFilterSection,
+} from "@/features/archive/archive-tile-filters";
 import type { AppLocale } from "@/i18n/routing";
 import { getLocalizedName } from "@/lib/i18n/localized-name";
 import type { HomeDirectoryData } from "@/lib/home-page";
@@ -29,6 +33,7 @@ type HomeDirectorySectionProps = {
 type MobileView = "list" | "map";
 
 const ALL_ZONES = "ทั้งหมด";
+const ALL_FLOORS = "";
 const UNCATEGORIZED_SLUG = "__uncategorized__";
 
 type StoreCategoryGroup = {
@@ -75,28 +80,6 @@ function groupStoresByCategory(
   return groups;
 }
 
-function getDefaultFloorId(
-  floors: {
-    id: string;
-    name: string;
-    sortOrder: number;
-  }[],
-) {
-  if (!floors.length) return "";
-
-  const floor1 = floors.find((item) =>
-    /ชั้น\s*1|floor\s*1/i.test(item.name),
-  );
-
-  if (floor1) return floor1.id;
-
-  const sorted = [...floors].sort(
-    (a, b) => a.sortOrder - b.sortOrder,
-  );
-
-  return sorted[0]?.id ?? "";
-}
-
 export function HomeDirectorySection({
   data,
   className,
@@ -106,12 +89,7 @@ export function HomeDirectorySection({
   const defaultBranch = data.branches[0]?.slug ?? "";
 
   const [branchSlug, setBranchSlug] = useState(defaultBranch);
-
-  const [floor, setFloor] = useState(() =>
-    getDefaultFloorId(
-      data.floorsByBranch[defaultBranch] ?? [],
-    ),
-  );
+  const [floor, setFloor] = useState(ALL_FLOORS);
 
   const [zone, setZone] = useState(ALL_ZONES);
   const [query, setQuery] = useState("");
@@ -192,9 +170,8 @@ export function HomeDirectorySection({
     (branch) => branch.slug === branchSlug,
   );
 
-  const activeFloor = floors.find(
-    (item) => item.id === floor,
-  );
+  const activeFloor = floors.find((item) => item.id === floor);
+  const floorLabel = activeFloor?.name ?? (floor === ALL_FLOORS ? "ทุกชั้น" : null);
 
   const activeZone = zonesOnFloor.find(
     (item) => item.id === zone,
@@ -257,17 +234,9 @@ export function HomeDirectorySection({
     };
   }, [mapImageOpen]);
 
-  function handleBranchChange(
-    nextBranch: string,
-  ) {
+  function handleBranchChange(nextBranch: string) {
     setBranchSlug(nextBranch);
-
-    setFloor(
-      getDefaultFloorId(
-        data.floorsByBranch[nextBranch] ?? [],
-      ),
-    );
-
+    setFloor(ALL_FLOORS);
     setZone(ALL_ZONES);
     setQuery("");
     setSelectedStoreId(null);
@@ -313,34 +282,17 @@ export function HomeDirectorySection({
         {/* =========================
             Branch Selector
         ========================== */}
-        <div className="mt-8 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <div className="flex min-w-max gap-2">
-            {data.branches.map((branch) => {
-              const active =
-                branch.slug === branchSlug;
-
-              return (
-                <button
-                  key={branch.slug}
-                  type="button"
-                  onClick={() =>
-                    handleBranchChange(
-                      branch.slug,
-                    )
-                  }
-                  className={cn(
-                    "rounded-full border px-5 py-2.5 text-sm font-semibold transition-all",
-                    active
-                      ? "border-paseo-dark bg-paseo-dark text-white"
-                      : "border-black/[0.08] bg-white text-foreground hover:border-paseo-dark/40 hover:bg-paseo-hover",
-                  )}
-                >
-                  {getLocalizedName(branch, locale)}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        <ArchiveFilterSection title="สาขา" className="mt-8">
+          <ArchiveBranchTileButtons
+            activeSlug={branchSlug}
+            onSelect={handleBranchChange}
+            items={data.branches.map((branch) => ({
+              slug: branch.slug,
+              label: getLocalizedName(branch, locale),
+              image: branch.image,
+            }))}
+          />
+        </ArchiveFilterSection>
 
         {/* =========================
             Search
@@ -367,8 +319,21 @@ export function HomeDirectorySection({
         ========================== */}
         <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           {/* Floors */}
-          <div className="-mx-5 overflow-x-auto px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:px-0">
+          <div className="-mx-5 overflow-x-auto px-5 scrollbar-hidden sm:mx-0 sm:px-0">
             <div className="flex min-w-max items-center gap-2">
+              <button
+                type="button"
+                onClick={() => handleFloorChange(ALL_FLOORS)}
+                className={cn(
+                  "rounded-full px-4 py-2 text-sm font-medium transition-colors",
+                  floor === ALL_FLOORS
+                    ? "bg-paseo/15 text-paseo-dark"
+                    : "text-muted hover:bg-black/[0.04] hover:text-foreground",
+                )}
+              >
+                ทุกชั้น
+              </button>
+
               {floors.map((item) => (
                 <button
                   key={item.id}
@@ -492,7 +457,7 @@ export function HomeDirectorySection({
                 <p className="mt-0.5 text-xs text-muted">
                   {[
                     activeBranch ? getLocalizedName(activeBranch, locale) : null,
-                    activeFloor?.name,
+                    floorLabel,
                     activeZone?.name,
                   ]
                     .filter(Boolean)
@@ -601,8 +566,28 @@ export function HomeDirectorySection({
                                     )}
                                   </span>
 
-                                  <span className="truncate font-semibold text-foreground transition-colors group-hover:text-paseo-dark">
-                                    {store.name}
+                                  <span className="min-w-0">
+                                    <span className="block truncate font-semibold text-foreground transition-colors group-hover:text-paseo-dark">
+                                      {store.name}
+                                    </span>
+
+                                    {store.category ? (
+                                      <span
+                                        className={cn(
+                                          "mt-1 inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide sm:text-xs",
+                                          store.category.color
+                                            ? "text-white"
+                                            : "bg-[#F3F0EA] text-muted",
+                                        )}
+                                        style={
+                                          store.category.color
+                                            ? { backgroundColor: store.category.color }
+                                            : undefined
+                                        }
+                                      >
+                                        {store.category.name}
+                                      </span>
+                                    ) : null}
                                   </span>
                                 </span>
 

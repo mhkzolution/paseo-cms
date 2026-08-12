@@ -1,14 +1,12 @@
 import { NextResponse } from "next/server";
 
 import { forbiddenError, validationError } from "@/lib/content-api";
-import { checkRole } from "@/lib/rbac";
+import { checkModuleAccess } from "@/lib/rbac";
 import { getSeoSettings, saveSettings } from "@/lib/settings";
 import { seoSchema } from "@/validators/content.validator";
 
-const SEO_ROLES = ["SUPER_ADMIN", "ADMIN", "EDITOR"] as const;
-
 export async function GET() {
-  const { authorized, status } = await checkRole([...SEO_ROLES]);
+  const { authorized, status } = await checkModuleAccess("seo");
   if (!authorized) return forbiddenError(status);
 
   const seo = await getSeoSettings();
@@ -17,7 +15,7 @@ export async function GET() {
 }
 
 export async function PATCH(request: Request) {
-  const { authorized, status } = await checkRole([...SEO_ROLES]);
+  const { authorized, status } = await checkModuleAccess("seo");
   if (!authorized) return forbiddenError(status);
 
   const parsed = seoSchema.safeParse(await request.json());

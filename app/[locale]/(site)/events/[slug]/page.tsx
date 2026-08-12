@@ -9,20 +9,21 @@ import {
   MapPin,
   ArrowRight,
 } from "lucide-react";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 
 import { EventList } from "@/features/events/event-list";
+import { CONTENT_PROSE_CLASS } from "@/lib/content-prose";
 import { EventAlbumGallery } from "@/features/events/event-album-gallery";
 import { ShareMenu } from "@/features/events/share-menu";
 import { getBranchThaiName } from "@/lib/branches/branch-names";
 import {
-  formatEventDate,
   formatEventDateRange,
   formatEventTime,
   getHomeStyleEvents,
   toHomeArchiveEvent,
 } from "@/lib/events";
 import { prisma } from "@/lib/prisma";
+import { buildEventHref, decodeSlugParam, resolvePublishedContentSlug } from "@/lib/slug";
 import {
   DEFAULT_SETTINGS,
   getSettings,
@@ -72,7 +73,9 @@ export async function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: EventPageProps): Promise<Metadata> {
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
+  const slug = await resolvePublishedContentSlug(prisma.event, rawSlug);
+  if (!slug) return {};
 
   const [settings, event] = await Promise.all([
     getSettings(SETTINGS_KEYS, DEFAULT_SETTINGS),
@@ -210,7 +213,13 @@ export async function generateMetadata({
 export default async function EventPage({
   params,
 }: EventPageProps) {
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
+  const slug = await resolvePublishedContentSlug(prisma.event, rawSlug);
+  if (!slug) notFound();
+
+  if (decodeSlugParam(rawSlug) !== slug) {
+    permanentRedirect(buildEventHref(slug));
+  }
 
   const [settings, event] = await Promise.all([
     getSettings(SETTINGS_KEYS, DEFAULT_SETTINGS),
@@ -327,6 +336,11 @@ export default async function EventPage({
     ? branchNames.join(" · ")
     : event.location?.trim() || "";
 
+  const [eventDateRangeLabel, eventTimeLabel] = await Promise.all([
+    formatEventDateRange(event.eventDate, event.eventEndDate),
+    formatEventTime(event.eventDate),
+  ]);
+
   return (
     <main className="min-h-screen bg-white text-foreground">
       <article>
@@ -362,7 +376,7 @@ export default async function EventPage({
           {/* H1 */}
           <header className="pb-4 pt-4 sm:pb-10 sm:pt-14 lg:pb-12 lg:pt-10">
             <h1 className="max-w-5xl text-[2rem] font-semibold leading-[1.15] tracking-[-0.035em] text-foreground sm:text-5xl sm:leading-[1.12] lg:text-[3.5rem]">
-              {event.h1 || event.title}
+              {event.title}
             </h1>
           </header>
 
@@ -421,7 +435,7 @@ export default async function EventPage({
                 </dt>
 
                 <dd className="text-sm font-medium leading-6 text-foreground">
-                  {formatEventDateRange(event.eventDate, event.eventEndDate)}
+                  {eventDateRangeLabel}
                 </dd>
               </div>
 
@@ -438,8 +452,7 @@ export default async function EventPage({
                 </dt>
 
                 <dd className="text-sm font-medium leading-6 text-foreground">
-                  {formatEventTime(event.eventDate)}
-                  {" น."}
+                  {eventTimeLabel}
                 </dd>
               </div>
 
@@ -472,51 +485,7 @@ export default async function EventPage({
           <div className="border-t border-black/[0.1]">
             <div className="mx-auto max-w-[760px] py-12 sm:py-16 lg:py-20">
               <div
-                className="
-                  prose prose-neutral max-w-none
-
-                  prose-headings:font-semibold
-                  prose-headings:tracking-[-0.025em]
-                  prose-headings:text-foreground
-
-                  prose-h2:mb-5
-                  prose-h2:mt-12
-                  prose-h2:text-2xl
-                  sm:prose-h2:text-3xl
-
-                  prose-h3:mb-4
-                  prose-h3:mt-10
-                  prose-h3:text-xl
-
-                  prose-p:my-6
-                  prose-p:text-[16px]
-                  prose-p:leading-8
-                  prose-p:text-[#4B5563]
-
-                  prose-a:font-medium
-                  prose-a:text-paseo-dark
-                  prose-a:no-underline
-                  hover:prose-a:underline
-
-                  prose-strong:font-semibold
-                  prose-strong:text-foreground
-
-                  prose-ul:my-6
-                  prose-ol:my-6
-
-                  prose-li:my-2
-                  prose-li:leading-7
-                  prose-li:text-[#4B5563]
-                  prose-li:marker:text-paseo-dark
-
-                  prose-blockquote:border-l-paseo
-                  prose-blockquote:text-foreground
-
-                  prose-img:my-10
-                  prose-img:max-w-full
-                  prose-img:h-auto
-                  prose-img:rounded-none
-                "
+                className={CONTENT_PROSE_CLASS}
                 dangerouslySetInnerHTML={{
                   __html: event.content,
                 }}
@@ -652,9 +621,7 @@ function buildEventJsonLd({
 
     "@type": "Event",
 
-    name:
-      event.h1 ||
-      event.title,
+    name: event.title,
 
     description:
       event.seo?.seoDescription ||

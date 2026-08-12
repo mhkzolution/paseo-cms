@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 
+import { forbiddenError } from "@/lib/content-api";
 import { POST_KIND_LABELS } from "@/lib/post-archives";
 import { formatPromotionCategory } from "@/lib/promotion-categories";
 import { prisma } from "@/lib/prisma";
 import { getBranchThaiName } from "@/lib/branches/branch-names";
+import { authorizeSearchRequest, isPublicSearchScope } from "@/lib/search-access";
 import { getStoreThaiName } from "@/lib/stores/store-names";
 import { searchSchema } from "@/validators/content.validator";
 
@@ -26,10 +28,18 @@ interface SearchResult {
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const parsed = searchSchema.safeParse({ q: searchParams.get("q") ?? "" });
-  const isPublic = searchParams.get("scope") === "public";
+  const scope = searchParams.get("scope");
+  const isPublic = isPublicSearchScope(scope);
 
   if (!parsed.success) {
     return NextResponse.json({ results: [], query: "", error: parsed.error.issues[0]?.message }, { status: 422 });
+  }
+
+  if (!isPublic) {
+    const { authorized, status } = await authorizeSearchRequest(scope);
+    if (!authorized) {
+      return forbiddenError(status);
+    }
   }
 
   const query = parsed.data.q;

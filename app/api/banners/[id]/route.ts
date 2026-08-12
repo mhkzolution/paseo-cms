@@ -3,17 +3,15 @@ import { NextResponse } from "next/server";
 import { revalidateAllBannerPages, revalidateBannerPages } from "@/lib/banners-revalidate";
 import { forbiddenError, validationError } from "@/lib/content-api";
 import { prisma } from "@/lib/prisma";
-import { checkRole } from "@/lib/rbac";
+import { checkModuleAccess } from "@/lib/rbac";
 import { bannerSchema } from "@/validators/content.validator";
-
-const MARKETING_ROLES = ["SUPER_ADMIN", "ADMIN", "EDITOR", "MARKETING"] as const;
 
 interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
 export async function PATCH(request: Request, { params }: RouteParams) {
-  const { authorized, status } = await checkRole([...MARKETING_ROLES]);
+  const { authorized, status } = await checkModuleAccess("banners");
   if (!authorized) return forbiddenError(status);
 
   const { id } = await params;
@@ -32,7 +30,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 }
 
 export async function DELETE(_request: Request, { params }: RouteParams) {
-  const { authorized, status } = await checkRole([...MARKETING_ROLES]);
+  const { authorized, status } = await checkModuleAccess("banners");
   if (!authorized) return forbiddenError(status);
 
   const { id } = await params;

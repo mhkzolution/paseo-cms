@@ -1,14 +1,14 @@
 import { redirect } from "next/navigation";
 
 import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/lib/rbac";
+import { requireModuleAccess } from "@/lib/rbac";
 
 interface LegacyEditBannerPageProps {
   params: Promise<{ id: string }>;
 }
 
 export default async function LegacyEditBannerPage({ params }: LegacyEditBannerPageProps) {
-  await requireRole(["SUPER_ADMIN", "ADMIN", "EDITOR", "MARKETING"]);
+  await requireModuleAccess("banners");
 
   const { id } = await params;
   const item = await prisma.banner.findFirst({

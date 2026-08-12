@@ -118,7 +118,7 @@ function PromotionCategoryTabs({
 }) {
   return (
     <div
-      className="-mx-5 flex items-end overflow-x-auto pl-0 pr-5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:flex-wrap sm:overflow-x-visible sm:pr-0"
+      className="-mx-5 flex items-end overflow-x-auto pl-0 pr-5 scrollbar-hidden sm:mx-0 sm:flex-wrap sm:overflow-x-visible sm:pr-0"
       role="tablist"
       aria-label="Promotion categories"
     >

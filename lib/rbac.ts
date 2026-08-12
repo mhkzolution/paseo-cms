@@ -1,13 +1,14 @@
 import { redirect } from "next/navigation";
 
+import { getModuleRoles } from "@/lib/admin-permissions";
+import type { AdminModuleId } from "@/types";
 import { auth } from "@/lib/auth";
 import type { AppRole } from "@/types";
 
 /**
- * Use in Server Components / pages. Redirects to /login if unauthenticated,
- * or to /admin/dashboard if authenticated but not in an allowed role.
+ * Internal page guard. Prefer `requireModuleAccess()` for admin modules.
  */
-export async function requireRole(allowedRoles: AppRole[]) {
+async function requireRole(allowedRoles: readonly AppRole[]) {
   const session = await auth();
 
   if (!session?.user) {
@@ -22,10 +23,16 @@ export async function requireRole(allowedRoles: AppRole[]) {
 }
 
 /**
- * Use in Route Handlers, where redirecting isn't appropriate — callers
- * should check `authorized` and return a 401/403 response themselves.
+ * Enforce access for a registered admin module using the centralized permission registry.
  */
-export async function checkRole(allowedRoles: AppRole[]) {
+export async function requireModuleAccess(moduleId: AdminModuleId) {
+  return requireRole(getModuleRoles(moduleId));
+}
+
+/**
+ * Internal API guard. Prefer `checkModuleAccess()` for admin modules.
+ */
+async function checkRole(allowedRoles: readonly AppRole[]) {
   const session = await auth();
 
   if (!session?.user) {
@@ -37,4 +44,11 @@ export async function checkRole(allowedRoles: AppRole[]) {
   }
 
   return { authorized: true as const, status: 200 as const, session };
+}
+
+/**
+ * Check access for a registered admin module using the centralized permission registry.
+ */
+export async function checkModuleAccess(moduleId: AdminModuleId) {
+  return checkRole(getModuleRoles(moduleId));
 }

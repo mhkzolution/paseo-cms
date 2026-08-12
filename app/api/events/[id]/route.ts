@@ -4,19 +4,18 @@ import { Prisma } from "@prisma/client";
 import { forbiddenError, validationError } from "@/lib/content-api";
 import { buildUniqueEventSlug, resolveTagIds, syncEventRelations } from "@/lib/event-write";
 import { prisma } from "@/lib/prisma";
-import { checkRole } from "@/lib/rbac";
+import { checkModuleAccess } from "@/lib/rbac";
+import { enrichSeoForSave } from "@/lib/seo-content-save";
 import { persistSeoAudit, toSeoScoreInput } from "@/lib/seo-audit";
 import { estimateReadingTime, generateSlug, parseJsonObject, splitKeywords } from "@/lib/seo";
 import { eventSchema } from "@/validators/content.validator";
-
-const MARKETING_ROLES = ["SUPER_ADMIN", "ADMIN", "EDITOR", "MARKETING"] as const;
 
 interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
 export async function PATCH(request: Request, { params }: RouteParams) {
-  const { authorized, status } = await checkRole([...MARKETING_ROLES]);
+  const { authorized, status } = await checkModuleAccess("events");
   if (!authorized) return forbiddenError(status);
 
   const { id } = await params;
@@ -35,14 +34,19 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
   const baseSlug = generateSlug(parsed.data.slug ?? parsed.data.title) || "event";
   const slug = await buildUniqueEventSlug(baseSlug, id);
-  const { tagIds, branchIds, relatedEventIds, newTags, seo, alternates, faqs, images, ...eventInput } = parsed.data;
+  const enriched = await enrichSeoForSave(prisma, parsed.data, {
+    contentType: "event",
+    slug,
+    isCreate: false,
+  });
+  const { tagIds, branchIds, relatedEventIds, newTags, seo, alternates, faqs, images, ...eventInput } = enriched;
 
   const event = await prisma.$transaction(async (tx) => {
     const updated = await tx.event.update({
       where: { id },
       data: {
         ...eventInput,
-        slug,
+        slug: enriched.slug,
         readingTimeMinutes: estimateReadingTime(eventInput.content),
         seo: {
           upsert: {
@@ -71,7 +75,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       images,
     });
 
-    await persistSeoAudit(tx, { eventId: updated.id }, toSeoScoreInput(parsed.data));
+    await persistSeoAudit(tx, { eventId: updated.id }, toSeoScoreInput(enriched, { contentType: "event" }));
 
     return tx.event.findUnique({
       where: { id: updated.id },
@@ -83,7 +87,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 }
 
 export async function DELETE(_request: Request, { params }: RouteParams) {
-  const { authorized, status } = await checkRole([...MARKETING_ROLES]);
+  const { authorized, status } = await checkModuleAccess("events");
   if (!authorized) return forbiddenError(status);
 
   const { id } = await params;

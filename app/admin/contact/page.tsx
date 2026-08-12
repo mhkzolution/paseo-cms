@@ -5,11 +5,13 @@ import { EmptyState } from "@/components/admin/empty-state";
 import { DeleteResourceButton } from "@/features/content/delete-resource-button";
 import { ContactStatusSelect } from "@/features/contact/contact-status-select";
 import { formatDate } from "@/lib/format";
+import { getLocalizationSettings } from "@/lib/settings-cache";
 import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/lib/rbac";
+import { requireModuleAccess } from "@/lib/rbac";
 
 export default async function ContactPage() {
-  await requireRole(["SUPER_ADMIN", "ADMIN", "EDITOR", "MARKETING"]);
+  await requireModuleAccess("contact-messages");
+  const localization = await getLocalizationSettings();
 
   const submissions = await prisma.contactSubmission.findMany({
     where: { deletedAt: null },
@@ -54,7 +56,7 @@ export default async function ContactPage() {
                   <td className="px-4 py-3">
                     <ContactStatusSelect id={submission.id} status={submission.status} />
                   </td>
-                  <td className="px-4 py-3 text-muted">{formatDate(submission.createdAt)}</td>
+                  <td className="px-4 py-3 text-muted">{formatDate(submission.createdAt, localization)}</td>
                   <td className="px-4 py-3 text-right">
                     <DeleteResourceButton endpoint={`/api/contact/${submission.id}`} label={submission.subject} />
                   </td>

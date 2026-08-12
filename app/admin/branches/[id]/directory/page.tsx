@@ -5,14 +5,14 @@ import { ArrowLeft } from "lucide-react";
 import { BranchDirectoryManager } from "@/features/branches/branch-directory-manager";
 import { getBranchAdminLabel } from "@/lib/branches/branch-names";
 import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/lib/rbac";
+import { requireModuleAccess } from "@/lib/rbac";
 
 interface BranchDirectoryPageProps {
   params: Promise<{ id: string }>;
 }
 
 export default async function BranchDirectoryPage({ params }: BranchDirectoryPageProps) {
-  await requireRole(["SUPER_ADMIN", "ADMIN", "EDITOR"]);
+  await requireModuleAccess("branches");
 
   const { id } = await params;
   const branch = await prisma.branch.findFirst({

@@ -1,8 +1,15 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 
-import { EventArchivePageGrid, EventBranchFilter } from "@/features/events/event-archive-section";
-import { getBranchBySlug, getPublishedEvents } from "@/lib/events";
-import { prisma } from "@/lib/prisma";
+import {
+  ArchiveBranchTiles,
+  ArchiveFilterSection,
+  type ArchiveTileItem,
+} from "@/features/archive/archive-tile-filters";
+import { HomeEventsSection } from "@/features/home/home-events-section";
+import { ARCHIVE_EVENT_LIMIT, buildEventsHref, getBranchBySlug, getHomeStyleEvents } from "@/lib/events";
+import { getBranchThaiName } from "@/lib/branches/branch-names";
+import { getHomeBranches } from "@/lib/home-page";
 
 export const revalidate = 300;
 
@@ -26,34 +33,54 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
   const { branch: branchSlug } = await searchParams;
   const branch = branchSlug ? await getBranchBySlug(branchSlug) : null;
 
-  const [branches, events] = await Promise.all([
-    prisma.branch.findMany({ where: { deletedAt: null }, orderBy: { name: "asc" }, select: { name: true, slug: true } }),
-    getPublishedEvents({ branchId: branch?.id, upcomingOnly: true }),
+  const [branches, events, t] = await Promise.all([
+    getHomeBranches(),
+    getHomeStyleEvents({ branchId: branch?.id, limit: ARCHIVE_EVENT_LIMIT }),
+    getTranslations("events"),
   ]);
+
+  const branchLabel = branch ? getBranchThaiName(branch) : null;
+
+  const branchItems: ArchiveTileItem[] = branches.map((item) => ({
+    slug: item.slug,
+    label: item.nameTh,
+    image: item.image,
+    href: buildEventsHref({ branch: item.slug }),
+  }));
 
   return (
     <main className="min-h-screen bg-[#FCFAF6] text-foreground">
-      <section className="bg-paseo py-12 sm:py-16">
-        <div className="mx-auto w-full max-w-7xl px-5 sm:px-8">
-          <p className="text-sm font-semibold uppercase text-foreground/80">Events</p>
-          <h1 className="mt-2 text-4xl font-bold tracking-tight sm:text-5xl">
-            {branch ? `กิจกรรมที่ ${branch.name}` : "กิจกรรม The Paseo"}
+      <section className="mx-auto w-full max-w-7xl px-5 pt-12 sm:px-8">
+        <div className="max-w-3xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-paseo-dark">{t("title")}</p>
+          <h1 className="mt-2 text-3xl font-semibold tracking-[-0.03em] sm:text-4xl">
+            {branchLabel ? `กิจกรรมที่ ${branchLabel}` : "กิจกรรม The Paseo"}
           </h1>
-          <p className="mt-4 max-w-2xl text-sm leading-6 text-foreground/80">
+          <p className="mt-3 text-sm text-muted">
             อีเวนต์ที่กำลังจัดและใกล้ถึงจากทุกสาขา เลือกดูตามสาขาที่สนใจได้
           </p>
         </div>
+
+        <ArchiveFilterSection title="สาขา" className="mt-8">
+          <ArchiveBranchTiles
+            items={branchItems}
+            activeSlug={branch?.slug}
+            allOption={{
+              href: "/events",
+              label: "ทุกสาขา",
+              active: !branch,
+            }}
+          />
+        </ArchiveFilterSection>
       </section>
 
-      <section className="mx-auto w-full max-w-7xl px-5 py-12 sm:px-8">
-        <EventBranchFilter branches={branches} activeSlug={branch?.slug} />
-        <div className="mt-10">
-          <EventArchivePageGrid
-            events={events}
-            emptyMessage={branch ? `ยังไม่มีกิจกรรมที่ ${branch.name}` : "ยังไม่มีกิจกรรมในขณะนี้"}
-          />
-        </div>
-      </section>
+      <HomeEventsSection
+        events={events}
+        showViewAll={false}
+        showHeading={false}
+        variant="compact"
+        className="pt-6"
+      />
     </main>
   );
 }

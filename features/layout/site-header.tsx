@@ -445,7 +445,7 @@ export function SiteHeader({
           <div className="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8">
             <nav
               ref={scrollRef}
-              className="flex items-center justify-start gap-0 overflow-x-auto py-1 [-ms-overflow-style:none] [scrollbar-width:none] md:justify-center [&::-webkit-scrollbar]:hidden"
+              className="flex items-center justify-start gap-0 overflow-x-auto py-1 scrollbar-hidden md:justify-center"
               aria-label={sectionNav ? t("homeMenu") : t("categories")}
             >
               {sectionNav

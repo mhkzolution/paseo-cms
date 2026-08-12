@@ -3,9 +3,11 @@ import Image from "next/image";
 import { Link } from "@/i18n/navigation";
 
 import { ShareMenu } from "@/features/events/share-menu";
-import { formatBangkokDate, formatBangkokTime } from "@/lib/datetime";
+import { formatDate, formatTime } from "@/lib/datetime-server";
 import { formatPostKindLabel } from "@/lib/post-archives";
+import { CONTENT_PROSE_CLASS } from "@/lib/content-prose";
 import { buildTagHref } from "@/lib/tags";
+import { cn } from "@/lib/utils";
 
 export type NewsPostTag = {
   name: string;
@@ -33,10 +35,12 @@ type NewsPostSectionProps = {
   post: NewsPostSectionData;
 };
 
-export function NewsPostSection({ post }: NewsPostSectionProps) {
+export async function NewsPostSection({ post }: NewsPostSectionProps) {
   const publishedDate = post.publishedAt ?? post.createdAt;
-  const dateLabel = formatBangkokDate(publishedDate);
-  const timeLabel = `${formatBangkokTime(publishedDate)} น.`;
+  const [dateLabel, timeLabel] = await Promise.all([
+    formatDate(publishedDate),
+    formatTime(publishedDate),
+  ]);
   const categoryLabel = formatPostKindLabel(post.kind);
 
   return (
@@ -44,7 +48,7 @@ export function NewsPostSection({ post }: NewsPostSectionProps) {
       <header className="relative">
         <div className="min-w-0 text-center sm:pr-14 sm:text-left">
           <h1 className="text-[2rem] font-semibold leading-[1.15] tracking-[-0.035em] text-foreground sm:text-4xl sm:leading-[1.12] lg:text-5xl">
-            {post.h1 || post.title}
+            {post.title}
           </h1>
 
           <p className="mt-4 text-sm leading-6 text-muted sm:text-base">
@@ -108,51 +112,7 @@ export function NewsPostSection({ post }: NewsPostSectionProps) {
         ) : null}
 
         <div
-          className="
-            prose prose-neutral mt-8 max-w-none
-
-            prose-headings:font-semibold
-            prose-headings:tracking-[-0.025em]
-            prose-headings:text-foreground
-
-            prose-h2:mb-5
-            prose-h2:mt-12
-            prose-h2:text-2xl
-            sm:prose-h2:text-3xl
-
-            prose-h3:mb-4
-            prose-h3:mt-10
-            prose-h3:text-xl
-
-            prose-p:my-6
-            prose-p:text-[16px]
-            prose-p:leading-8
-            prose-p:text-[#4B5563]
-
-            prose-a:font-medium
-            prose-a:text-paseo-dark
-            prose-a:no-underline
-            hover:prose-a:underline
-
-            prose-strong:font-semibold
-            prose-strong:text-foreground
-
-            prose-ul:my-6
-            prose-ol:my-6
-
-            prose-li:my-2
-            prose-li:leading-7
-            prose-li:text-[#4B5563]
-            prose-li:marker:text-paseo-dark
-
-            prose-blockquote:border-l-paseo
-            prose-blockquote:text-foreground
-
-            prose-img:my-10
-            prose-img:max-w-full
-            prose-img:h-auto
-            prose-img:rounded-none
-          "
+          className={cn(CONTENT_PROSE_CLASS, "mt-8 text-foreground")}
           dangerouslySetInnerHTML={{ __html: post.content }}
         />
 
@@ -168,9 +128,7 @@ export function NewsPostSection({ post }: NewsPostSectionProps) {
             <div className="flex items-center gap-2">
               <dt className="font-medium text-foreground">วันที่โพส</dt>
               <dd>
-                <time dateTime={publishedDate.toISOString()}>
-                  {formatBangkokDate(publishedDate)}
-                </time>
+                <time dateTime={publishedDate.toISOString()}>{dateLabel}</time>
               </dd>
             </div>
 
