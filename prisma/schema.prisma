@@ -98,6 +98,35 @@ enum SitemapChangeFrequency {
   NEVER
 }
 
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  RESTORE
+  PUBLISH
+  UNPUBLISH
+  LOGIN
+  LOGOUT
+}
+
+enum AuditModule {
+  AUTH
+  POSTS
+  EVENTS
+  PROMOTIONS
+  PAGES
+  SETTINGS
+  LOCALIZATION
+  MEDIA
+  USERS
+}
+
+enum AuditSeverity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
 // ---------------------------------------------------------------------------
 // Models
 // ---------------------------------------------------------------------------
@@ -1052,4 +1081,40 @@ model LeasingSubmission {
   @@index([branchId])
   @@index([status])
   @@map("leasing_submissions")
+}
+
+/// Append-only system audit trail.
+/// DELETE = soft delete (set deletedAt). RESTORE = clear deletedAt.
+/// Never soft-delete or update AuditLog rows.
+model AuditLog {
+  id         String @id @default(uuid())
+
+  userId     String?
+  userName   String?
+  userRole   Role?
+
+  action     AuditAction
+  module     AuditModule
+  severity   AuditSeverity @default(INFO)
+
+  entityId   String?
+  entityType String?
+  entityName String?
+  entitySlug String?
+
+  changes    Json?
+
+  ipAddress  String?
+  userAgent  String?
+
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([module])
+  @@index([action])
+  @@index([severity])
+  @@index([createdAt])
+  @@index([module, createdAt])
+  @@index([action, createdAt])
+  @@map("audit_logs")
 }
