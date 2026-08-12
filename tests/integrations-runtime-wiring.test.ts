@@ -33,3 +33,14 @@ describe("TrackingScripts orchestrator", () => {
     assert.match(source, /catch/);
   });
 });
+
+describe("integrations layout wiring", () => {
+  it("mounts TrackingScripts on the public site layout only", () => {
+    assert.match(
+      read("app/[locale]/(site)/layout.tsx"),
+      /TrackingScripts/,
+    );
+    assert.doesNotMatch(read("app/layout.tsx"), /TrackingScripts/);
+    assert.doesNotMatch(read("app/admin/layout.tsx"), /TrackingScripts/);
+  });
+});
