@@ -2,13 +2,23 @@ import Image from "next/image";
 import { getLocale, getTranslations } from "next-intl/server";
 import { FaPhone } from "react-icons/fa6";
 
+import { CookieSettingsButton } from "@/components/integrations/cookie-settings-button";
+import { LineFooterLink } from "@/components/integrations/line-footer-link";
+import { resolveLineOaUrl } from "@/components/integrations/resolve-line-oa";
 import { SiteSocialIcons } from "@/features/layout/site-social-icons";
 import { Link } from "@/i18n/navigation";
 import type { AppLocale } from "@/i18n/routing";
 import { BRANCH_SLUGS } from "@/lib/branches/branch-config";
 import { getLocalizedName } from "@/lib/i18n/localized-name";
-import { DEFAULT_SETTINGS, getSettings, SETTINGS_KEYS } from "@/lib/settings";
+import {
+  DEFAULT_INTEGRATION_SETTINGS,
+  DEFAULT_SETTINGS,
+  getSettings,
+  SETTINGS_KEYS,
+} from "@/lib/settings";
 import { prisma } from "@/lib/prisma";
+
+const FOOTER_SETTINGS_KEYS = [...SETTINGS_KEYS, "lineOaId"] as const;
 
 function formatTelHref(phone: string) {
   return `tel:${phone.replace(/\s/g, "")}`;
@@ -31,7 +41,10 @@ export async function SiteFooter() {
         createdAt: true,
       },
     }),
-    getSettings(SETTINGS_KEYS, DEFAULT_SETTINGS),
+    getSettings(FOOTER_SETTINGS_KEYS, {
+      ...DEFAULT_SETTINGS,
+      lineOaId: DEFAULT_INTEGRATION_SETTINGS.lineOaId,
+    }),
     getTranslations("footer"),
     getLocale(),
   ]);
@@ -52,6 +65,7 @@ export async function SiteFooter() {
     tiktokUrl: settings.tiktokUrl,
     lineUrl: settings.lineUrl,
   };
+  const lineOaHref = resolveLineOaUrl(settings.lineOaId);
 
   return (
     <footer className="relative z-20 w-full border-t border-black/[0.06] bg-[#FAFAF8]">
@@ -210,6 +224,10 @@ export async function SiteFooter() {
               className="mt-6 flex flex-row flex-wrap items-center gap-2"
               iconClassName="h-5 w-5"
             />
+
+            {lineOaHref ? (
+              <LineFooterLink href={lineOaHref} label={t("lineOaFooter")} />
+            ) : null}
           </section>
         </div>
       </div>
@@ -226,6 +244,8 @@ export async function SiteFooter() {
             <Link href="/terms" className="transition-colors hover:text-foreground">
               {t("terms")}
             </Link>
+
+            <CookieSettingsButton />
           </div>
         </div>
       </div>

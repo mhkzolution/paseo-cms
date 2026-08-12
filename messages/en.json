@@ -39,6 +39,8 @@
     "followDesc": "Follow news, events, and promotions from The Paseo",
     "privacy": "Privacy policy",
     "terms": "Terms of use",
+    "lineOaContact": "Contact us on LINE",
+    "lineOaFooter": "LINE Official Account",
     "copyright": "© {year} TBN Property. All rights reserved."
   },
   "home": {
@@ -85,5 +87,19 @@
     "placeholder": "Search news, events, stores…",
     "noResults": "No results found",
     "viewAllResults": "View all results"
+  },
+  "consent": {
+    "title": "Cookies & privacy",
+    "description": "We use analytics and marketing technologies to improve your experience. Necessary cookies are always on.",
+    "acceptAll": "Accept all",
+    "necessaryOnly": "Necessary only",
+    "customize": "Customize",
+    "save": "Save preferences",
+    "cancel": "Cancel",
+    "analytics": "Analytics",
+    "analyticsHelp": "Helps us understand site usage (e.g. Google Analytics / Tag Manager).",
+    "marketing": "Marketing",
+    "marketingHelp": "Used for advertising measurement (e.g. Meta Pixel).",
+    "cookieSettings": "Cookie settings"
   }
 }

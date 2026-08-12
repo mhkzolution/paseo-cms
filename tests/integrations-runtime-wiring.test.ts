@@ -25,9 +25,9 @@ describe("integrations provider script ids", () => {
   });
 });
 
-describe("TrackingScripts orchestrator", () => {
+describe("TrackingConfigLoader orchestrator", () => {
   it("fails soft when settings cannot be loaded", () => {
-    const source = read("components/integrations/tracking-scripts.tsx");
+    const source = read("components/integrations/tracking-config-loader.tsx");
     assert.match(source, /try\s*\{/);
     assert.match(source, /getIntegrationSettings/);
     assert.match(source, /catch/);
@@ -35,10 +35,21 @@ describe("TrackingScripts orchestrator", () => {
 });
 
 describe("integrations layout wiring", () => {
-  it("mounts TrackingScripts on the locale layout only", () => {
-    assert.match(read("app/[locale]/layout.tsx"), /TrackingScripts/);
-    assert.doesNotMatch(read("app/[locale]/(site)/layout.tsx"), /TrackingScripts/);
-    assert.doesNotMatch(read("app/layout.tsx"), /TrackingScripts/);
-    assert.doesNotMatch(read("app/admin/layout.tsx"), /TrackingScripts/);
+  it("mounts consent-aware tracking on the locale layout only", () => {
+    const localeLayout = read("app/[locale]/layout.tsx");
+    assert.match(localeLayout, /ConsentProvider/);
+    assert.match(localeLayout, /TrackingConfigLoader/);
+    assert.doesNotMatch(localeLayout, /<TrackingScripts\s*\/>/);
+    assert.doesNotMatch(read("app/[locale]/(site)/layout.tsx"), /TrackingConfigLoader/);
+    assert.doesNotMatch(read("app/layout.tsx"), /ConsentProvider/);
+    assert.doesNotMatch(read("app/admin/layout.tsx"), /ConsentProvider/);
+  });
+
+  it("ConsentAwareTrackingScripts gates providers by consent category", () => {
+    const source = read("components/integrations/consent-aware-tracking-scripts.tsx");
+    assert.match(source, /canLoadAnalytics/);
+    assert.match(source, /canLoadMarketing/);
+    assert.match(source, /useConsent/);
+    assert.doesNotMatch(source, /fetch\(/);
   });
 });

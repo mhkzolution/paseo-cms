@@ -1,5 +1,6 @@
 import { Link2 } from "lucide-react";
 
+import { resolveIntegrationDiagnostics } from "@/components/integrations/resolve-integration-diagnostics";
 import { IntegrationsForm } from "@/features/settings/integrations-form";
 import { getIntegrationSettings } from "@/lib/integration-settings";
 import { requireModuleAccess } from "@/lib/rbac";
@@ -8,6 +9,7 @@ export default async function IntegrationsSettingsPage() {
   await requireModuleAccess("integrations");
 
   const integrations = await getIntegrationSettings();
+  const diagnostics = resolveIntegrationDiagnostics(integrations);
 
   return (
     <div className="flex flex-col gap-6">
@@ -22,7 +24,7 @@ export default async function IntegrationsSettingsPage() {
         </p>
       </div>
 
-      <IntegrationsForm defaultValues={integrations} />
+      <IntegrationsForm defaultValues={integrations} initialDiagnostics={diagnostics} />
     </div>
   );
 }

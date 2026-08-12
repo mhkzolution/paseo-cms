@@ -5,19 +5,27 @@ import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
+import {
+  resolveIntegrationDiagnostics,
+  type IntegrationDiagnostics,
+} from "@/components/integrations/resolve-integration-diagnostics";
 import { Button } from "@/components/ui/button";
 import { IntegrationsAnalyticsSection } from "@/features/settings/integrations-analytics-section";
+import { IntegrationsDiagnosticsPanel } from "@/features/settings/integrations-diagnostics-panel";
 import { IntegrationsLineSection } from "@/features/settings/integrations-line-section";
 import { IntegrationsMetaSection } from "@/features/settings/integrations-meta-section";
 import { IntegrationsTagManagerSection } from "@/features/settings/integrations-tag-manager-section";
+import type { IntegrationSettings } from "@/lib/integration-settings";
 import { integrationSchema } from "@/validators/content.validator";
 import type { IntegrationFormValues } from "@/validators/content.validator";
 
 interface IntegrationsFormProps {
   defaultValues: IntegrationFormValues;
+  initialDiagnostics: IntegrationDiagnostics;
 }
 
-export function IntegrationsForm({ defaultValues }: IntegrationsFormProps) {
+export function IntegrationsForm({ defaultValues, initialDiagnostics }: IntegrationsFormProps) {
+  const [diagnostics, setDiagnostics] = useState(initialDiagnostics);
   const [serverMessage, setServerMessage] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
   const resolver = zodResolver(integrationSchema) as Resolver<IntegrationFormValues>;
@@ -45,6 +53,8 @@ export function IntegrationsForm({ defaultValues }: IntegrationsFormProps) {
         return;
       }
 
+      const saved = (await response.json()) as IntegrationSettings;
+      setDiagnostics(resolveIntegrationDiagnostics(saved));
       setIsSuccess(true);
       setServerMessage("Integrations settings saved.");
     } catch {
@@ -54,6 +64,7 @@ export function IntegrationsForm({ defaultValues }: IntegrationsFormProps) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="grid max-w-4xl gap-6">
+      <IntegrationsDiagnosticsPanel diagnostics={diagnostics} />
       <IntegrationsAnalyticsSection register={register} errors={errors} />
       <IntegrationsTagManagerSection register={register} errors={errors} />
       <IntegrationsMetaSection register={register} errors={errors} />

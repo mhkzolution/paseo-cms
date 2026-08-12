@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { describe, it } from "node:test";
 
 import { canLoadTracking } from "@/components/integrations/consent";
@@ -13,7 +15,12 @@ const empty: IntegrationSettings = {
 };
 
 describe("canLoadTracking", () => {
-  it("returns true in Runtime V1", () => {
+  it("is deprecated and not used for runtime gating", () => {
+    const source = readFileSync(
+      path.join(process.cwd(), "components/integrations/consent.ts"),
+      "utf8",
+    );
+    assert.match(source, /@deprecated/);
     assert.equal(canLoadTracking(), true);
   });
 });

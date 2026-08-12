@@ -39,6 +39,8 @@
     "followDesc": "ติดตามข่าวสาร กิจกรรม และโปรโมชั่นจากเดอะพาซิโอ",
     "privacy": "นโยบายความเป็นส่วนตัว",
     "terms": "ข้อกำหนดการใช้งาน",
+    "lineOaContact": "ติดต่อเราทาง LINE",
+    "lineOaFooter": "LINE Official Account",
     "copyright": "© {year} TBN Property. All rights reserved."
   },
   "home": {
@@ -85,5 +87,19 @@
     "placeholder": "ค้นหาข่าว กิจกรรม ร้านค้า…",
     "noResults": "ไม่พบผลลัพธ์",
     "viewAllResults": "ดูผลลัพธ์ทั้งหมด"
+  },
+  "consent": {
+    "title": "คุกกี้และความเป็นส่วนตัว",
+    "description": "เราใช้เทคโนโลยีด้านการวิเคราะห์และการตลาดเพื่อปรับปรุงประสบการณ์ของคุณ คุกกี้ที่จำเป็นจะเปิดใช้งานเสมอ",
+    "acceptAll": "ยอมรับทั้งหมด",
+    "necessaryOnly": "จำเป็นเท่านั้น",
+    "customize": "ปรับแต่ง",
+    "save": "บันทึกการตั้งค่า",
+    "cancel": "ยกเลิก",
+    "analytics": "การวิเคราะห์",
+    "analyticsHelp": "ช่วยให้เราเข้าใจการใช้งานเว็บไซต์ (เช่น Google Analytics / Tag Manager)",
+    "marketing": "การตลาด",
+    "marketingHelp": "ใช้สำหรับวัดผลการโฆษณา (เช่น Meta Pixel)",
+    "cookieSettings": "ตั้งค่าคุกกี้"
   }
 }
