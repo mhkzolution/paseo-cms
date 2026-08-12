@@ -348,8 +348,8 @@ Response:
 
 Validation:
 
-- Invalid enum → 422
-- `pageSize` not in {25,50,100} → coerce to 50 or 422 (prefer coerce to default for resilience)
+- Invalid enum values (`module` / `action` / `severity`) are **ignored** and treated as unset filters (same resilience model as page/pageSize coercion — bad bookmark/query params must not 422 the page)
+- `pageSize` not in {25,50,100} → coerce to 50
 - `page < 1` → coerce to 1
 
 Query shape (conceptual):
