@@ -117,6 +117,8 @@ roles: ADMIN_ROLES
 
 Update `app/api/settings/integrations/route.ts` from `"settings"` → `"integrations"` in this PR so page and API share one module identity.
 
+**Reviewer note:** This is a breaking authorization change for the integrations endpoint. The route path remains unchanged (`/api/settings/integrations`). Only the module identity checked by `checkModuleAccess` changes.
+
 ### Audit
 
 Unchanged: `auditIntegrationSettingsUpdate` continues to use `AuditModule.SETTINGS`. Permission module ≠ audit module.
@@ -144,7 +146,7 @@ features/settings/
 └─ integrations-line-section.tsx
 ```
 
-Reuse SEO visual primitives where practical (`SeoSectionCard` / field styling patterns) or mirror equivalent local helpers — prefer visual consistency over inventing a new design system.
+Prefer visual consistency with SEO section cards. Reuse SEO primitives only when the import stays light; otherwise clone the visual pattern locally. Visual consistency beats component coupling in V1.
 
 ### Sections
 
@@ -158,7 +160,7 @@ Reuse SEO visual primitives where practical (`SeoSectionCard` / field styling pa
 ### Save flow
 
 - Single button: **Save Integrations**
-- Single `PATCH /api/settings/integrations` with full form values
+- Single `PATCH /api/settings/integrations` with the current form state (API already merges partial updates; do not require a special “send all keys” rule beyond what RHF submits)
 - Feedback: inline success / error (SEO pattern)
   - Success: `Integrations settings saved.`
   - Error: API `error` string or generic fallback
