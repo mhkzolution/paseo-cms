@@ -89,3 +89,19 @@ export async function auditSeoSettingsUpdate(
     context: await dependencies.getAuditRequestContext(),
   });
 }
+
+export async function auditIntegrationSettingsUpdate(
+  { user, before, after }: SettingsUpdateAuditInput,
+  dependencies: SettingsAuditDependencies = defaultDependencies,
+): Promise<void> {
+  await dependencies.createAuditLog({
+    user: toAuditActor(user),
+    action: AuditAction.UPDATE,
+    module: AuditModule.SETTINGS,
+    entityType: "IntegrationSettings",
+    entityName: "Integration Settings",
+    before,
+    after,
+    context: await dependencies.getAuditRequestContext(),
+  });
+}

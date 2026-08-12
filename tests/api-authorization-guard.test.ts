@@ -72,6 +72,7 @@ const API_ROUTE_REGISTRY: ApiRouteExpectation[] = [
   { file: "app/api/settings/route.ts", moduleId: "settings", authPattern: "checkModuleAccess" },
   { file: "app/api/settings/localization/route.ts", moduleId: "localization", authPattern: "checkModuleAccess" },
   { file: "app/api/settings/introduction/route.ts", moduleId: "about-the-paseo", authPattern: "checkModuleAccess" },
+  { file: "app/api/settings/integrations/route.ts", moduleId: "integrations", authPattern: "checkModuleAccess" },
   { file: "app/api/recaptcha/route.ts", moduleId: "recaptcha", authPattern: "checkModuleAccess" },
   { file: "app/api/users/route.ts", moduleId: "users", authPattern: "checkModuleAccess" },
   { file: "app/api/users/[id]/route.ts", moduleId: "users", authPattern: "checkModuleAccess" },
@@ -223,6 +224,7 @@ describe("API authorization registry coverage", () => {
       "seo",
       "seo-settings",
       "settings",
+      "integrations",
       "localization",
       "about-the-paseo",
       "recaptcha",
@@ -274,5 +276,21 @@ describe("SEO settings API audit wiring", () => {
     assert.match(patchHandler, /const before = .*await getSeoSettings\(\)/);
     assert.match(patchHandler, /normalizeSeoSettingsValues\(parsed\.data\)/);
     assert.match(patchHandler, /await auditSeoSettingsUpdate\(\{[\s\S]*user: session\.user,[\s\S]*before,[\s\S]*after/);
+  });
+});
+
+describe("integration settings API audit wiring", () => {
+  it("audits PATCH updates with the authenticated user and before/after values", () => {
+    const source = readFileSync(relativePath("app/api/settings/integrations/route.ts"), "utf8");
+    const patchHandler = extractHandler(source, "PATCH");
+
+    assert.ok(patchHandler, "expected PATCH handler");
+    assert.match(patchHandler, /const \{ authorized, status, session \} = await checkModuleAccess\("integrations"\)/);
+    assert.match(patchHandler, /const before = await getIntegrationSettings\(\)/);
+    assert.match(patchHandler, /await saveIntegrationSettings\(/);
+    assert.match(
+      patchHandler,
+      /await auditIntegrationSettingsUpdate\(\{[\s\S]*user: session\.user,[\s\S]*before,[\s\S]*after/,
+    );
   });
 });

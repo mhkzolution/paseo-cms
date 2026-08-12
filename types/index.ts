@@ -25,6 +25,7 @@ export type AdminModuleId =
   | "roles"
   | "settings"
   | "localization"
+  | "integrations"
   | "recaptcha"
   | "audit-logs";
 

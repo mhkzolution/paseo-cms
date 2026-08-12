@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 
 import {
   contactSchema,
+  integrationSchema,
   leasingSchema,
   postSchema,
   recaptchaSchema,
@@ -311,6 +312,25 @@ describe("content validators", () => {
       recaptchaSchema.safeParse({
         recaptchaSiteKey: "",
         recaptchaSecretKey: "",
+      }).success,
+      true,
+    );
+  });
+
+  it("accepts optional integration ids without format checks", () => {
+    assert.equal(
+      integrationSchema.safeParse({
+        gaMeasurementId: "G-XXXXXXXXXX",
+        gtmContainerId: "GTM-XXXXXXX",
+        metaPixelId: "123456789",
+        lineOaId: "@thepaseo",
+      }).success,
+      true,
+    );
+    assert.equal(integrationSchema.safeParse({}).success, true);
+    assert.equal(
+      integrationSchema.safeParse({
+        gaMeasurementId: "not-a-ga-id-yet",
       }).success,
       true,
     );

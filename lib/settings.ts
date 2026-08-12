@@ -77,10 +77,18 @@ export const SEO_KEYS = [
 
 export const RECAPTCHA_KEYS = ["recaptchaSiteKey", "recaptchaSecretKey"] as const;
 
+export const INTEGRATION_KEYS = [
+  "gaMeasurementId",
+  "gtmContainerId",
+  "metaPixelId",
+  "lineOaId",
+] as const;
+
 export type SettingsKey = (typeof SETTINGS_KEYS)[number];
 export type SeoKey = (typeof SEO_KEYS)[number];
 export type RecaptchaKey = (typeof RECAPTCHA_KEYS)[number];
-export type SettingKey = SettingsKey | SeoKey | RecaptchaKey;
+export type IntegrationKey = (typeof INTEGRATION_KEYS)[number];
+export type SettingKey = SettingsKey | SeoKey | RecaptchaKey | IntegrationKey;
 export type SettingMap<K extends string = SettingKey> = Record<K, string>;
 type WritableSettingMap = Record<string, string | null | undefined>;
 type TwitterCard = "summary" | "summary_large_image";
@@ -92,6 +100,7 @@ export interface SeoSettings extends SettingMap<SeoKey> {
 }
 
 export type RecaptchaSettings = SettingMap<RecaptchaKey>;
+export type IntegrationSettings = SettingMap<IntegrationKey>;
 
 export const DEFAULT_SETTINGS = {
   siteName: "The Paseo",
@@ -138,6 +147,13 @@ export const DEFAULT_RECAPTCHA = {
   recaptchaSiteKey: "",
   recaptchaSecretKey: "",
 } satisfies RecaptchaSettings;
+
+export const DEFAULT_INTEGRATION_SETTINGS = {
+  gaMeasurementId: "",
+  gtmContainerId: "",
+  metaPixelId: "",
+  lineOaId: "",
+} satisfies IntegrationSettings;
 
 export function normalizeSeoSettingsValues<
   T extends Partial<Record<SeoKey, string | null | undefined>>,

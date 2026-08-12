@@ -7,6 +7,7 @@ import { buildDiff } from "@/lib/audit-diff";
 import type { CreateAuditLogInput } from "@/lib/audit-log";
 import { DEFAULT_SEO, normalizeSeoSettingsValues } from "@/lib/settings";
 import {
+  auditIntegrationSettingsUpdate,
   auditLocalizationUpdate,
   auditSeoSettingsUpdate,
   auditSiteSettingsUpdate,
@@ -96,6 +97,25 @@ describe("settings audit handlers", () => {
       module: AuditModule.SEO,
       entityType: "SeoSettings",
       entityName: "SEO Settings",
+      before,
+      after,
+      context,
+    });
+  });
+
+  it("audits integration settings updates under AuditModule.SETTINGS", async () => {
+    const capture = captureAuditInput();
+    const before = { gaMeasurementId: "", gtmContainerId: "" };
+    const after = { gaMeasurementId: "G-XXXXXXXXXX", gtmContainerId: "GTM-XXXXXXX" };
+
+    await auditIntegrationSettingsUpdate({ user, before, after }, capture.dependencies);
+
+    assert.deepEqual(capture.getInput(), {
+      user,
+      action: AuditAction.UPDATE,
+      module: AuditModule.SETTINGS,
+      entityType: "IntegrationSettings",
+      entityName: "Integration Settings",
       before,
       after,
       context,

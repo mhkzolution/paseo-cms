@@ -164,3 +164,10 @@ describe("admin page authorization CI guard", () => {
     });
   }
 });
+
+describe("integrations settings page authorization wiring", () => {
+  it("requires integrations module access on the page", () => {
+    const source = readFileSync(relativePath("app/admin/settings/integrations/page.tsx"), "utf8");
+    assert.match(source, /requireModuleAccess\("integrations"\)/);
+  });
+});
