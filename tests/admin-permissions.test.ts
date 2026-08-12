@@ -36,6 +36,13 @@ describe("admin permissions registry", () => {
     assert.equal(permission?.roles.includes("EDITOR"), false);
   });
 
+  it("protects integrations settings for ADMIN_ROLES only", () => {
+    assert.deepEqual(getModuleRoles("integrations"), ["SUPER_ADMIN", "ADMIN"]);
+    const permission = findModulePermissionForPathname("/admin/settings/integrations");
+    assert.equal(permission?.id, "integrations");
+    assert.equal(permission?.roles.includes("EDITOR"), false);
+  });
+
   it("keeps the SEO workspace available to content editors", () => {
     assert.deepEqual(getModuleRoles("seo"), ["SUPER_ADMIN", "ADMIN", "EDITOR"]);
     const permission = findModulePermissionForPathname("/admin/seo");
@@ -58,6 +65,30 @@ describe("admin navigation active state", () => {
     );
     assert.ok(bannerItem);
     assert.equal(isNavLinkActive("/admin/banners/about/new", bannerItem), false);
+  });
+
+  it("keeps general settings active-path exclusions for nested settings routes", () => {
+    const general = ADMIN_NAV_SECTIONS.flatMap((section) => section.items).find(
+      (item) => item.id === "settings",
+    );
+    assert.ok(general);
+    assert.ok(general.excludeActivePaths?.includes("/admin/settings/integrations"));
+    assert.equal(isNavLinkActive("/admin/settings/integrations", general), false);
+  });
+
+  it("includes Integrations nav link after SEO", () => {
+    const system = ADMIN_NAV_SECTIONS.find((section) => section.id === "system-settings");
+    assert.ok(system);
+    const ids = system.items.map((item) => item.id);
+    const seoIndex = ids.indexOf("seo-settings");
+    const integrationsIndex = ids.indexOf("integrations");
+    assert.ok(seoIndex >= 0);
+    assert.ok(integrationsIndex >= 0);
+    assert.equal(integrationsIndex, seoIndex + 1);
+
+    const integrations = system.items[integrationsIndex];
+    assert.equal(integrations.label, "Integrations");
+    assert.equal(integrations.href, "/admin/settings/integrations");
   });
 });
 

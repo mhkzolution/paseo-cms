@@ -40,6 +40,7 @@ export const ADMIN_MODULE_PERMISSIONS = [
   { id: "roles", routePrefix: "/admin/roles", roles: SUPER_ADMIN_ROLES },
   { id: "settings", routePrefix: "/admin/settings", roles: ADMIN_ROLES },
   { id: "localization", routePrefix: "/admin/settings/localization", roles: ADMIN_ROLES },
+  { id: "integrations", routePrefix: "/admin/settings/integrations", roles: ADMIN_ROLES },
   { id: "recaptcha", routePrefix: "/admin/recaptcha", roles: ADMIN_ROLES },
   { id: "audit-logs", routePrefix: "/admin/audit-logs", roles: ADMIN_ROLES },
 ] as const satisfies readonly AdminModulePermission[];
