@@ -18,6 +18,7 @@ const MODULE_CLASSES: Record<AuditModule, string> = {
   PAGES: "bg-muted/20 text-muted",
   SETTINGS: "bg-[#F3F1EC] text-foreground",
   LOCALIZATION: "bg-[#E8F0D8] text-paseo-dark",
+  SEO: "bg-[#E8F0D8] text-paseo-dark",
   MEDIA: "bg-paseo-hover text-paseo-dark",
   USERS: "bg-paseo text-foreground",
 };

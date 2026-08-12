@@ -117,6 +117,7 @@ enum AuditModule {
   PAGES
   SETTINGS
   LOCALIZATION
+  SEO
   MEDIA
   USERS
 }

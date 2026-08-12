@@ -6,6 +6,8 @@ const LONG_TEXT_KEYS = new Set([
   "metadata",
   "schemaOverrides",
   "robotsDirectives",
+  "jsonLd",
+  "customOrganizationSchema",
 ]);
 
 export type DiffValue =

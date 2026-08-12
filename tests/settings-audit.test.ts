@@ -7,6 +7,7 @@ import { buildDiff } from "@/lib/audit-diff";
 import type { CreateAuditLogInput } from "@/lib/audit-log";
 import {
   auditLocalizationUpdate,
+  auditSeoSettingsUpdate,
   auditSiteSettingsUpdate,
   type SettingsAuditDependencies,
 } from "@/lib/settings-audit";
@@ -78,6 +79,51 @@ describe("settings audit handlers", () => {
       after,
       context,
     });
+  });
+
+  it("audits SEO settings updates under AuditModule.SEO", async () => {
+    const capture = captureAuditInput();
+    const before = { organizationPhone: "" };
+    const after = { organizationPhone: "02-123-4567" };
+
+    await auditSeoSettingsUpdate({ user, before, after }, capture.dependencies);
+
+    assert.deepEqual(capture.getInput(), {
+      user,
+      action: AuditAction.UPDATE,
+      module: AuditModule.SEO,
+      entityType: "SeoSettings",
+      entityName: "SEO Settings",
+      before,
+      after,
+      context,
+    });
+  });
+
+  it("stores only changed SEO fields in diff", () => {
+    const diff = buildDiff(
+      {
+        metaTitle: "The Paseo",
+        metaDescription: "Same",
+        organizationPhone: "",
+      },
+      {
+        metaTitle: "The Paseo",
+        metaDescription: "Same",
+        organizationPhone: "02-123-4567",
+      },
+    );
+
+    assert.deepEqual(diff, {
+      organizationPhone: { before: "", after: "02-123-4567" },
+    });
+  });
+
+  it("marks jsonLd and customOrganizationSchema as long-text diffs", () => {
+    assert.deepEqual(
+      buildDiff({ jsonLd: "{}" }, { jsonLd: '{"@type":"Thing"}' }),
+      { jsonLd: { changed: true } },
+    );
   });
 
   it("uses a null actor when the session has no user", async () => {
