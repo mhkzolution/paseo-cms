@@ -1,0 +1,9 @@
+-- AlterTable
+ALTER TABLE `media` ADD COLUMN `originalName` VARCHAR(191) NULL,
+    ADD COLUMN `mimeType` VARCHAR(191) NULL,
+    ADD COLUMN `extension` VARCHAR(191) NULL,
+    ADD COLUMN `width` INTEGER NULL,
+    ADD COLUMN `height` INTEGER NULL,
+    ADD COLUMN `altText` TEXT NULL,
+    ADD COLUMN `title` VARCHAR(191) NULL,
+    ADD COLUMN `caption` TEXT NULL;

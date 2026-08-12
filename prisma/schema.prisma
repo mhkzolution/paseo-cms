@@ -54,6 +54,11 @@ enum PostKind {
   ARTICLE
 }
 
+enum CategoryScope {
+  STORE
+  POST
+}
+
 enum PromotionCategory {
   FOOD
   DRINKS_BAKERY
@@ -189,20 +194,22 @@ model Post {
 }
 
 model Category {
-  id        String    @id @default(uuid())
+  id        String         @id @default(uuid())
   name      String
-  slug      String    @unique
+  slug      String         @unique
+  scope     CategoryScope  @default(STORE)
+  postKind  PostKind?
   image     String?
   color     String?
-  sortOrder Int       @default(0)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  sortOrder Int            @default(0)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
   deletedAt DateTime?
 
   posts  Post[]
   stores Store[]
 
-  @@index([sortOrder])
+  @@index([scope, sortOrder])
   @@map("categories")
 }
 
@@ -940,15 +947,23 @@ model MediaFolder {
 }
 
 model Media {
-  id        String     @id @default(uuid())
-  folderId  String?
-  filename  String
-  path      String
-  type      MediaType
-  size      Int
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  deletedAt DateTime?
+  id           String     @id @default(uuid())
+  folderId     String?
+  filename     String
+  path         String
+  type         MediaType
+  size         Int
+  originalName String?
+  mimeType     String?
+  extension    String?
+  width        Int?
+  height       Int?
+  altText      String?    @db.Text
+  title        String?
+  caption      String?    @db.Text
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  deletedAt    DateTime?
 
   folder MediaFolder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
 
@@ -982,6 +997,25 @@ model Setting {
   deletedAt DateTime?
 
   @@map("settings")
+}
+
+model LocalizationSetting {
+  id                 String   @id @default(cuid())
+  defaultLanguage    String   @default("th")
+  supportedLanguages Json     @default("[\"th\"]")
+  dateLocale         String   @default("th-TH")
+  timeLocale         String   @default("th-TH")
+  numberLocale       String   @default("th-TH")
+  calendarSystem     String   @default("buddhist")
+  weekStartsOn       String   @default("monday")
+  timezone           String   @default("Asia/Bangkok")
+  dateFormat         String   @default("DD/MM/YYYY")
+  timeFormat         String   @default("24h")
+  currency           String   @default("THB")
+  currencyPosition   String   @default("before")
+  updatedAt          DateTime @updatedAt
+
+  @@map("localization_settings")
 }
 
 model ContactSubmission {
