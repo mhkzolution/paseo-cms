@@ -8,7 +8,6 @@ import { Folder, FolderOpen, Plus } from "lucide-react";
 import { EmptyState } from "@/components/admin/empty-state";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { LocalizationSettings } from "@/lib/localization-settings";
 import { MediaUploadButton } from "@/features/media/media-upload-button";
 import { AssetDrawer } from "@/features/media/asset-drawer";
 import { MediaGrid } from "@/features/media/media-grid";
@@ -26,7 +25,6 @@ interface MediaLibraryProps {
   folders: MediaFolder[];
   media: MediaListItem[];
   currentFolderId: string | null;
-  localization?: LocalizationSettings;
 }
 
 export function MediaLibrary({ folders, media: initialMedia, currentFolderId }: MediaLibraryProps) {

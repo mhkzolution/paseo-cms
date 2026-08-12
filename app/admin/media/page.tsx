@@ -1,13 +1,13 @@
 import { MediaLibrary } from "@/features/media/media-library";
 import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/lib/rbac";
+import { requireModuleAccess } from "@/lib/rbac";
 
 interface MediaLibraryPageProps {
   searchParams: Promise<{ folderId?: string }>;
 }
 
 export default async function MediaLibraryPage({ searchParams }: MediaLibraryPageProps) {
-  await requireRole(["SUPER_ADMIN", "ADMIN", "EDITOR", "MARKETING"]);
+  await requireModuleAccess("media-library");
 
   const { folderId } = await searchParams;
   const currentFolderId = folderId ?? null;
