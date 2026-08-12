@@ -22,6 +22,12 @@ describe("admin permissions registry", () => {
     const permission = findModulePermissionForPathname("/admin/posts/new");
     assert.equal(permission?.id, "news");
   });
+
+  it("protects audit-logs for ADMIN_ROLES only", () => {
+    assert.deepEqual(getModuleRoles("audit-logs"), ["SUPER_ADMIN", "ADMIN"]);
+    const permission = findModulePermissionForPathname("/admin/audit-logs");
+    assert.equal(permission?.id, "audit-logs");
+  });
 });
 
 describe("admin navigation active state", () => {

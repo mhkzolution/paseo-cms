@@ -24,7 +24,8 @@ export type AdminModuleId =
   | "roles"
   | "settings"
   | "localization"
-  | "recaptcha";
+  | "recaptcha"
+  | "audit-logs";
 
 export type NavSectionId =
   | "website-content"

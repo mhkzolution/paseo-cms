@@ -137,6 +137,7 @@ export const ADMIN_NAV_SECTIONS: NavSection[] = [
       { id: "settings", label: "ตั้งค่าทั่วไป", href: "/admin/settings", excludeActivePaths: ["/admin/settings/localization"] },
       { id: "localization", label: "ภาษาและรูปแบบ", href: "/admin/settings/localization" },
       { id: "recaptcha", label: "ระบบป้องกันสแปม", href: "/admin/recaptcha" },
+      { id: "audit-logs", label: "Audit Logs", href: "/admin/audit-logs" },
     ],
   },
 ];
