@@ -2,6 +2,7 @@ import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 
+import { LineOaSurfaces } from "@/components/integrations/line-oa-surfaces";
 import { TrackingScripts } from "@/components/integrations/tracking-scripts";
 import { routing } from "@/i18n/routing";
 
@@ -27,6 +28,7 @@ export default async function LocaleLayout({ children, params }: Props) {
   return (
     <NextIntlClientProvider messages={messages}>
       <TrackingScripts />
+      <LineOaSurfaces />
       {children}
     </NextIntlClientProvider>
   );
