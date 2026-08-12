@@ -24,3 +24,12 @@ describe("integrations provider script ids", () => {
     assert.match(read("components/integrations/meta-pixel.tsx"), /id=["']meta-pixel["']/);
   });
 });
+
+describe("TrackingScripts orchestrator", () => {
+  it("fails soft when settings cannot be loaded", () => {
+    const source = read("components/integrations/tracking-scripts.tsx");
+    assert.match(source, /try\s*\{/);
+    assert.match(source, /getIntegrationSettings/);
+    assert.match(source, /catch/);
+  });
+});
