@@ -139,6 +139,14 @@ export const DEFAULT_RECAPTCHA = {
   recaptchaSecretKey: "",
 } satisfies RecaptchaSettings;
 
+export function normalizeSeoSettingsValues<
+  T extends Partial<Record<SeoKey, string | null | undefined>>,
+>(values: T): { [K in keyof T]: string } {
+  return Object.fromEntries(
+    Object.entries(values).map(([key, value]) => [key, value ?? ""]),
+  ) as { [K in keyof T]: string };
+}
+
 export async function getSettings<K extends SettingKey>(
   keys: readonly K[],
   defaults: SettingMap<K>,

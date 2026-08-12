@@ -5,6 +5,7 @@ import { AuditAction, AuditModule } from "@prisma/client";
 
 import { buildDiff } from "@/lib/audit-diff";
 import type { CreateAuditLogInput } from "@/lib/audit-log";
+import { DEFAULT_SEO, normalizeSeoSettingsValues } from "@/lib/settings";
 import {
   auditLocalizationUpdate,
   auditSeoSettingsUpdate,
@@ -12,6 +13,7 @@ import {
   type SettingsAuditDependencies,
 } from "@/lib/settings-audit";
 import { LOCALIZATION_SETTING_ID } from "@/lib/localization-settings";
+import { seoSchema } from "@/validators/content.validator";
 
 const context = {
   ipAddress: "203.0.113.20",
@@ -117,6 +119,19 @@ describe("settings audit handlers", () => {
     assert.deepEqual(diff, {
       organizationPhone: { before: "", after: "02-123-4567" },
     });
+  });
+
+  it("normalizes parsed empty SEO values before building audit diffs", () => {
+    const changed = normalizeSeoSettingsValues(
+      seoSchema.parse({ ...DEFAULT_SEO, organizationPhone: "02-123-4567" }),
+    );
+
+    assert.deepEqual(buildDiff(DEFAULT_SEO, changed), {
+      organizationPhone: { before: "", after: "02-123-4567" },
+    });
+
+    const unchanged = normalizeSeoSettingsValues(seoSchema.parse({ ...DEFAULT_SEO }));
+    assert.equal(buildDiff(DEFAULT_SEO, unchanged), null);
   });
 
   it("marks jsonLd and customOrganizationSchema as long-text diffs", () => {

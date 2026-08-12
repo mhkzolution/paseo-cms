@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 
 import { forbiddenError, validationError } from "@/lib/content-api";
 import { checkModuleAccess } from "@/lib/rbac";
-import { getSeoSettings, saveSettings } from "@/lib/settings";
+import {
+  getSeoSettings,
+  normalizeSeoSettingsValues,
+  saveSettings,
+} from "@/lib/settings";
 import { auditSeoSettingsUpdate } from "@/lib/settings-audit";
 import { seoSchema } from "@/validators/content.validator";
 
@@ -22,13 +26,14 @@ export async function PATCH(request: Request) {
   const parsed = seoSchema.safeParse(await request.json());
   if (!parsed.success) return validationError(parsed.error);
 
+  const after = normalizeSeoSettingsValues(parsed.data);
   const before = { ...(await getSeoSettings()) };
-  await saveSettings(parsed.data);
+  await saveSettings(after);
   await auditSeoSettingsUpdate({
     user: session.user,
     before,
-    after: parsed.data,
+    after,
   });
 
-  return NextResponse.json({ seo: parsed.data });
+  return NextResponse.json({ seo: after });
 }
