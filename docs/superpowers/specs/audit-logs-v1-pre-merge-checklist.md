@@ -85,7 +85,31 @@ npx prisma migrate status
 
 Paste a fresh `npx prisma migrate status` into the MR when opening it.
 
-## Out of scope (Sprint 2)
+## Smoke evidence (captured 2026-08-12)
+
+Ran against local `npm run dev` at `http://localhost:3000` with session `admin@thepaseo.co.th`.
+
+| Step | Result |
+|------|--------|
+| LOGIN | `LOGIN \| AUTH \| INFO` — **1 row** (no duplicate) |
+| CREATE | `CREATE \| POSTS \| INFO` — entity `Test Audit` / `test-audit-smoke` |
+| UPDATE | `UPDATE \| POSTS` — `title` before/after `Test Audit` → `Test Audit Updated` |
+| PUBLISH | `PUBLISH \| POSTS` — status `DRAFT` → `PUBLISHED` (not UPDATE) |
+| UNPUBLISH | `UNPUBLISH \| POSTS` — status `PUBLISHED` → `DRAFT` |
+| DELETE | `DELETE \| POSTS \| WARNING` — entityName/slug retained, changes null |
+
+```txt
+LOGIN | AUTH | INFO |  |  | null
+CREATE | POSTS | INFO | Test Audit | test-audit-smoke | {...}
+UPDATE | POSTS | INFO | Test Audit Updated | test-audit-smoke | {"title":{"before":"Test Audit","after":"Test Audit Updated"},...}
+PUBLISH | POSTS | INFO | Test Audit Updated | test-audit-smoke | {"status":{"before":"DRAFT","after":"PUBLISHED"},...}
+UNPUBLISH | POSTS | INFO | Test Audit Updated | test-audit-smoke | {"status":{"before":"PUBLISHED","after":"DRAFT"},...}
+DELETE | POSTS | WARNING | Test Audit Updated | test-audit-smoke | null
+LOGIN_COUNT 1
+```
+
+**Final gate:** Manual smoke **PASSED** → ready for merge / MR when product owner confirms.
+
 
 ```txt
 Audit Logs UI
