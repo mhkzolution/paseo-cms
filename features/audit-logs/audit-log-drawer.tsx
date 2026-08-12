@@ -74,6 +74,17 @@ function AuditLogDrawerContent({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
+  useEffect(() => {
     let cancelled = false;
 
     setLoading(true);

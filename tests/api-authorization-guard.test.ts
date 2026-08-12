@@ -227,6 +227,7 @@ describe("API authorization registry coverage", () => {
       "recaptcha",
       "users",
       "search",
+      "audit-logs",
     ];
 
     const missing = expectedApiModules.filter((moduleId) => !modulesWithApi.has(moduleId));
