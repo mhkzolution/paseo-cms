@@ -21,7 +21,12 @@ function isAssetSelected(assetId: string, selectedId?: string | null, selectedId
 
 export function MediaGrid({ media, onSelect, selectedId, selectedIds, className }: MediaGridProps) {
   return (
-    <div className={cn("grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5", className)}>
+    <div
+      className={cn(
+        "grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(220px,1fr))]",
+        className,
+      )}
+    >
       {media.map((asset) => {
         const selected = isAssetSelected(asset.id, selectedId, selectedIds);
 
@@ -37,7 +42,13 @@ export function MediaGrid({ media, onSelect, selectedId, selectedIds, className 
         >
           <div className="relative flex aspect-square items-center justify-center bg-background">
             {asset.type === "IMAGE" ? (
-              <Image src={asset.path} alt={asset.altText || asset.filename} fill className="object-cover" sizes="200px" />
+              <Image
+                src={asset.path}
+                alt={asset.altText || asset.filename}
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 50vw, 220px"
+              />
             ) : asset.type === "VIDEO" ? (
               <Video className="h-8 w-8 text-muted" aria-hidden="true" />
             ) : (
