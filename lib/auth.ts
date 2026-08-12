@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 
+import { auditAuthSignIn, auditAuthSignOut } from "@/lib/auth-audit";
 import { prisma } from "@/lib/prisma";
 import type { AppRole } from "@/types";
 import { loginSchema } from "@/validators/auth.validator";
@@ -55,6 +56,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.role = token.role as AppRole;
       }
       return session;
+    },
+  },
+  events: {
+    signIn: auditAuthSignIn,
+    async signOut(message) {
+      const token = "token" in message ? message.token : null;
+      await auditAuthSignOut({ token });
     },
   },
 });
