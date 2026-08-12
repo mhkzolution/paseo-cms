@@ -1,7 +1,7 @@
 # Integrations LINE OA Surfaces V1 Design
 
 **Date:** 2026-08-12  
-**Status:** Final Spec — ready for implementation plan  
+**Status:** Final Spec — approved for implementation plan (polish notes locked 2026-08-12)  
 
 **Depends on:** Integrations Foundation + Admin UI V1 (`lineOaId`, `getIntegrationSettings()`, admin at `/admin/settings/integrations`)  
 **Scope:** Public LINE Official Account surfaces driven by stored `lineOaId` — Floating CTA + Footer link
@@ -29,7 +29,7 @@ resolveLineOaUrl(lineOaId)             (pure — single source of truth)
 
 SiteFooter (and homepage via same footer)
   ↓
-settings / getIntegrationSettings
+existing getSettings(...) load + include lineOaId   (prefer — avoid 2nd integrations fetch)
   ↓
 resolveLineOaUrl(lineOaId)
   ↓
@@ -86,6 +86,9 @@ resolveLineOaUrl(raw: string | null | undefined): string | null
 4. If missing leading `@`, prepend `@`.
 5. Return `https://line.me/R/ti/p/` + normalized id (id already includes `@`).
 
+**V1 expects an OA identifier, not a URL.**  
+If a full LINE URL is pasted (e.g. `https://line.me/R/ti/p/@thepaseo` or `line.me/R/ti/p/@thepaseo`), treat the **entire** string as an opaque identifier — **do not** parse or strip URL prefixes. (Admin should enter `@thepaseo` / `thepaseo` only.)
+
 ### Examples
 
 | Input | Output |
@@ -94,6 +97,7 @@ resolveLineOaUrl(raw: string | null | undefined): string | null
 | `@thepaseo` | `https://line.me/R/ti/p/@thepaseo` |
 | `thepaseo` | `https://line.me/R/ti/p/@thepaseo` |
 | ` @thepaseo ` | `https://line.me/R/ti/p/@thepaseo` |
+| `https://line.me/R/ti/p/@thepaseo` (misconfigured) | `https://line.me/R/ti/p/@https://line.me/R/ti/p/@thepaseo` — **not supported**; no URL parsing in V1 |
 
 ### Visibility (derived)
 
@@ -119,18 +123,21 @@ No separate enable flags in V1.
 - Props: non-null `href: string` (and optional label from i18n).
 - Fixed bottom-right on all viewports.
 - `target="_blank"` + `rel="noopener noreferrer"`.
+- **Icon:** Prefer the same LINE icon already used by site social icons (`FaLine` from `react-icons/fa` via `SiteSocialIcons`) — do not introduce a second SVG/asset set.
 - **Accessibility:** meaningful accessible name via i18n (e.g. `aria-label` / visually supported text) such as “Contact us on LINE” — not icon-only without a name.
-- **z-index:** above normal page content; below modal/dialog overlays (use an existing stacking token/convention if the design system has one; do not hard-code an arbitrary “max” that covers dialogs).
+- **z-index:** above normal page content (e.g. footer `z-20`); below modal/dialog overlays (site modals commonly use `z-50`). Prefer something like `z-40` unless an existing token fits better — do not cover dialogs.
 
 ### `LineFooterLink`
 
 - Presentational link for footer contact / social-adjacent area.
 - Same `href` semantics; open in new tab with `noopener noreferrer`.
+- Prefer the same LINE icon source as floating / social icons when an icon is shown.
 - Label via i18n (not hardcoded English-only in component body if the site already uses next-intl in footer).
 
 ### `LineOaSurfaces`
 
 - Async Server Component.
+- **Owns** the dedicated `getIntegrationSettings()` fetch for the floating surface.
 - Fail-soft:
 
 ```ts
@@ -147,7 +154,15 @@ export async function LineOaSurfaces() {
 }
 ```
 
-Footer does **not** need to go through `LineOaSurfaces`; it resolves independently with the same helper. If footer already loads broad settings, it may read `lineOaId` from that path **or** call `getIntegrationSettings()` — either is fine as long as `resolveLineOaUrl` remains the URL source of truth. Prefer fail-soft around any dedicated integrations fetch in footer as well.
+### Footer data guidance
+
+Footer does **not** go through `LineOaSurfaces`; it resolves with the same `resolveLineOaUrl` helper.
+
+**Prefer:** extend the footer's existing settings load (today: `getSettings(SETTINGS_KEYS, …)`) to also request `lineOaId` in that same call — one settings read, no second integrations round-trip solely for the footer.
+
+**Avoid:** introducing a standalone `getIntegrationSettings()` call inside `SiteFooter` only to render the LINE OA link.
+
+`resolveLineOaUrl` remains the URL source of truth regardless of how the raw `lineOaId` string is loaded.
 
 ---
 
@@ -194,7 +209,7 @@ V1 does not unify, replace, or hide `lineUrl` based on `lineOaId`. Both may appe
 
 ### Required
 
-1. **`resolveLineOaUrl` unit tests** — empty/whitespace → `null`; bare id and `@id` → same URL; trim; leading `@` ensured; exact URL prefix `https://line.me/R/ti/p/`.
+1. **`resolveLineOaUrl` unit tests** — empty/whitespace → `null`; bare id and `@id` → same URL; trim; leading `@` ensured; exact URL prefix `https://line.me/R/ti/p/`. Document that pasted full LINE URLs are **not** special-cased (identifier-only contract).
 2. **Layout wiring (static)** — `app/[locale]/layout.tsx` imports / renders `LineOaSurfaces`; `app/layout.tsx` and `app/admin/layout.tsx` do not.
 3. **Fail-soft source assert** — `LineOaSurfaces` wraps settings load in `try/catch`.
 
