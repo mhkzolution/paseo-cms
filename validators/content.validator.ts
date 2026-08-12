@@ -530,6 +530,14 @@ export const recaptchaSchema = z.object({
   recaptchaSecretKey: optionalText,
 });
 
+/** V1: optional strings only — format checks (GA/GTM/Pixel IDs) deferred. */
+export const integrationSchema = z.object({
+  gaMeasurementId: z.string().optional(),
+  gtmContainerId: z.string().optional(),
+  metaPixelId: z.string().optional(),
+  lineOaId: z.string().optional(),
+});
+
 export const storeFloorSchema = z.object({
   branchId: requiredText("สาขา"),
   nameTh: requiredText("ชื่อภาษาไทย"),
@@ -573,9 +581,11 @@ export type IntroductionInput = z.infer<typeof introductionSchema>;
 export type SettingsInput = z.infer<typeof settingsSchema>;
 export type SeoInput = z.infer<typeof seoSchema>;
 export type RecaptchaInput = z.infer<typeof recaptchaSchema>;
+export type IntegrationInput = z.infer<typeof integrationSchema>;
 export type LocalizationInput = z.infer<typeof localizationSchema>;
 export type IntroductionFormValues = z.input<typeof introductionSchema>;
 export type SettingsFormValues = z.input<typeof settingsSchema>;
 export type SeoFormValues = z.input<typeof seoSchema>;
+export type IntegrationFormValues = z.input<typeof integrationSchema>;
 export type RecaptchaFormValues = z.input<typeof recaptchaSchema>;
 export type LocalizationFormValues = z.input<typeof localizationSchema>;
