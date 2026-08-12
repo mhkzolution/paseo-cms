@@ -46,7 +46,12 @@ Footer does **not** call `getIntegrationSettings()`.
 
 - New toggles / `lineOaUrl` field
 - Merge with General Settings `lineUrl`
+- Hiding social LINE icon when `lineOaId` is set (intentional V1 dual-render; see P3 Footer UX Refinement)
 - Contact page block / click analytics / Consent
+
+### Known follow-up (P3)
+
+Footer may show both social `lineUrl` and Integrations LINE OA link. Deferred to **Footer UX Refinement** (prefer long-term Contact vs Social IA split). Not a V1 blocker.
 
 ## Test plan
 

@@ -260,3 +260,26 @@ Unify or clarify lineUrl vs lineOaId in Admin UX copy
 WhatsApp / Messenger / Telegram surfaces (same orchestrator pattern)
 Diagnostics: “LINE configured ✓” in Integrations admin
 ```
+
+### Known UX follow-up (P3) — Footer LINE duplication
+
+**Status:** Accepted intentional behavior in V1 — **do not change in this PR.**
+
+```txt
+lineUrl (General Settings)  → social media URL (SiteSocialIcons)
+lineOaId (Integrations)     → Official Account surface (Floating + Footer link)
+
+Both may render simultaneously in V1. Intentional.
+```
+
+**Problem (post-launch UX):** users may see two LINE entries and not understand they come from different CMS fields.
+
+**Options for a future ticket (`Footer UX Refinement`, P3, before major public release):**
+
+| Option | Idea |
+|--------|------|
+| A | Hide social LINE icon when `lineOaId` resolves |
+| B | Move LINE Official Account out of Follow Us into a Contact section |
+| C *(preferred long-term)* | Footer IA split: **Follow Us** (Facebook / Instagram / TikTok / YouTube) vs **Contact Us** (LINE OA, Phone, Email) |
+
+Product note: LINE OA is primarily a **contact channel**, not a social feed — Option C matches that meaning best.
