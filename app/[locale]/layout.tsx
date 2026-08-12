@@ -2,8 +2,10 @@ import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 
+import { ConsentBanner } from "@/components/integrations/consent-banner";
+import { ConsentProvider } from "@/components/integrations/consent-provider";
 import { LineOaSurfaces } from "@/components/integrations/line-oa-surfaces";
-import { TrackingScripts } from "@/components/integrations/tracking-scripts";
+import { TrackingConfigLoader } from "@/components/integrations/tracking-config-loader";
 import { routing } from "@/i18n/routing";
 
 type Props = {
@@ -27,9 +29,12 @@ export default async function LocaleLayout({ children, params }: Props) {
 
   return (
     <NextIntlClientProvider messages={messages}>
-      <TrackingScripts />
-      <LineOaSurfaces />
-      {children}
+      <ConsentProvider>
+        <ConsentBanner />
+        <TrackingConfigLoader />
+        <LineOaSurfaces />
+        {children}
+      </ConsentProvider>
     </NextIntlClientProvider>
   );
 }

@@ -1,3 +1,4 @@
+/** @deprecated Replaced by TrackingConfigLoader + ConsentAwareTrackingScripts. */
 import { GoogleAnalytics } from "@/components/integrations/google-analytics";
 import { GoogleTagManager } from "@/components/integrations/google-tag-manager";
 import { MetaPixel } from "@/components/integrations/meta-pixel";
