@@ -10,7 +10,7 @@ import { auditIntegrationSettingsUpdate } from "@/lib/settings-audit";
 import { integrationSchema } from "@/validators/content.validator";
 
 export async function GET() {
-  const { authorized, status } = await checkModuleAccess("settings");
+  const { authorized, status } = await checkModuleAccess("integrations");
   if (!authorized) return forbiddenError(status);
 
   const integrations = await getIntegrationSettings();
@@ -19,7 +19,7 @@ export async function GET() {
 }
 
 export async function PATCH(request: Request) {
-  const { authorized, status, session } = await checkModuleAccess("settings");
+  const { authorized, status, session } = await checkModuleAccess("integrations");
   if (!authorized) return forbiddenError(status);
 
   const parsed = integrationSchema.safeParse(await request.json());

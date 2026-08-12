@@ -72,7 +72,7 @@ const API_ROUTE_REGISTRY: ApiRouteExpectation[] = [
   { file: "app/api/settings/route.ts", moduleId: "settings", authPattern: "checkModuleAccess" },
   { file: "app/api/settings/localization/route.ts", moduleId: "localization", authPattern: "checkModuleAccess" },
   { file: "app/api/settings/introduction/route.ts", moduleId: "about-the-paseo", authPattern: "checkModuleAccess" },
-  { file: "app/api/settings/integrations/route.ts", moduleId: "settings", authPattern: "checkModuleAccess" },
+  { file: "app/api/settings/integrations/route.ts", moduleId: "integrations", authPattern: "checkModuleAccess" },
   { file: "app/api/recaptcha/route.ts", moduleId: "recaptcha", authPattern: "checkModuleAccess" },
   { file: "app/api/users/route.ts", moduleId: "users", authPattern: "checkModuleAccess" },
   { file: "app/api/users/[id]/route.ts", moduleId: "users", authPattern: "checkModuleAccess" },
@@ -284,7 +284,7 @@ describe("integration settings API audit wiring", () => {
     const patchHandler = extractHandler(source, "PATCH");
 
     assert.ok(patchHandler, "expected PATCH handler");
-    assert.match(patchHandler, /const \{ authorized, status, session \} = await checkModuleAccess\("settings"\)/);
+    assert.match(patchHandler, /const \{ authorized, status, session \} = await checkModuleAccess\("integrations"\)/);
     assert.match(patchHandler, /const before = await getIntegrationSettings\(\)/);
     assert.match(patchHandler, /await saveIntegrationSettings\(/);
     assert.match(
