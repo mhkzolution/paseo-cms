@@ -7,6 +7,15 @@ import { cn } from "@/lib/utils";
 export type MediaFilter = "all" | "IMAGE" | "PDF" | "VIDEO";
 export type MediaSort = "newest" | "oldest" | "name-asc" | "name-desc";
 
+const DEFAULT_TYPE_OPTIONS: MediaFilter[] = ["all", "IMAGE", "PDF", "VIDEO"];
+
+const TYPE_LABELS: Record<MediaFilter, string> = {
+  all: "All",
+  IMAGE: "Images",
+  PDF: "PDF",
+  VIDEO: "Videos",
+};
+
 interface MediaToolbarProps {
   query: string;
   type: MediaFilter;
@@ -14,6 +23,7 @@ interface MediaToolbarProps {
   onQueryChange: (query: string) => void;
   onTypeChange: (type: MediaFilter) => void;
   onSortChange: (sort: MediaSort) => void;
+  typeOptions?: MediaFilter[];
   className?: string;
 }
 
@@ -24,6 +34,7 @@ export function MediaToolbar({
   onQueryChange,
   onTypeChange,
   onSortChange,
+  typeOptions = DEFAULT_TYPE_OPTIONS,
   className,
 }: MediaToolbarProps) {
   return (
@@ -50,10 +61,11 @@ export function MediaToolbar({
           value={type}
           onChange={(event) => onTypeChange(event.target.value as MediaFilter)}
         >
-          <option value="all">All</option>
-          <option value="IMAGE">Images</option>
-          <option value="PDF">PDF</option>
-          <option value="VIDEO">Videos</option>
+          {typeOptions.map((option) => (
+            <option key={option} value={option}>
+              {TYPE_LABELS[option]}
+            </option>
+          ))}
         </select>
       </label>
 

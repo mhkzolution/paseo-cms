@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { FolderOpen, ImageIcon, Upload, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,25 @@ type MediaFolder = {
   name: string;
   slug: string;
 };
+
+type AcceptType = "IMAGE" | "PDF" | "VIDEO";
+
+const MEDIA_TYPES: AcceptType[] = ["IMAGE", "PDF", "VIDEO"];
+
+function buildTypeOptions(accept: AcceptType[]): MediaFilter[] {
+  const options: MediaFilter[] = [];
+  if (accept.length > 1) options.push("all");
+  for (const mediaType of MEDIA_TYPES) {
+    if (accept.includes(mediaType)) options.push(mediaType);
+  }
+  return options;
+}
+
+function deriveApiType(toolbarType: MediaFilter, accept: AcceptType[]): MediaFilter {
+  if (toolbarType !== "all") return toolbarType;
+  if (accept.length === 1) return accept[0];
+  return "all";
+}
 
 interface MediaPickerDialogProps {
   open: boolean;
@@ -51,18 +70,21 @@ function MediaPickerDialogContent({
   const [folders, setFolders] = useState<MediaFolder[]>([]);
   const [folderId, setFolderId] = useState<string>("root");
   const [query, setQuery] = useState("");
-  const [type, setType] = useState<MediaFilter>("all");
+  const typeOptions = useMemo(() => buildTypeOptions(accept), [accept]);
+  const [type, setType] = useState<MediaFilter>(() => (accept.length === 1 ? accept[0] : "all"));
   const [sort, setSort] = useState<MediaSort>("newest");
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectedAsset, setSelectedAsset] = useState<MediaListItem | null>(null);
+  const apiType = useMemo(() => deriveApiType(type, accept), [type, accept]);
+  const acceptFilter = apiType === "all" ? accept : undefined;
   const { media, total, hasMore, isLoading, isLoadingMore, error, reload, loadMore } = useMediaList({
     folderId: folderId === "root" ? null : folderId,
     query,
-    type,
+    type: apiType,
     sort,
-    accept,
+    accept: acceptFilter,
   });
   const selectedFolder = folders.find((folder) => folder.id === folderId);
   const inventoryTitle = query.trim() ? "Search Results" : selectedFolder?.name ?? "All Files";
@@ -224,6 +246,7 @@ function MediaPickerDialogContent({
             onQueryChange={setQuery}
             onTypeChange={setType}
             onSortChange={setSort}
+            typeOptions={typeOptions}
             className="min-w-[16rem] flex-1"
           />
 
