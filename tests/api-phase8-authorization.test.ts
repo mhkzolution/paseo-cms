@@ -33,8 +33,8 @@ const PHASE_8_ROUTES: Array<{ file: string; moduleId: AdminModuleId; expectedRol
   },
   {
     file: "app/api/seo/route.ts",
-    moduleId: "seo",
-    expectedRoles: CONTENT_EDITOR_ROLES,
+    moduleId: "seo-settings",
+    expectedRoles: ADMIN_ROLES,
   },
 ];
 

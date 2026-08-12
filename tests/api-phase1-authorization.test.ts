@@ -9,8 +9,8 @@ import type { AdminModuleId } from "@/types";
 const PHASE_1_ROUTES: Array<{ file: string; moduleId: AdminModuleId; expectedRoles: string[] }> = [
   {
     file: "app/api/seo/route.ts",
-    moduleId: "seo",
-    expectedRoles: ["SUPER_ADMIN", "ADMIN", "EDITOR"],
+    moduleId: "seo-settings",
+    expectedRoles: ["SUPER_ADMIN", "ADMIN"],
   },
   {
     file: "app/api/settings/route.ts",
