@@ -6,6 +6,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { Button } from "@/components/ui/button";
+import { SeoAdvancedSection } from "@/features/settings/seo-advanced-section";
+import { SeoGeneralSection } from "@/features/settings/seo-general-section";
+import { SeoOrganizationSection } from "@/features/settings/seo-organization-section";
+import { SeoVerificationSection } from "@/features/settings/seo-verification-section";
 import { seoSchema } from "@/validators/content.validator";
 import type { SeoFormValues } from "@/validators/content.validator";
 
@@ -21,8 +25,12 @@ export function SeoForm({ defaultValues }: SeoFormProps) {
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<SeoFormValues>({ resolver, defaultValues });
+
+  const allowIndexing = watch("robots") !== "noindex,nofollow";
 
   const onSubmit = async (values: SeoFormValues) => {
     setServerMessage(null);
@@ -45,110 +53,27 @@ export function SeoForm({ defaultValues }: SeoFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="grid max-w-3xl gap-4 md:grid-cols-2">
-      <div>
-        <label htmlFor="metaTitle" className="text-sm font-medium text-foreground">
-          Meta title
-        </label>
-        <input
-          id="metaTitle"
-          type="text"
-          className="mt-1.5 w-full rounded-md border border-border bg-surface px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent"
-          {...register("metaTitle")}
-        />
-        {errors.metaTitle?.message ? <p className="mt-1 text-sm text-destructive">{errors.metaTitle.message}</p> : null}
-      </div>
+    <form onSubmit={handleSubmit(onSubmit)} className="grid max-w-4xl gap-6">
+      <SeoGeneralSection
+        register={register}
+        errors={errors}
+        allowIndexing={allowIndexing}
+        onAllowIndexingChange={(checked) =>
+          setValue("robots", checked ? "index,follow" : "noindex,nofollow", { shouldDirty: true })
+        }
+      />
 
-      <div>
-        <label htmlFor="canonicalUrl" className="text-sm font-medium text-foreground">
-          Canonical URL
-        </label>
-        <input
-          id="canonicalUrl"
-          type="url"
-          className="mt-1.5 w-full rounded-md border border-border bg-surface px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent"
-          {...register("canonicalUrl")}
-        />
-        {errors.canonicalUrl?.message ? (
-          <p className="mt-1 text-sm text-destructive">{errors.canonicalUrl.message}</p>
-        ) : null}
-      </div>
+      <SeoVerificationSection register={register} errors={errors} />
 
-      <div className="md:col-span-2">
-        <label htmlFor="metaDescription" className="text-sm font-medium text-foreground">
-          Meta description
-        </label>
-        <textarea
-          id="metaDescription"
-          rows={3}
-          className="mt-1.5 w-full rounded-md border border-border bg-surface px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent"
-          {...register("metaDescription")}
-        />
-        {errors.metaDescription?.message ? (
-          <p className="mt-1 text-sm text-destructive">{errors.metaDescription.message}</p>
-        ) : null}
-      </div>
+      <SeoOrganizationSection register={register} errors={errors} />
 
-      <div>
-        <label htmlFor="ogImage" className="text-sm font-medium text-foreground">
-          Open Graph image
-        </label>
-        <input
-          id="ogImage"
-          type="text"
-          className="mt-1.5 w-full rounded-md border border-border bg-surface px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent"
-          {...register("ogImage")}
-        />
-      </div>
-
-      <div>
-        <label htmlFor="twitterCard" className="text-sm font-medium text-foreground">
-          Twitter card
-        </label>
-        <select
-          id="twitterCard"
-          className="mt-1.5 w-full rounded-md border border-border bg-surface px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent"
-          {...register("twitterCard")}
-        >
-          <option value="summary_large_image">Summary large image</option>
-          <option value="summary">Summary</option>
-        </select>
-      </div>
-
-      <div>
-        <label htmlFor="robots" className="text-sm font-medium text-foreground">
-          Robots
-        </label>
-        <select
-          id="robots"
-          className="mt-1.5 w-full rounded-md border border-border bg-surface px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent"
-          {...register("robots")}
-        >
-          <option value="index,follow">Index, follow</option>
-          <option value="noindex,nofollow">No index, no follow</option>
-        </select>
-      </div>
-
-      <div className="md:col-span-2">
-        <label htmlFor="jsonLd" className="text-sm font-medium text-foreground">
-          JSON-LD
-        </label>
-        <textarea
-          id="jsonLd"
-          rows={8}
-          className="mt-1.5 w-full rounded-md border border-border bg-surface px-3 py-2 font-mono text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent"
-          {...register("jsonLd")}
-        />
-        {errors.jsonLd?.message ? <p className="mt-1 text-sm text-destructive">{errors.jsonLd.message}</p> : null}
-      </div>
+      <SeoAdvancedSection register={register} errors={errors} />
 
       {serverMessage ? (
-        <p className={isSuccess ? "text-sm text-emerald-700 md:col-span-2" : "text-sm text-destructive md:col-span-2"}>
-          {serverMessage}
-        </p>
+        <p className={isSuccess ? "text-sm text-emerald-700" : "text-sm text-destructive"}>{serverMessage}</p>
       ) : null}
 
-      <div className="md:col-span-2">
+      <div>
         <Button type="submit" isLoading={isSubmitting}>
           Save SEO
         </Button>

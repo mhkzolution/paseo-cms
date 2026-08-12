@@ -46,6 +46,11 @@ const ADMIN_PAGE_AUTH_EXEMPTIONS = [
     route: "/admin/seo",
     reason: "Redirect-only to /admin/seo/workspace",
   },
+  {
+    file: "app/admin/seo/settings/page.tsx",
+    route: "/admin/seo/settings",
+    reason: "Redirect-only 308 shim to /admin/settings/seo",
+  },
 ] as const;
 
 function listAdminPageFiles(dir = ADMIN_ROOT, prefix = "app/admin"): string[] {

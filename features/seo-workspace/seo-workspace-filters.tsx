@@ -265,7 +265,7 @@ export function SeoWorkspaceFilters({ categories, branches, tags }: SeoWorkspace
 
 export function SeoWorkspaceSettingsLink() {
   return (
-    <Link href="/admin/seo/settings" className="text-sm font-medium text-paseo-dark hover:underline">
+    <Link href="/admin/settings/seo" className="text-sm font-medium text-paseo-dark hover:underline">
       SEO Settings
     </Link>
   );

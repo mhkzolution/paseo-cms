@@ -114,7 +114,6 @@ export const ADMIN_NAV_SECTIONS: NavSection[] = [
         label: "จัดการ SEO",
         href: "/admin/seo/workspace",
         activePaths: ["/admin/seo/workspace", "/admin/seo/issues"],
-        excludeActivePaths: ["/admin/seo/settings"],
       },
     ],
   },
@@ -134,8 +133,14 @@ export const ADMIN_NAV_SECTIONS: NavSection[] = [
     icon: Settings,
     defaultExpanded: false,
     items: [
-      { id: "settings", label: "ตั้งค่าทั่วไป", href: "/admin/settings", excludeActivePaths: ["/admin/settings/localization"] },
+      {
+        id: "settings",
+        label: "ตั้งค่าทั่วไป",
+        href: "/admin/settings",
+        excludeActivePaths: ["/admin/settings/localization", "/admin/settings/seo"],
+      },
       { id: "localization", label: "ภาษาและรูปแบบ", href: "/admin/settings/localization" },
+      { id: "seo-settings", label: "SEO", href: "/admin/settings/seo" },
       { id: "recaptcha", label: "ระบบป้องกันสแปม", href: "/admin/recaptcha" },
       { id: "audit-logs", label: "Audit Logs", href: "/admin/audit-logs" },
     ],
