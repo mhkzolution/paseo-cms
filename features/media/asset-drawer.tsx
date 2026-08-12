@@ -42,6 +42,7 @@ export function AssetDrawer({ mode, asset, folders = [], onClose, onSaved, onDel
 }
 
 function AssetDrawerContent({ mode, asset, folders = [], onClose, onSaved, onDeleted, onSelect }: AssetDrawerProps & { asset: MediaListItem }) {
+  const [currentAsset, setCurrentAsset] = useState(asset);
   const [metadata, setMetadata] = useState<Metadata>({
     altText: asset.altText,
     title: asset.title,
@@ -55,7 +56,9 @@ function AssetDrawerContent({ mode, asset, folders = [], onClose, onSaved, onDel
   const [copied, setCopied] = useState(false);
 
   const isDirty =
-    metadata.altText !== asset.altText || metadata.title !== asset.title || metadata.caption !== asset.caption;
+    metadata.altText !== currentAsset.altText ||
+    metadata.title !== currentAsset.title ||
+    metadata.caption !== currentAsset.caption;
 
   const requestClose = () => {
     if (mode === "library" && isDirty && !window.confirm("Discard unsaved metadata changes?")) return;
@@ -63,7 +66,7 @@ function AssetDrawerContent({ mode, asset, folders = [], onClose, onSaved, onDel
   };
 
   const patchAsset = async (data: Partial<MediaListItem>) => {
-    const response = await fetch(`/api/media/${asset.id}`, {
+    const response = await fetch(`/api/media/${currentAsset.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -71,6 +74,7 @@ function AssetDrawerContent({ mode, asset, folders = [], onClose, onSaved, onDel
     const body = (await response.json().catch(() => null)) as { media?: MediaListItem; error?: string } | null;
 
     if (!response.ok || !body?.media) throw new Error(body?.error ?? "Could not update this asset.");
+    setCurrentAsset(body.media);
     onSaved?.(body.media);
     return body.media;
   };
@@ -89,8 +93,8 @@ function AssetDrawerContent({ mode, asset, folders = [], onClose, onSaved, onDel
   };
 
   const renameAsset = async () => {
-    const filename = window.prompt("Rename asset", asset.filename)?.trim();
-    if (!filename || filename === asset.filename) return;
+    const filename = window.prompt("Rename asset", currentAsset.filename)?.trim();
+    if (!filename || filename === currentAsset.filename) return;
     setError(null);
     try {
       await patchAsset({ filename });
@@ -101,11 +105,12 @@ function AssetDrawerContent({ mode, asset, folders = [], onClose, onSaved, onDel
 
   const moveAsset = async () => {
     const folderId = moveFolderId || null;
-    if (folderId === asset.folderId) return;
+    if (folderId === currentAsset.folderId) return;
     setIsMoving(true);
     setError(null);
     try {
-      await patchAsset({ folderId });
+      const saved = await patchAsset({ folderId });
+      setMoveFolderId(saved.folderId ?? "");
     } catch (moveError) {
       setError(moveError instanceof Error ? moveError.message : "Could not move this asset.");
     } finally {
@@ -122,12 +127,12 @@ function AssetDrawerContent({ mode, asset, folders = [], onClose, onSaved, onDel
     setIsDeleting(true);
     setError(null);
     try {
-      const response = await fetch(`/api/media/${asset.id}`, { method: "DELETE" });
+      const response = await fetch(`/api/media/${currentAsset.id}`, { method: "DELETE" });
       if (!response.ok) {
         const body = (await response.json().catch(() => null)) as { error?: string } | null;
         throw new Error(body?.error ?? "Could not remove this file. Please try again.");
       }
-      onDeleted?.(asset);
+      onDeleted?.(currentAsset);
       onClose();
     } catch (deleteError) {
       setError(deleteError instanceof Error ? deleteError.message : "Could not remove this file. Please try again.");
@@ -138,7 +143,7 @@ function AssetDrawerContent({ mode, asset, folders = [], onClose, onSaved, onDel
 
   const copyUrl = async () => {
     try {
-      await navigator.clipboard.writeText(new URL(asset.path, window.location.origin).toString());
+      await navigator.clipboard.writeText(new URL(currentAsset.path, window.location.origin).toString());
       setCopied(true);
     } catch {
       setError("Could not copy the asset URL.");
@@ -154,7 +159,7 @@ function AssetDrawerContent({ mode, asset, folders = [], onClose, onSaved, onDel
       <aside
         role="dialog"
         aria-modal="true"
-        aria-label={`${asset.filename} details`}
+        aria-label={`${currentAsset.filename} details`}
         className="flex h-full w-full max-w-xl flex-col overflow-hidden bg-surface shadow-xl"
         onMouseDown={(event) => event.stopPropagation()}
       >
@@ -172,19 +177,19 @@ function AssetDrawerContent({ mode, asset, folders = [], onClose, onSaved, onDel
 
         <div className="flex-1 overflow-y-auto p-5">
           <section aria-label="Preview" className="flex aspect-video items-center justify-center overflow-hidden rounded-lg bg-background">
-            {asset.type === "IMAGE" ? (
-              <Image src={asset.path} alt={asset.altText || asset.filename} width={800} height={450} className="h-full w-full object-contain" />
-            ) : asset.type === "VIDEO" ? (
+            {currentAsset.type === "IMAGE" ? (
+              <Image src={currentAsset.path} alt={currentAsset.altText || currentAsset.filename} width={800} height={450} className="h-full w-full object-contain" />
+            ) : currentAsset.type === "VIDEO" ? (
               <div className="flex flex-col items-center gap-2 text-muted">
                 <Video className="h-10 w-10" aria-hidden="true" />
-                <a href={asset.path} target="_blank" rel="noreferrer" className="text-sm underline">
+                <a href={currentAsset.path} target="_blank" rel="noreferrer" className="text-sm underline">
                   Open video
                 </a>
               </div>
             ) : (
               <div className="flex flex-col items-center gap-2 text-muted">
                 <FileText className="h-10 w-10" aria-hidden="true" />
-                <a href={asset.path} target="_blank" rel="noreferrer" className="text-sm underline">
+                <a href={currentAsset.path} target="_blank" rel="noreferrer" className="text-sm underline">
                   Open PDF
                 </a>
               </div>
@@ -194,14 +199,14 @@ function AssetDrawerContent({ mode, asset, folders = [], onClose, onSaved, onDel
           <section className="mt-6">
             <h3 className="text-sm font-semibold text-foreground">Asset information</h3>
             <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
-              <Detail label="Filename" value={asset.filename} />
-              <Detail label="Original name" value={emptyValue(asset.originalName)} />
-              <Detail label="Size" value={formatBytes(asset.size)} />
-              <Detail label="Mime type" value={emptyValue(asset.mimeType)} />
-              <Detail label="Extension" value={emptyValue(asset.extension)} />
-              <Detail label="Dimensions" value={asset.width && asset.height ? `${asset.width} × ${asset.height}` : "—"} />
-              <Detail label="Created At" value={formatDate(asset.createdAt)} />
-              <Detail label="Updated At" value={formatDate(asset.updatedAt)} />
+              <Detail label="Filename" value={currentAsset.filename} />
+              <Detail label="Original name" value={emptyValue(currentAsset.originalName)} />
+              <Detail label="Size" value={formatBytes(currentAsset.size)} />
+              <Detail label="Mime type" value={emptyValue(currentAsset.mimeType)} />
+              <Detail label="Extension" value={emptyValue(currentAsset.extension)} />
+              <Detail label="Dimensions" value={currentAsset.width && currentAsset.height ? `${currentAsset.width} × ${currentAsset.height}` : "—"} />
+              <Detail label="Created At" value={formatDate(currentAsset.createdAt)} />
+              <Detail label="Updated At" value={formatDate(currentAsset.updatedAt)} />
             </dl>
           </section>
 
@@ -218,9 +223,9 @@ function AssetDrawerContent({ mode, asset, folders = [], onClose, onSaved, onDel
               </div>
             ) : (
               <dl className="mt-3 grid gap-3 text-sm">
-                <Detail label="Alt text" value={emptyValue(asset.altText)} />
-                <Detail label="Title" value={emptyValue(asset.title)} />
-                <Detail label="Caption" value={emptyValue(asset.caption)} />
+                <Detail label="Alt text" value={emptyValue(currentAsset.altText)} />
+                <Detail label="Title" value={emptyValue(currentAsset.title)} />
+                <Detail label="Caption" value={emptyValue(currentAsset.caption)} />
               </dl>
             )}
           </section>
@@ -235,7 +240,7 @@ function AssetDrawerContent({ mode, asset, folders = [], onClose, onSaved, onDel
               {copied ? "Copied" : "Copy URL"}
             </Button>
             <a
-              href={asset.path}
+              href={currentAsset.path}
               download
               className="inline-flex items-center justify-center gap-2 rounded-md border border-border bg-surface px-4 py-2 text-sm font-medium text-foreground transition-colors hover:border-paseo/40 hover:bg-paseo-hover"
             >
@@ -243,7 +248,7 @@ function AssetDrawerContent({ mode, asset, folders = [], onClose, onSaved, onDel
               Download
             </a>
             {mode === "picker" ? (
-              <Button type="button" onClick={() => onSelect?.(asset)}>
+              <Button type="button" onClick={() => onSelect?.(currentAsset)}>
                 Select
               </Button>
             ) : (
@@ -265,7 +270,7 @@ function AssetDrawerContent({ mode, asset, folders = [], onClose, onSaved, onDel
                     </option>
                   ))}
                 </select>
-                <Button type="button" variant="secondary" isLoading={isMoving} disabled={moveFolderId === (asset.folderId ?? "")} onClick={moveAsset}>
+                <Button type="button" variant="secondary" isLoading={isMoving} disabled={moveFolderId === (currentAsset.folderId ?? "")} onClick={moveAsset}>
                   Move
                 </Button>
                 <Button type="button" variant="ghost" className="text-destructive hover:text-destructive" isLoading={isDeleting} onClick={deleteAsset}>
