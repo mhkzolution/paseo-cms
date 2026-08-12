@@ -3,15 +3,58 @@ import path from "path";
 
 import { NextResponse } from "next/server";
 
-import { checkRole } from "@/lib/rbac";
+import { validationError } from "@/lib/content-api";
+import { mediaListSelect } from "@/lib/media";
+import { checkModuleAccess } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
+import { mediaPatchSchema } from "@/validators/media.validator";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
+export async function PATCH(request: Request, { params }: RouteParams) {
+  const { authorized, status } = await checkModuleAccess("media-library");
+  if (!authorized) {
+    return NextResponse.json({ error: "Forbidden" }, { status });
+  }
+
+  const { id } = await params;
+  const parsed = mediaPatchSchema.safeParse(await request.json());
+  if (!parsed.success) return validationError(parsed.error);
+
+  const existing = await prisma.media.findFirst({ where: { id, deletedAt: null } });
+  if (!existing) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  if (parsed.data.folderId !== undefined && parsed.data.folderId !== null) {
+    const folder = await prisma.mediaFolder.findFirst({
+      where: { id: parsed.data.folderId, deletedAt: null },
+      select: { id: true },
+    });
+    if (!folder) {
+      return NextResponse.json({ error: "Folder not found" }, { status: 404 });
+    }
+  }
+
+  const media = await prisma.media.update({
+    where: { id },
+    data: {
+      ...(parsed.data.altText !== undefined ? { altText: parsed.data.altText } : {}),
+      ...(parsed.data.title !== undefined ? { title: parsed.data.title } : {}),
+      ...(parsed.data.caption !== undefined ? { caption: parsed.data.caption } : {}),
+      ...(parsed.data.filename !== undefined ? { filename: parsed.data.filename } : {}),
+      ...(parsed.data.folderId !== undefined ? { folderId: parsed.data.folderId } : {}),
+    },
+    select: mediaListSelect,
+  });
+
+  return NextResponse.json({ media });
+}
+
 export async function DELETE(_request: Request, { params }: RouteParams) {
-  const { authorized, status } = await checkRole(["SUPER_ADMIN", "ADMIN", "EDITOR", "MARKETING"]);
+  const { authorized, status } = await checkModuleAccess("media-library");
   if (!authorized) {
     return NextResponse.json({ error: "Forbidden" }, { status });
   }

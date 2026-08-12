@@ -9,7 +9,9 @@ export function DeleteMediaButton({ mediaId, filename }: { mediaId: string; file
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
-    const confirmed = window.confirm(`Remove "${filename}" from the media library?`);
+    const confirmed = window.confirm(
+      "Delete Asset\n\nThis asset will be removed from the Media Library.\n\nYou can restore it later if recovery is supported by the system.",
+    );
     if (!confirmed) return;
 
     setIsDeleting(true);
