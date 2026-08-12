@@ -272,6 +272,7 @@ describe("SEO settings API audit wiring", () => {
     assert.ok(patchHandler, "expected PATCH handler");
     assert.match(patchHandler, /const \{ authorized, status, session \} = await checkModuleAccess\("seo-settings"\)/);
     assert.match(patchHandler, /const before = .*await getSeoSettings\(\)/);
-    assert.match(patchHandler, /await auditSeoSettingsUpdate\(\{[\s\S]*user: session\.user,[\s\S]*before,[\s\S]*after: parsed\.data/);
+    assert.match(patchHandler, /normalizeSeoSettingsValues\(parsed\.data\)/);
+    assert.match(patchHandler, /await auditSeoSettingsUpdate\(\{[\s\S]*user: session\.user,[\s\S]*before,[\s\S]*after/);
   });
 });
