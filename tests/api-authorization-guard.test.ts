@@ -64,7 +64,7 @@ const API_ROUTE_REGISTRY: ApiRouteExpectation[] = [
     publicHandlers: ["POST"],
   },
   { file: "app/api/leasing/[id]/route.ts", moduleId: "leasing-inquiries", authPattern: "checkModuleAccess" },
-  { file: "app/api/seo/route.ts", moduleId: "seo", authPattern: "checkModuleAccess" },
+  { file: "app/api/seo/route.ts", moduleId: "seo-settings", authPattern: "checkModuleAccess" },
   { file: "app/api/admin/seo/workspace/route.ts", moduleId: "seo", authPattern: "checkModuleAccess" },
   { file: "app/api/admin/seo/recalculate/route.ts", moduleId: "seo", authPattern: "checkModuleAccess" },
   { file: "app/api/admin/audit-logs/route.ts", moduleId: "audit-logs", authPattern: "checkModuleAccess" },
@@ -221,6 +221,7 @@ describe("API authorization registry coverage", () => {
       "contact-messages",
       "leasing-inquiries",
       "seo",
+      "seo-settings",
       "settings",
       "localization",
       "about-the-paseo",
@@ -260,5 +261,17 @@ describe("admin permission registry integrity", () => {
     const uniqueFingerprints = new Set(roleFingerprints);
 
     assert.ok(uniqueFingerprints.size <= 4, "unexpected proliferation of distinct role sets");
+  });
+});
+
+describe("SEO settings API audit wiring", () => {
+  it("audits PATCH updates with the authenticated user and before/after values", () => {
+    const source = readFileSync(relativePath("app/api/seo/route.ts"), "utf8");
+    const patchHandler = extractHandler(source, "PATCH");
+
+    assert.ok(patchHandler, "expected PATCH handler");
+    assert.match(patchHandler, /const \{ authorized, status, session \} = await checkModuleAccess\("seo-settings"\)/);
+    assert.match(patchHandler, /const before = .*await getSeoSettings\(\)/);
+    assert.match(patchHandler, /await auditSeoSettingsUpdate\(\{[\s\S]*user: session\.user,[\s\S]*before,[\s\S]*after: parsed\.data/);
   });
 });

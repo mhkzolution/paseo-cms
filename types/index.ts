@@ -19,6 +19,7 @@ export type AdminModuleId =
   | "post-categories"
   | "tags"
   | "seo"
+  | "seo-settings"
   | "search"
   | "users"
   | "roles"

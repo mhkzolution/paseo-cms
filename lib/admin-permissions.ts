@@ -34,6 +34,7 @@ export const ADMIN_MODULE_PERMISSIONS = [
   { id: "post-categories", routePrefix: "/admin/post-categories", roles: CONTENT_EDITOR_ROLES },
   { id: "tags", routePrefix: "/admin/tags", roles: CONTENT_EDITOR_ROLES },
   { id: "seo", routePrefix: "/admin/seo", roles: CONTENT_EDITOR_ROLES },
+  { id: "seo-settings", routePrefix: "/admin/settings/seo", roles: ADMIN_ROLES },
   { id: "search", routePrefix: "/admin/search", roles: MARKETING_CONTENT_ROLES },
   { id: "users", routePrefix: "/admin/users", roles: ADMIN_ROLES },
   { id: "roles", routePrefix: "/admin/roles", roles: SUPER_ADMIN_ROLES },

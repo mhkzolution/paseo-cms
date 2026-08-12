@@ -28,6 +28,19 @@ describe("admin permissions registry", () => {
     const permission = findModulePermissionForPathname("/admin/audit-logs");
     assert.equal(permission?.id, "audit-logs");
   });
+
+  it("protects SEO settings for ADMIN_ROLES only", () => {
+    assert.deepEqual(getModuleRoles("seo-settings"), ["SUPER_ADMIN", "ADMIN"]);
+    const permission = findModulePermissionForPathname("/admin/settings/seo");
+    assert.equal(permission?.id, "seo-settings");
+    assert.equal(permission?.roles.includes("EDITOR"), false);
+  });
+
+  it("keeps the SEO workspace available to content editors", () => {
+    assert.deepEqual(getModuleRoles("seo"), ["SUPER_ADMIN", "ADMIN", "EDITOR"]);
+    const permission = findModulePermissionForPathname("/admin/seo");
+    assert.equal(permission?.id, "seo");
+  });
 });
 
 describe("admin navigation active state", () => {
