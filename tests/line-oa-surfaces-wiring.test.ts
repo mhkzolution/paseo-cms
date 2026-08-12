@@ -22,4 +22,10 @@ describe("LINE OA surfaces wiring", () => {
     assert.match(source, /getIntegrationSettings/);
     assert.match(source, /catch/);
   });
+
+  it("wires LineFooterLink via SiteFooter without getIntegrationSettings", () => {
+    const source = read("features/layout/site-footer.tsx");
+    assert.match(source, /LineFooterLink|resolveLineOaUrl/);
+    assert.doesNotMatch(source, /getIntegrationSettings/);
+  });
 });
