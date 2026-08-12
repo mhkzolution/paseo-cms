@@ -134,6 +134,7 @@ See [04-mvp-scope.md](./04-mvp-scope.md) for the full lock and [05-future-roadma
 | 03 | [UI spec](./03-ui-spec.md) | Library, Picker, Drawer, search/filter/sort |
 | 04 | [MVP scope](./04-mvp-scope.md) | In / out of scope, success criteria |
 | 05 | [Future roadmap](./05-future-roadmap.md) | Media Platform Initiative phases |
+| 06 | [Layout refinement](./06-layout-refinement.md) | Grid density, inventory, page pagination, Load More (Library + Picker) |
 
 ---
 
