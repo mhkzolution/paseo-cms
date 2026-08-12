@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 
+import { AuditModule } from "@/lib/audit-log";
 import { forbiddenError, validationError } from "@/lib/content-api";
+import { auditContentDelete, auditContentUpdate } from "@/lib/content-audit";
 import { resolvePostKindForSave } from "@/lib/categories";
 import { buildUniquePostSlug, resolveTagIds, syncPostRelations } from "@/lib/post-write";
 import { prisma } from "@/lib/prisma";
@@ -16,7 +18,7 @@ interface RouteParams {
 }
 
 export async function PATCH(request: Request, { params }: RouteParams) {
-  const { authorized, status } = await checkModuleAccess("news");
+  const { authorized, status, session } = await checkModuleAccess("news");
   if (!authorized) return forbiddenError(status);
 
   const { id } = await params;
@@ -29,8 +31,22 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     kind: resolvedKind ?? parsed.data.kind,
   };
 
-  const current = await prisma.post.findFirst({ where: { id, deletedAt: null }, select: { id: true, slug: true } });
-  if (!current) return NextResponse.json({ error: "Post not found" }, { status: 404 });
+  const existing = await prisma.post.findFirst({
+    where: { id, deletedAt: null },
+    include: {
+      seo: {
+        select: {
+          seoTitle: true,
+          seoDescription: true,
+          focusKeyword: true,
+          canonicalUrl: true,
+          noindex: true,
+          nofollow: true,
+        },
+      },
+    },
+  });
+  if (!existing) return NextResponse.json({ error: "Post not found" }, { status: 404 });
 
   let customJsonLd = null;
   try {
@@ -41,7 +57,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
   const baseSlug = generateSlug(postPayload.slug ?? postPayload.title) || "post";
   const slug = await buildUniquePostSlug(baseSlug, id);
-  const slugChanged = current.slug !== slug;
+  const slugChanged = existing.slug !== slug;
   const enriched = await enrichSeoForSave(prisma, postPayload, {
     contentType: "post",
     slug,
@@ -75,10 +91,10 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
     if (slugChanged) {
       await tx.postSlugHistory.upsert({
-        where: { oldSlug: current.slug },
+        where: { oldSlug: existing.slug },
         create: {
           postId: id,
-          oldSlug: current.slug,
+          oldSlug: existing.slug,
           newSlug: slug,
           statusCode: "MOVED_PERMANENTLY",
         },
@@ -88,9 +104,9 @@ export async function PATCH(request: Request, { params }: RouteParams) {
         },
       });
       await tx.seoRedirect.upsert({
-        where: { fromPath: `/news/${current.slug}` },
+        where: { fromPath: `/news/${existing.slug}` },
         create: {
-          fromPath: `/news/${current.slug}`,
+          fromPath: `/news/${existing.slug}`,
           toPath: `/news/${slug}`,
           statusCode: "MOVED_PERMANENTLY",
         },
@@ -121,15 +137,38 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     });
   });
 
+  if (post) {
+    await auditContentUpdate({
+      user: session.user,
+      module: AuditModule.POSTS,
+      entityType: "Post",
+      before: existing,
+      after: post,
+    });
+  }
+
   return NextResponse.json({ post });
 }
 
 export async function DELETE(_request: Request, { params }: RouteParams) {
-  const { authorized, status } = await checkModuleAccess("news");
+  const { authorized, status, session } = await checkModuleAccess("news");
   if (!authorized) return forbiddenError(status);
 
   const { id } = await params;
+  const existing = await prisma.post.findFirst({
+    where: { id, deletedAt: null },
+    select: { id: true, title: true, slug: true },
+  });
+  if (!existing) return NextResponse.json({ error: "Post not found" }, { status: 404 });
+
   await prisma.post.update({ where: { id }, data: { deletedAt: new Date() } });
+
+  await auditContentDelete({
+    user: session.user,
+    module: AuditModule.POSTS,
+    entityType: "Post",
+    entity: existing,
+  });
 
   return NextResponse.json({ success: true });
 }

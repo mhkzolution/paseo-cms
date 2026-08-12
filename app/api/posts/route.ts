@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 
 import { forbiddenError, validationError } from "@/lib/content-api";
+import { auditContentCreate } from "@/lib/content-audit";
 import { resolvePostKindForSave } from "@/lib/categories";
+import { AuditModule } from "@/lib/audit-log";
 import { buildUniquePostSlug, resolveTagIds, syncPostRelations } from "@/lib/post-write";
 import { prisma } from "@/lib/prisma";
 import { checkModuleAccess } from "@/lib/rbac";
@@ -94,6 +96,15 @@ export async function POST(request: Request) {
       include: { seo: true, tags: { include: { tag: true } }, branches: { include: { branch: true } } },
     });
   });
+
+  if (post) {
+    await auditContentCreate({
+      user: session.user,
+      module: AuditModule.POSTS,
+      entityType: "Post",
+      entity: post,
+    });
+  }
 
   return NextResponse.json({ post }, { status: 201 });
 }

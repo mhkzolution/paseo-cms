@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 
+import { AuditModule } from "@/lib/audit-log";
 import { forbiddenError, validationError } from "@/lib/content-api";
+import { auditContentCreate } from "@/lib/content-audit";
 import { buildUniqueEventSlug, resolveTagIds, syncEventRelations } from "@/lib/event-write";
 import { prisma } from "@/lib/prisma";
 import { checkModuleAccess } from "@/lib/rbac";
@@ -86,6 +88,15 @@ export async function POST(request: Request) {
       include: { seo: true, tags: { include: { tag: true } }, branches: { include: { branch: true } } },
     });
   });
+
+  if (event) {
+    await auditContentCreate({
+      user: session.user,
+      module: AuditModule.EVENTS,
+      entityType: "Event",
+      entity: event,
+    });
+  }
 
   return NextResponse.json({ event }, { status: 201 });
 }
