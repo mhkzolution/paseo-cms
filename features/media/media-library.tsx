@@ -1,17 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
-import { FileText, Folder, FolderOpen, Plus, Video } from "lucide-react";
+import { Folder, FolderOpen, Plus } from "lucide-react";
 
 import { EmptyState } from "@/components/admin/empty-state";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { formatBytes, formatDate } from "@/lib/format";
-import { DeleteMediaButton } from "@/features/media/delete-media-button";
+import type { LocalizationSettings } from "@/lib/localization-settings";
 import { MediaUploadButton } from "@/features/media/media-upload-button";
+import { AssetDrawer } from "@/features/media/asset-drawer";
+import { MediaGrid } from "@/features/media/media-grid";
+import { MediaToolbar, type MediaFilter, type MediaSort } from "@/features/media/media-toolbar";
+import type { MediaFolderOption, MediaListItem } from "@/features/media/types";
 
 type MediaFolder = {
   id: string;
@@ -20,29 +22,53 @@ type MediaFolder = {
   _count: { media: number };
 };
 
-type MediaItem = {
-  id: string;
-  folderId: string | null;
-  filename: string;
-  path: string;
-  type: "IMAGE" | "PDF" | "VIDEO";
-  size: number;
-  createdAt: Date;
-};
-
 interface MediaLibraryProps {
   folders: MediaFolder[];
-  media: MediaItem[];
+  media: MediaListItem[];
   currentFolderId: string | null;
+  localization?: LocalizationSettings;
 }
 
-export function MediaLibrary({ folders, media, currentFolderId }: MediaLibraryProps) {
+export function MediaLibrary({ folders, media: initialMedia, currentFolderId }: MediaLibraryProps) {
   const router = useRouter();
   const [folderName, setFolderName] = useState("");
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [folderError, setFolderError] = useState<string | null>(null);
+  const [media, setMedia] = useState<MediaListItem[]>(initialMedia);
+  const [query, setQuery] = useState("");
+  const [type, setType] = useState<MediaFilter>("all");
+  const [sort, setSort] = useState<MediaSort>("newest");
+  const [isLoading, setIsLoading] = useState(false);
+  const [mediaError, setMediaError] = useState<string | null>(null);
+  const [selectedAsset, setSelectedAsset] = useState<MediaListItem | null>(null);
 
   const currentFolder = folders.find((folder) => folder.id === currentFolderId) ?? null;
+  const folderOptions: MediaFolderOption[] = folders.map(({ id, name }) => ({ id, name }));
+
+  const loadMedia = useCallback(async () => {
+    setIsLoading(true);
+    setMediaError(null);
+
+    const params = new URLSearchParams({ folderId: currentFolderId ?? "root", sort });
+    if (query.trim()) params.set("q", query.trim());
+    if (type !== "all") params.set("type", type);
+
+    try {
+      const response = await fetch(`/api/media?${params.toString()}`);
+      const body = (await response.json().catch(() => null)) as { media?: MediaListItem[]; error?: string } | null;
+      if (!response.ok) throw new Error(body?.error ?? "Could not load media.");
+      setMedia(body?.media ?? []);
+    } catch (error) {
+      setMediaError(error instanceof Error ? error.message : "Could not load media.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentFolderId, query, sort, type]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => void loadMedia(), 0);
+    return () => window.clearTimeout(timer);
+  }, [loadMedia]);
 
   const handleCreateFolder = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -128,17 +154,31 @@ export function MediaLibrary({ folders, media, currentFolderId }: MediaLibraryPr
       </aside>
 
       <div className="min-w-0 flex-1">
-        <div className="mb-4 flex items-center justify-between gap-2">
+        <div className="mb-4 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div>
             <h2 className="text-lg font-semibold text-foreground">{currentFolder?.name ?? "All files"}</h2>
             <p className="text-sm text-muted">
               {currentFolder ? "Files uploaded to this folder" : "All uploaded files across every folder"}
             </p>
           </div>
-          <MediaUploadButton folderId={currentFolderId} />
+          <MediaUploadButton folderId={currentFolderId} onBatchUploaded={() => void loadMedia()} />
         </div>
 
-        {media.length === 0 ? (
+        <MediaToolbar
+          query={query}
+          type={type}
+          sort={sort}
+          onQueryChange={setQuery}
+          onTypeChange={setType}
+          onSortChange={setSort}
+          className="mb-5"
+        />
+
+        {mediaError ? <p role="alert" className="mb-4 text-sm text-destructive">{mediaError}</p> : null}
+
+        {isLoading ? (
+          <p className="text-sm text-muted">Loading media...</p>
+        ) : media.length === 0 ? (
           <EmptyState
             icon={FolderOpen}
             title="No files yet"
@@ -149,35 +189,25 @@ export function MediaLibrary({ folders, media, currentFolderId }: MediaLibraryPr
             }
           />
         ) : (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
-            {media.map((item) => (
-              <div
-                key={item.id}
-                className="group relative flex flex-col overflow-hidden rounded-lg border border-border bg-surface"
-              >
-                <div className="relative flex aspect-square items-center justify-center bg-background">
-                  {item.type === "IMAGE" ? (
-                    <Image src={item.path} alt={item.filename} fill className="object-cover" sizes="200px" />
-                  ) : item.type === "VIDEO" ? (
-                    <Video className="h-8 w-8 text-muted" aria-hidden="true" />
-                  ) : (
-                    <FileText className="h-8 w-8 text-muted" aria-hidden="true" />
-                  )}
-                  <DeleteMediaButton mediaId={item.id} filename={item.filename} />
-                </div>
-                <div className="flex flex-col gap-0.5 px-3 py-2">
-                  <p className="truncate text-sm font-medium text-foreground" title={item.filename}>
-                    {item.filename}
-                  </p>
-                  <p className="text-xs text-muted">
-                    {formatBytes(item.size)} · {formatDate(item.createdAt)}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
+          <MediaGrid media={media} onSelect={setSelectedAsset} selectedId={selectedAsset?.id} />
         )}
       </div>
+
+      <AssetDrawer
+        mode="library"
+        asset={selectedAsset}
+        folders={folderOptions}
+        onClose={() => setSelectedAsset(null)}
+        onSaved={(saved) => {
+          setMedia((current) => current.map((asset) => (asset.id === saved.id ? saved : asset)));
+          setSelectedAsset(saved);
+        }}
+        onDeleted={(deleted) => {
+          setMedia((current) => current.filter((asset) => asset.id !== deleted.id));
+          setSelectedAsset(null);
+          router.refresh();
+        }}
+      />
     </div>
   );
 }
