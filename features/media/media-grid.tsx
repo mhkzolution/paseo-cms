@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { FileText, Video } from "lucide-react";
+import { Check, FileText, Video } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { formatBytes, formatDate } from "@/lib/format";
@@ -11,20 +11,28 @@ interface MediaGridProps {
   media: MediaListItem[];
   onSelect: (asset: MediaListItem) => void;
   selectedId?: string | null;
+  selectedIds?: string[];
   className?: string;
 }
 
-export function MediaGrid({ media, onSelect, selectedId, className }: MediaGridProps) {
+function isAssetSelected(assetId: string, selectedId?: string | null, selectedIds?: string[]) {
+  return selectedId === assetId || selectedIds?.includes(assetId);
+}
+
+export function MediaGrid({ media, onSelect, selectedId, selectedIds, className }: MediaGridProps) {
   return (
     <div className={cn("grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5", className)}>
-      {media.map((asset) => (
+      {media.map((asset) => {
+        const selected = isAssetSelected(asset.id, selectedId, selectedIds);
+
+        return (
         <button
           key={asset.id}
           type="button"
           onClick={() => onSelect(asset)}
           className={cn(
             "group flex flex-col overflow-hidden rounded-lg border bg-surface text-left transition-colors hover:border-paseo",
-            selectedId === asset.id ? "border-paseo ring-2 ring-paseo/30" : "border-border",
+            selected ? "border-paseo ring-2 ring-paseo/30" : "border-border",
           )}
         >
           <div className="relative flex aspect-square items-center justify-center bg-background">
@@ -35,6 +43,14 @@ export function MediaGrid({ media, onSelect, selectedId, className }: MediaGridP
             ) : (
               <FileText className="h-8 w-8 text-muted" aria-hidden="true" />
             )}
+            {selected ? (
+              <span
+                className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-paseo text-white shadow-sm"
+                aria-hidden="true"
+              >
+                <Check className="h-3 w-3" />
+              </span>
+            ) : null}
           </div>
           <div className="min-w-0 px-3 py-2">
             <p className="truncate text-sm font-medium text-foreground" title={asset.filename}>
@@ -45,7 +61,8 @@ export function MediaGrid({ media, onSelect, selectedId, className }: MediaGridP
             </p>
           </div>
         </button>
-      ))}
+        );
+      })}
     </div>
   );
 }

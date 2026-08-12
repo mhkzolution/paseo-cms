@@ -267,7 +267,12 @@ function MediaPickerDialogContent({
               <p className="text-sm">No files in this folder yet.</p>
             </div>
           ) : (
-            <MediaGrid media={media} onSelect={setSelectedAsset} selectedId={selectedAsset?.id} />
+            <MediaGrid
+              media={media}
+              onSelect={setSelectedAsset}
+              selectedId={selectedAsset?.id}
+              selectedIds={multiple ? selectedIds : undefined}
+            />
           )}
         </div>
 
