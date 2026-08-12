@@ -59,7 +59,7 @@ node --import tsx --test tests/api-authorization-guard.test.ts
 
 ## API Smoke (admin session, localhost:3000)
 
-Login: `admin@thepaseo.co.th` / `ChangeMe123!` via credentials callback (HTTP 302).
+Login: `<redacted>` via credentials callback (HTTP 302). Credentials omitted from this document intentionally.
 
 | Check | Result |
 |-------|--------|
