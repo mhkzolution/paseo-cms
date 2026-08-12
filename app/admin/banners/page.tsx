@@ -1,5 +1,8 @@
 import { redirect } from "next/navigation";
 
-export default function BannersIndexPage() {
+import { requireModuleAccess } from "@/lib/rbac";
+
+export default async function BannersIndexPage() {
+  await requireModuleAccess("banners");
   redirect("/admin/banners/site");
 }

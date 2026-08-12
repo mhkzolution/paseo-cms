@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 import { ResourceForm } from "@/features/content/resource-form";
-import { requireRole } from "@/lib/rbac";
+import { requireModuleAccess } from "@/lib/rbac";
 
 const GALLERY_FIELDS = [
   { name: "album", label: "Album", type: "text" },
@@ -10,7 +10,7 @@ const GALLERY_FIELDS = [
 ] as const;
 
 export default async function NewGalleryPage() {
-  await requireRole(["SUPER_ADMIN", "ADMIN", "EDITOR", "MARKETING"]);
+  await requireModuleAccess("gallery");
 
   return (
     <div className="flex flex-col gap-6">

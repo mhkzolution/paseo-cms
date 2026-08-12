@@ -1,7 +1,7 @@
 import { AdminPageHeader, AdminTableShell } from "@/components/admin/admin-table";
 import { RoleBadge } from "@/components/admin/role-badge";
 import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/lib/rbac";
+import { requireModuleAccess } from "@/lib/rbac";
 import type { AppRole } from "@/types";
 
 const ROLE_DESCRIPTIONS: Record<AppRole, string> = {
@@ -28,7 +28,7 @@ const CAPABILITY_MATRIX: Record<AppRole, boolean[]> = {
 const ALL_ROLES: AppRole[] = ["SUPER_ADMIN", "ADMIN", "EDITOR", "MARKETING", "VIEWER"];
 
 export default async function RolesPage() {
-  await requireRole(["SUPER_ADMIN"]);
+  await requireModuleAccess("roles");
 
   const counts = await prisma.user.groupBy({
     by: ["role"],

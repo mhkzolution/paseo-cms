@@ -1,8 +1,11 @@
 import Image from "next/image";
 import { Link } from "@/i18n/navigation";
 
+import { buildEventHref } from "@/lib/slug";
+
 import type { ArchiveEvent } from "@/lib/events";
-import { formatEventDate, formatEventDateRange } from "@/lib/events";
+import { formatDateRangeWithSettings } from "@/lib/datetime";
+import { getLocalizationSettings } from "@/lib/settings-cache";
 import { cn } from "@/lib/utils";
 
 interface EventCardProps {
@@ -11,9 +14,12 @@ interface EventCardProps {
   imageClassName?: string;
 }
 
-export function EventCard({ event, className, imageClassName }: EventCardProps) {
+export async function EventCard({ event, className, imageClassName }: EventCardProps) {
+  const settings = await getLocalizationSettings();
+  const dateRangeLabel = formatDateRangeWithSettings(event.eventDate, event.eventEndDate, settings);
+
   return (
-    <Link href={`/events/${event.slug}`} className={cn("group block", className)}>
+    <Link href={buildEventHref(event.slug)} className={cn("group block", className)}>
       <div className={cn("relative aspect-[3/4] overflow-hidden rounded-2xl bg-white/20", imageClassName)}>
         {event.featuredImage ? (
           <Image
@@ -32,7 +38,7 @@ export function EventCard({ event, className, imageClassName }: EventCardProps) 
       <article className="mt-4">
         <p className="line-clamp-4 text-sm leading-6 text-foreground">{event.excerpt || event.title}</p>
         <p className="mt-2 text-xs text-foreground/70">
-          {formatEventDateRange(event.eventDate, event.eventEndDate)}
+          {dateRangeLabel}
           {event.location ? ` · ${event.location}` : ""}
         </p>
       </article>

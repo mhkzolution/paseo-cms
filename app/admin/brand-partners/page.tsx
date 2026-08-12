@@ -7,11 +7,13 @@ import { EmptyState } from "@/components/admin/empty-state";
 import { DeleteResourceButton } from "@/features/content/delete-resource-button";
 import { getBranchPlacementLabels } from "@/lib/banners";
 import { formatDate } from "@/lib/format";
+import { getLocalizationSettings } from "@/lib/settings-cache";
 import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/lib/rbac";
+import { requireModuleAccess } from "@/lib/rbac";
 
 export default async function BrandPartnersPage() {
-  await requireRole(["SUPER_ADMIN", "ADMIN", "EDITOR", "MARKETING"]);
+  await requireModuleAccess("brand-partners");
+  const localization = await getLocalizationSettings();
 
   const [brandPartners, branchLabels] = await Promise.all([
     prisma.brandPartner.findMany({
@@ -116,7 +118,7 @@ export default async function BrandPartnersPage() {
                         {partner.isActive ? "Active" : "Inactive"}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-muted">{formatDate(partner.updatedAt)}</td>
+                    <td className="px-4 py-3 text-muted">{formatDate(partner.updatedAt, localization)}</td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex flex-nowrap items-center justify-end gap-1 whitespace-nowrap sm:gap-2">
                         <Link

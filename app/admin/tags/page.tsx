@@ -5,10 +5,10 @@ import { AdminPageHeader, AdminTableShell } from "@/components/admin/admin-table
 import { EmptyState } from "@/components/admin/empty-state";
 import { DeleteResourceButton } from "@/features/content/delete-resource-button";
 import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/lib/rbac";
+import { requireModuleAccess } from "@/lib/rbac";
 
 export default async function TagsPage() {
-  await requireRole(["SUPER_ADMIN", "ADMIN", "EDITOR"]);
+  await requireModuleAccess("tags");
 
   const tags = await prisma.tag.findMany({
     where: { deletedAt: null },

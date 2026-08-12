@@ -196,6 +196,7 @@ describe("content validators", () => {
   it("validates required production settings", () => {
     const parsed = settingsSchema.safeParse({
       siteName: "The Paseo",
+      siteTagline: "ระบบจัดการเว็บไซต์",
       siteUrl: "https://thepaseo.co.th",
       siteLogo: "",
       favicon: "",

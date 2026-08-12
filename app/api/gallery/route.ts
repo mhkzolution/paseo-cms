@@ -2,13 +2,11 @@ import { NextResponse } from "next/server";
 
 import { forbiddenError, validationError } from "@/lib/content-api";
 import { prisma } from "@/lib/prisma";
-import { checkRole } from "@/lib/rbac";
+import { checkModuleAccess } from "@/lib/rbac";
 import { gallerySchema } from "@/validators/content.validator";
 
-const MARKETING_ROLES = ["SUPER_ADMIN", "ADMIN", "EDITOR", "MARKETING"] as const;
-
 export async function GET() {
-  const { authorized, status } = await checkRole([...MARKETING_ROLES]);
+  const { authorized, status } = await checkModuleAccess("gallery");
   if (!authorized) return forbiddenError(status);
 
   const gallery = await prisma.gallery.findMany({
@@ -20,7 +18,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const { authorized, status } = await checkRole([...MARKETING_ROLES]);
+  const { authorized, status } = await checkModuleAccess("gallery");
   if (!authorized) return forbiddenError(status);
 
   const parsed = gallerySchema.safeParse(await request.json());

@@ -2,10 +2,10 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 import { BranchEditorForm } from "@/features/branches/branch-editor-form";
-import { requireRole } from "@/lib/rbac";
+import { requireModuleAccess } from "@/lib/rbac";
 
 export default async function NewBranchPage() {
-  await requireRole(["SUPER_ADMIN", "ADMIN", "EDITOR"]);
+  await requireModuleAccess("branches");
 
   return (
     <div className="flex flex-col gap-6">

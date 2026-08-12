@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
-import { requireRole } from "@/lib/rbac";
+import { requireModuleAccess } from "@/lib/rbac";
 import { UserForm } from "@/features/users/user-form";
 
 export default async function NewUserPage() {
-  await requireRole(["SUPER_ADMIN", "ADMIN"]);
+  await requireModuleAccess("users");
 
   return (
     <div className="flex flex-col gap-6">

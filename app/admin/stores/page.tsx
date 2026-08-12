@@ -9,10 +9,10 @@ import { getBranchAdminLabel } from "@/lib/branches/branch-names";
 import { getStoreFloorLabel, getStoreLocationLabel, getStoreZoneLabel } from "@/lib/store-zones/names";
 import { getStoreAdminLabel } from "@/lib/stores/store-names";
 import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/lib/rbac";
+import { requireModuleAccess } from "@/lib/rbac";
 
 export default async function StoresPage() {
-  await requireRole(["SUPER_ADMIN", "ADMIN", "EDITOR"]);
+  await requireModuleAccess("stores");
 
   const stores = await prisma.store.findMany({
     where: { deletedAt: null },

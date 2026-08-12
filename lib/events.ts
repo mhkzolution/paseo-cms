@@ -1,12 +1,8 @@
 import type { Prisma } from "@prisma/client";
 
 import { getBranchThaiName } from "@/lib/branches/branch-names";
-import {
-  formatBangkokDate,
-  formatBangkokDateRange,
-  formatBangkokTime,
-  startOfTodayBangkok,
-} from "@/lib/datetime";
+import { startOfTodayBangkok } from "@/lib/datetime";
+import { formatDate, formatDateRange, formatDateTime, formatTime } from "@/lib/datetime-server";
 import { prisma } from "@/lib/prisma";
 
 export const ARCHIVE_EVENT_LIMIT = 24;
@@ -167,8 +163,8 @@ export async function getHomeStyleEvents({
   return events.map(toHomeArchiveEvent);
 }
 
-export function formatEventTime(date: Date) {
-  return formatBangkokTime(date);
+export async function formatEventTime(date: Date) {
+  return formatTime(date);
 }
 
 export function formatEventBranchLabel(event: HomeArchiveEvent) {
@@ -181,20 +177,16 @@ export async function getUpcomingEventsForBranch(branchId: string, limit = 6) {
   return getPublishedEvents({ branchId, limit, upcomingOnly: true });
 }
 
-export function formatEventDate(date: Date) {
-  return formatBangkokDate(date);
+export async function formatEventDate(date: Date) {
+  return formatDate(date);
 }
 
-export function formatEventDateTime(date: Date) {
-  return new Intl.DateTimeFormat("th-TH", {
-    timeZone: "UTC",
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
+export async function formatEventDateTime(date: Date) {
+  return formatDateTime(date);
 }
 
-export function formatEventDateRange(start: Date, end: Date | null) {
-  return formatBangkokDateRange(start, end);
+export async function formatEventDateRange(start: Date, end: Date | null) {
+  return formatDateRange(start, end);
 }
 
 export function buildEventsHref({ branch }: { branch?: string }) {

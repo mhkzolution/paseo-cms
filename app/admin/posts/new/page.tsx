@@ -2,18 +2,35 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 import { PostEditorForm } from "@/features/content/post-editor-form";
+import { ensureDefaultPostCategories, mapPostCategoryOptions } from "@/lib/categories";
 import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/lib/rbac";
+import { resolveInternalLinkSuggestions } from "@/lib/seo-internal-links";
+import { requireModuleAccess } from "@/lib/rbac";
+
+const NEW_POST_LINK_CONTEXT_ID = "__new_post__";
 
 export default async function NewPostPage() {
-  await requireRole(["SUPER_ADMIN", "ADMIN", "EDITOR"]);
+  await requireModuleAccess("news");
+  await ensureDefaultPostCategories();
 
   const [categories, branches, tags, posts] = await Promise.all([
-    prisma.category.findMany({ where: { deletedAt: null }, orderBy: { name: "asc" } }),
+    prisma.category.findMany({
+      where: { deletedAt: null, scope: "POST" },
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+      select: { id: true, name: true, slug: true, postKind: true },
+    }),
     prisma.branch.findMany({ where: { deletedAt: null }, orderBy: { name: "asc" } }),
     prisma.tag.findMany({ where: { deletedAt: null }, orderBy: { name: "asc" } }),
     prisma.post.findMany({ where: { deletedAt: null }, orderBy: { title: "asc" }, select: { id: true, title: true } }),
   ]);
+
+  const internalLinkSuggestions = await resolveInternalLinkSuggestions({
+    contentType: "post",
+    contentId: NEW_POST_LINK_CONTEXT_ID,
+    categoryId: null,
+    tagIds: [],
+    branchIds: [],
+  });
 
   return (
     <div className="flex flex-col gap-6">
@@ -30,7 +47,12 @@ export default async function NewPostPage() {
         endpoint="/api/posts"
         returnHref="/admin/posts"
         submitLabel="Create post"
-        categories={categories.map((category) => ({ label: category.name, value: category.id }))}
+        internalLinkSuggestions={internalLinkSuggestions}
+        savedInternalLinkContext={{
+          categoryId: "",
+          tagIds: [],
+        }}
+        categories={mapPostCategoryOptions(categories)}
         branches={branches.map((branch) => ({ label: branch.name, value: branch.id }))}
         tags={tags.map((tag) => ({ label: tag.name, value: tag.id }))}
         posts={posts.map((post) => ({ label: post.title, value: post.id }))}

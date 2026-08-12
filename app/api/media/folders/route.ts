@@ -3,13 +3,11 @@ import { NextResponse } from "next/server";
 import { buildUniqueFolderSlug } from "@/lib/media";
 import { forbiddenError, validationError } from "@/lib/content-api";
 import { prisma } from "@/lib/prisma";
-import { checkRole } from "@/lib/rbac";
+import { checkModuleAccess } from "@/lib/rbac";
 import { mediaFolderSchema } from "@/validators/media.validator";
 
-const MEDIA_ROLES = ["SUPER_ADMIN", "ADMIN", "EDITOR", "MARKETING"] as const;
-
 export async function GET() {
-  const { authorized, status } = await checkRole([...MEDIA_ROLES]);
+  const { authorized, status } = await checkModuleAccess("media-library");
   if (!authorized) return forbiddenError(status);
 
   const folders = await prisma.mediaFolder.findMany({
@@ -27,7 +25,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const { authorized, status } = await checkRole([...MEDIA_ROLES]);
+  const { authorized, status } = await checkModuleAccess("media-library");
   if (!authorized) return forbiddenError(status);
 
   const parsed = mediaFolderSchema.safeParse(await request.json());

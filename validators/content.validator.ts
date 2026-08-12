@@ -194,6 +194,11 @@ export const postSchema = z.object({
 export const categorySchema = z.object({
   name: requiredText("Name"),
   slug: requiredText("Slug"),
+  scope: z.enum(["STORE", "POST"]).default("STORE"),
+  postKind: z.preprocess(
+    emptyToNull,
+    z.enum(POST_KIND_VALUES).nullable().optional(),
+  ),
   image: optionalText,
   color: z.preprocess(
     emptyToNull,
@@ -414,8 +419,19 @@ export const contactStatusSchema = z.object({
   status: z.enum(CONTACT_STATUS_VALUES),
 });
 
+export const introductionSchema = z.object({
+  aboutLogo: optionalText,
+  aboutDetail1: optionalText,
+  aboutDetail2: optionalText,
+  aboutDetail3: optionalText,
+  aboutDetail4: optionalText,
+  aboutMission: optionalText,
+  aboutVision: optionalText,
+});
+
 export const settingsSchema = z.object({
   siteName: requiredText("Site name"),
+  siteTagline: optionalText,
   siteUrl: z.string().trim().url("Enter a valid site URL"),
   siteLogo: optionalText,
   favicon: optionalText,
@@ -448,6 +464,31 @@ export const seoSchema = z.object({
   jsonLd: optionalText,
   robots: z.enum(["index,follow", "noindex,nofollow"]),
 });
+
+export const localizationSchema = z
+  .object({
+    defaultLanguage: z.enum(["th", "en"]),
+    supportedLanguages: z.array(z.enum(["th", "en"])).min(1, "Select at least one supported language"),
+    dateLocale: z.enum(["th-TH", "en-US", "en-GB"]),
+    timeLocale: z.enum(["th-TH", "en-US", "en-GB"]),
+    numberLocale: z.enum(["th-TH", "en-US", "de-DE"]),
+    calendarSystem: z.enum(["gregorian", "buddhist"]),
+    weekStartsOn: z.enum(["sunday", "monday"]),
+    timezone: z.enum(["Asia/Bangkok", "Asia/Singapore", "Asia/Tokyo", "UTC"]),
+    dateFormat: z.enum(["DD/MM/YYYY", "DD-MM-YYYY", "YYYY-MM-DD", "DD MMM YYYY"]),
+    timeFormat: z.enum(["24h", "12h"]),
+    currency: z.enum(["THB", "USD", "EUR"]),
+    currencyPosition: z.enum(["before", "after"]),
+  })
+  .superRefine((values, context) => {
+    if (!values.supportedLanguages.includes(values.defaultLanguage)) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Default language must be included in supported languages",
+        path: ["defaultLanguage"],
+      });
+    }
+  });
 
 export const recaptchaSchema = z.object({
   recaptchaSiteKey: optionalText,
@@ -493,9 +534,13 @@ export type SearchInput = z.infer<typeof searchSchema>;
 export type ContactInput = z.infer<typeof contactSchema>;
 export type ContactStatusInput = z.infer<typeof contactStatusSchema>;
 export type LeasingInput = z.infer<typeof leasingSchema>;
+export type IntroductionInput = z.infer<typeof introductionSchema>;
 export type SettingsInput = z.infer<typeof settingsSchema>;
 export type SeoInput = z.infer<typeof seoSchema>;
 export type RecaptchaInput = z.infer<typeof recaptchaSchema>;
+export type LocalizationInput = z.infer<typeof localizationSchema>;
+export type IntroductionFormValues = z.input<typeof introductionSchema>;
 export type SettingsFormValues = z.input<typeof settingsSchema>;
 export type SeoFormValues = z.input<typeof seoSchema>;
 export type RecaptchaFormValues = z.input<typeof recaptchaSchema>;
+export type LocalizationFormValues = z.input<typeof localizationSchema>;

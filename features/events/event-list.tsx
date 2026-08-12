@@ -3,12 +3,13 @@ import { Link } from "@/i18n/navigation";
 import { ArrowRight, CalendarDays, Clock3, MapPin } from "lucide-react";
 
 import type { HomeArchiveEvent } from "@/lib/events";
+import { formatEventBranchLabel } from "@/lib/events";
 import {
-  formatEventBranchLabel,
-  formatEventDate,
-  formatEventDateRange,
-  formatEventTime,
-} from "@/lib/events";
+  formatDateRangeWithSettings,
+  formatTimeWithSettings,
+} from "@/lib/datetime";
+import { getLocalizationSettings } from "@/lib/settings-cache";
+import { buildEventHref } from "@/lib/slug";
 import { cn } from "@/lib/utils";
 
 interface EventListProps {
@@ -16,13 +17,15 @@ interface EventListProps {
   className?: string;
 }
 
-export function EventList({ events, className }: EventListProps) {
+export async function EventList({ events, className }: EventListProps) {
   if (!events.length) return null;
+
+  const settings = await getLocalizationSettings();
 
   return (
     <ul
       className={cn(
-        "-mx-5 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+        "-mx-5 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-4 scrollbar-hidden",
         "sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-x-5 sm:gap-y-10 sm:overflow-visible sm:px-0 sm:pb-0",
         "lg:grid-cols-4 lg:gap-x-6",
         className,
@@ -30,6 +33,8 @@ export function EventList({ events, className }: EventListProps) {
     >
       {events.map((event) => {
         const branchLabel = formatEventBranchLabel(event);
+        const dateRangeLabel = formatDateRangeWithSettings(event.eventDate, event.eventEndDate, settings);
+        const timeLabel = formatTimeWithSettings(event.eventDate, settings);
 
         return (
           <li
@@ -37,7 +42,7 @@ export function EventList({ events, className }: EventListProps) {
             className="w-[78vw] max-w-[320px] shrink-0 snap-start sm:w-auto sm:max-w-none"
           >
             <article className="group">
-              <Link href={`/events/${event.slug}`} className="block">
+              <Link href={buildEventHref(event.slug)} className="block">
                 <div className="relative aspect-square overflow-hidden rounded-2xl bg-[#F0EDE8]">
                   {event.featuredImage ? (
                     <Image
@@ -73,9 +78,7 @@ export function EventList({ events, className }: EventListProps) {
                         strokeWidth={1.8}
                         aria-hidden="true"
                       />
-                      <span className="text-sm text-muted">
-                        {formatEventDateRange(event.eventDate, event.eventEndDate)}
-                      </span>
+                      <span className="text-sm text-muted">{dateRangeLabel}</span>
                     </div>
 
                     <div className="flex items-center gap-2.5">
@@ -84,7 +87,7 @@ export function EventList({ events, className }: EventListProps) {
                         strokeWidth={1.8}
                         aria-hidden="true"
                       />
-                      <span className="text-sm text-muted">{formatEventTime(event.eventDate)}</span>
+                      <span className="text-sm text-muted">{timeLabel}</span>
                     </div>
 
                     {branchLabel ? (

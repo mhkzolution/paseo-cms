@@ -2,11 +2,9 @@ import { NextResponse } from "next/server";
 
 import { conflictError, forbiddenError, validationError } from "@/lib/content-api";
 import { prisma } from "@/lib/prisma";
-import { checkRole } from "@/lib/rbac";
+import { checkModuleAccess } from "@/lib/rbac";
 import { generateSlug } from "@/lib/seo";
 import { tagSchema } from "@/validators/content.validator";
-
-const CONTENT_ROLES = ["SUPER_ADMIN", "ADMIN", "EDITOR"] as const;
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -30,7 +28,7 @@ async function buildUniqueTagSlug(baseSlug: string, excludeId: string) {
 }
 
 export async function GET(_request: Request, { params }: RouteParams) {
-  const { authorized, status } = await checkRole([...CONTENT_ROLES]);
+  const { authorized, status } = await checkModuleAccess("tags");
   if (!authorized) return forbiddenError(status);
 
   const { id } = await params;
@@ -61,7 +59,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
 }
 
 export async function PATCH(request: Request, { params }: RouteParams) {
-  const { authorized, status } = await checkRole([...CONTENT_ROLES]);
+  const { authorized, status } = await checkModuleAccess("tags");
   if (!authorized) return forbiddenError(status);
 
   const { id } = await params;
@@ -93,7 +91,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 }
 
 export async function DELETE(_request: Request, { params }: RouteParams) {
-  const { authorized, status } = await checkRole([...CONTENT_ROLES]);
+  const { authorized, status } = await checkModuleAccess("tags");
   if (!authorized) return forbiddenError(status);
 
   const { id } = await params;

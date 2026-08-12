@@ -3,16 +3,26 @@ import { ArrowLeft } from "lucide-react";
 
 import { EventEditorForm } from "@/features/content/event-editor-form";
 import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/lib/rbac";
+import { resolveInternalLinkSuggestions } from "@/lib/seo-internal-links";
+import { requireModuleAccess } from "@/lib/rbac";
+
+const NEW_EVENT_LINK_CONTEXT_ID = "__new_event__";
 
 export default async function NewEventPage() {
-  await requireRole(["SUPER_ADMIN", "ADMIN", "EDITOR", "MARKETING"]);
+  await requireModuleAccess("events");
 
   const [branches, tags, events] = await Promise.all([
     prisma.branch.findMany({ where: { deletedAt: null }, orderBy: { name: "asc" } }),
     prisma.tag.findMany({ where: { deletedAt: null }, orderBy: { name: "asc" } }),
     prisma.event.findMany({ where: { deletedAt: null }, orderBy: { title: "asc" }, select: { id: true, title: true } }),
   ]);
+
+  const internalLinkSuggestions = await resolveInternalLinkSuggestions({
+    contentType: "event",
+    contentId: NEW_EVENT_LINK_CONTEXT_ID,
+    tagIds: [],
+    branchIds: [],
+  });
 
   return (
     <div className="flex flex-col gap-6">
@@ -29,6 +39,11 @@ export default async function NewEventPage() {
         endpoint="/api/events"
         returnHref="/admin/events"
         submitLabel="Create event"
+        internalLinkSuggestions={internalLinkSuggestions}
+        savedInternalLinkContext={{
+          categoryId: "",
+          tagIds: [],
+        }}
         branches={branches.map((branch) => ({ label: branch.name, value: branch.id }))}
         tags={tags.map((tag) => ({ label: tag.name, value: tag.id }))}
         events={events.map((event) => ({ label: event.title, value: event.id }))}

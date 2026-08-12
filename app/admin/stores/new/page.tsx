@@ -10,14 +10,14 @@ import {
   getStoreZonesByFloorIds,
 } from "@/lib/store-zones/queries";
 import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/lib/rbac";
+import { requireModuleAccess } from "@/lib/rbac";
 
 export default async function NewStorePage() {
-  await requireRole(["SUPER_ADMIN", "ADMIN", "EDITOR"]);
+  await requireModuleAccess("stores");
 
   const [branches, categories] = await Promise.all([
     prisma.branch.findMany({ where: { deletedAt: null }, orderBy: { name: "asc" } }),
-    prisma.category.findMany({ where: { deletedAt: null }, orderBy: { name: "asc" } }),
+    prisma.category.findMany({ where: { deletedAt: null, scope: "STORE" }, orderBy: { name: "asc" } }),
   ]);
 
   const branchIds = branches.map((branch) => branch.id);

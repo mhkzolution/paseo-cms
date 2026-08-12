@@ -5,14 +5,14 @@ import { ArrowLeft } from "lucide-react";
 import { BrandPartnerForm } from "@/features/brand-partners/brand-partner-form";
 import { getBranchPlacementLabels } from "@/lib/banners";
 import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/lib/rbac";
+import { requireModuleAccess } from "@/lib/rbac";
 
 interface EditBrandPartnerPageProps {
   params: Promise<{ id: string }>;
 }
 
 export default async function EditBrandPartnerPage({ params }: EditBrandPartnerPageProps) {
-  await requireRole(["SUPER_ADMIN", "ADMIN", "EDITOR", "MARKETING"]);
+  await requireModuleAccess("brand-partners");
 
   const { id } = await params;
   const [item, branchLabels] = await Promise.all([

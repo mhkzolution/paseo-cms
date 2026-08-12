@@ -1,9 +1,10 @@
-import Image from "next/image";
 import { Link } from "@/i18n/navigation";
 
+import { StoreCardMedia } from "@/features/stores/store-card-media";
 import { StoreStatusBadge } from "@/features/stores/store-status-badge";
 import type { ArchiveStore } from "@/lib/stores";
 import { buildStoreDetailHref, buildStoresHref } from "@/lib/stores";
+import { resolveStoreCardMedia } from "@/lib/stores/store-card-media";
 import { getStoreOpenStatus } from "@/lib/stores/operating-hours";
 import { cn } from "@/lib/utils";
 
@@ -14,9 +15,11 @@ export type StoreCardStore = {
   name: string;
   slug: string;
   logo: string | null;
+  cover?: string | null;
   operatingHours: StoreOperatingHour[];
-  category: { name: string; color: string | null } | null;
+  category: { name: string; slug?: string; color: string | null; image?: string | null } | null;
   branchName: string;
+  branch?: { slug: string; image?: string | null };
 };
 
 type StoreCardProps = {
@@ -26,41 +29,41 @@ type StoreCardProps = {
 
 export function StoreCard({ store, listingQuery }: StoreCardProps) {
   const status = getStoreOpenStatus(store.operatingHours);
+  const media = resolveStoreCardMedia({
+    name: store.name,
+    logo: store.logo,
+    cover: store.cover,
+    category: store.category,
+    branch: store.branch,
+  });
 
   return (
-    <Link href={buildStoreDetailHref(store.slug, listingQuery)} className="group block">
-      <article className="overflow-hidden rounded-xl border border-border bg-white transition-shadow hover:shadow-md">
-        <div className="relative flex aspect-square items-center justify-center bg-[#F3F0EA] p-6">
-          {store.logo ? (
-            <div className="relative h-full w-full">
-              <Image
-                src={store.logo}
-                alt={store.name}
-                fill
-                sizes="(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw"
-                className="object-contain p-2"
-              />
-            </div>
-          ) : (
-            <span className="text-3xl font-bold text-[#9B8459]">{store.name.charAt(0)}</span>
-          )}
-          <StoreStatusBadge isOpen={status.isOpen} className="absolute right-2 top-2" />
+    <Link href={buildStoreDetailHref(store.slug, listingQuery)} className="group block h-full">
+      <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-black/[0.08] bg-white transition-all hover:border-paseo/30 hover:shadow-md">
+        <div className="relative">
+          <StoreCardMedia media={media} alt={store.name} />
+          <StoreStatusBadge isOpen={status.isOpen} className="absolute left-2 top-2 z-10" />
         </div>
 
-        <div className="p-4 text-center">
-          {store.category ? (
-            <p
-              className={cn(
-                "inline-block rounded-full px-2.5 py-1 text-xs font-medium uppercase tracking-wide",
-                store.category.color ? "text-white" : "bg-[#F3F0EA] text-muted",
-              )}
-              style={store.category.color ? { backgroundColor: store.category.color } : undefined}
-            >
-              {store.category.name}
-            </p>
-          ) : null}
-          <h3 className="mt-1 font-semibold text-foreground group-hover:text-paseo-dark">{store.name}</h3>
-          <p className="mt-1 text-xs text-muted">{store.branchName}</p>
+        <div className="flex min-h-[7.5rem] flex-1 flex-col gap-2 p-4 text-center sm:min-h-[8rem]">
+          <h3 className="line-clamp-2 min-h-[2.5rem] font-semibold text-foreground group-hover:text-paseo-dark">
+            {store.name}
+          </h3>
+
+          <div className="min-h-[1.25rem]">
+            {store.category ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-black/[0.04] px-2 py-0.5 text-xs font-medium text-foreground">
+                <span
+                  className="h-2 w-2 rounded-full"
+                  style={{ backgroundColor: store.category.color ?? "#9B8459" }}
+                  aria-hidden="true"
+                />
+                {store.category.name}
+              </span>
+            ) : null}
+          </div>
+
+          <p className="mt-auto text-xs text-muted">{store.branchName}</p>
         </div>
       </article>
     </Link>
@@ -92,6 +95,7 @@ export function StoreArchivePageGrid({
             name: store.name,
             slug: store.slug,
             logo: store.logo,
+            cover: store.cover,
             operatingHours: store.operatingHours,
             category: store.category,
             branchName: store.branch.name,
@@ -224,7 +228,7 @@ export function StoreCategoryFilter({
       className={cn("rounded-2xl p-4 transition-colors", !activeCategoryColor && "bg-transparent")}
       style={activeCategoryColor ? { backgroundColor: activeCategoryColor } : undefined}
     >
-      <div className="-mx-1 flex items-center gap-2 overflow-x-auto px-1 [-ms-overflow-style:none] [scrollbar-width:none] sm:flex-wrap sm:overflow-x-visible [&::-webkit-scrollbar]:hidden">
+      <div className="-mx-1 flex items-center gap-2 overflow-x-auto px-1 scrollbar-hidden sm:flex-wrap sm:overflow-x-visible">
         <CategoryFilterChip
           href={buildStoresHref({ branch: activeBranchSlug })}
           active={!activeSlug}

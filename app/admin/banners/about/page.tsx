@@ -1,5 +1,8 @@
-import { BannerListPage } from "@/features/banners/banner-list-page";
+import { redirect } from "next/navigation";
 
-export default function AboutBannersPage() {
-  return <BannerListPage scope="about" />;
+import { requireModuleAccess } from "@/lib/rbac";
+
+export default async function AboutBannersPage() {
+  await requireModuleAccess("banners");
+  redirect("/admin/introduction");
 }

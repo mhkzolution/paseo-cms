@@ -95,8 +95,8 @@ function FilterChip({ href, active, label }: { href: string; active: boolean; la
       href={href}
       className={
         active
-          ? "rounded-full bg-foreground px-3 py-1.5 text-sm font-medium text-white"
-          : "rounded-full border border-border bg-white px-3 py-1.5 text-sm font-medium text-foreground hover:border-foreground"
+          ? "rounded-full bg-paseo px-3 py-1.5 text-sm font-medium text-white"
+          : "rounded-full border border-border bg-white px-3 py-1.5 text-sm font-medium text-foreground hover:border-paseo"
       }
     >
       {label}

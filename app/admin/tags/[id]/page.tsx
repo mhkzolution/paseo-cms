@@ -7,14 +7,14 @@ import { DeleteResourceButton } from "@/features/content/delete-resource-button"
 import { TagEditorForm } from "@/features/tags/tag-editor-form";
 import { buildTagHref } from "@/lib/tags";
 import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/lib/rbac";
+import { requireModuleAccess } from "@/lib/rbac";
 
 interface TagDetailPageProps {
   params: Promise<{ id: string }>;
 }
 
 export default async function TagDetailPage({ params }: TagDetailPageProps) {
-  await requireRole(["SUPER_ADMIN", "ADMIN", "EDITOR"]);
+  await requireModuleAccess("tags");
 
   const { id } = await params;
   const tag = await prisma.tag.findFirst({

@@ -1,7 +1,30 @@
 import { prisma } from "@/lib/prisma";
 
+export const INTRODUCTION_SETTINGS_KEYS = [
+  "aboutLogo",
+  "aboutDetail1",
+  "aboutDetail2",
+  "aboutDetail3",
+  "aboutDetail4",
+  "aboutMission",
+  "aboutVision",
+] as const;
+
+export type IntroductionSettingsKey = (typeof INTRODUCTION_SETTINGS_KEYS)[number];
+
+export const DEFAULT_INTRODUCTION_SETTINGS = {
+  aboutLogo: "",
+  aboutDetail1: "",
+  aboutDetail2: "",
+  aboutDetail3: "",
+  aboutDetail4: "",
+  aboutMission: "",
+  aboutVision: "",
+} satisfies SettingMap<IntroductionSettingsKey>;
+
 export const SETTINGS_KEYS = [
   "siteName",
+  "siteTagline",
   "siteUrl",
   "siteLogo",
   "favicon",
@@ -52,6 +75,7 @@ export type RecaptchaSettings = SettingMap<RecaptchaKey>;
 
 export const DEFAULT_SETTINGS = {
   siteName: "The Paseo",
+  siteTagline: "ระบบจัดการเว็บไซต์",
   siteUrl: "https://thepaseo.co.th",
   siteLogo: "",
   favicon: "",

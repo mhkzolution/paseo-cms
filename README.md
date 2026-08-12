@@ -94,24 +94,23 @@ prisma/       schema.prisma and seed.ts
 
 ## Role enforcement (defense in depth)
 
-Roles are checked in three places — keep all three in sync as you add modules:
+Authorization is centralized in `lib/admin-permissions.ts` (`ADMIN_MODULE_PERMISSIONS`).
+Roles are enforced in four places — add new modules to the registry first, then wire each layer:
 
-1. `components/admin/sidebar.tsx` — hides nav items the current role can't use.
-2. `middleware.ts` — blocks the route at the edge before any page code runs.
-3. The page itself (`requireRole`) and its Route Handlers (`checkRole`), both in `lib/rbac.ts` —
-   the actual authorization boundary, since middleware/sidebar are UX conveniences, not security.
+1. `lib/admin-navigation.ts` — sidebar visibility via `getModuleRoles(item.id)`.
+2. `proxy.ts` — authentication plus registry longest-prefix checks for `/admin/*`.
+3. Admin pages — `requireModuleAccess(moduleId)` from `lib/rbac.ts`.
+4. API route handlers — `checkModuleAccess(moduleId)` from `lib/rbac.ts` (or
+   `authorizeSearchRequest()` for `/api/search` when `scope` is not `public`).
 
-Current restrictions:
+The registry is the source of truth for role mappings. CI guards in
+`tests/api-authorization-guard.test.ts` block `checkRole()` and local `*_ROLES`
+constants under `app/api/**`. `tests/admin-page-authorization-guard.test.ts`
+blocks new admin pages that omit `requireModuleAccess()` (with documented
+exemptions for `/admin`, `/admin/dashboard`, and legacy redirect shims).
 
-| Route            | Allowed roles                              |
-| ---------------- | ------------------------------------------- |
-| `/admin/users`   | Super Admin, Admin                          |
-| `/admin/roles`   | Super Admin                                 |
-| `/admin/media`   | Super Admin, Admin, Editor, Marketing       |
-| `/admin/search`  | Super Admin, Admin, Editor, Marketing       |
-| `/admin/seo`     | Super Admin, Admin, Editor                  |
-| `/admin/contact` | Super Admin, Admin, Editor, Marketing       |
-| `/admin/settings`| Super Admin, Admin                          |
+See [`docs/AUTHORIZATION.md`](./docs/AUTHORIZATION.md) for the certified model,
+public endpoints, and extension workflow.
 
 ## Production
 

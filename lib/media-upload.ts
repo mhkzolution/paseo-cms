@@ -2,9 +2,19 @@ export type UploadMediaResult = {
   id: string;
   folderId: string | null;
   filename: string;
+  originalName: string | null;
   path: string;
   type: "IMAGE" | "PDF" | "VIDEO";
   size: number;
+  mimeType: string | null;
+  extension: string | null;
+  width: number | null;
+  height: number | null;
+  altText: string | null;
+  title: string | null;
+  caption: string | null;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export async function uploadMediaFile(file: File, folderId?: string | null) {

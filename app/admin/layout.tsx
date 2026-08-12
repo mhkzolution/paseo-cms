@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 import { AdminShell } from "@/components/admin/admin-shell";
 import { auth } from "@/lib/auth";
+import { getSiteBranding } from "@/lib/site-branding";
 
 export default async function AdminLayout({
   children,
@@ -12,8 +13,10 @@ export default async function AdminLayout({
     redirect("/login");
   }
 
+  const branding = await getSiteBranding();
+
   return (
-    <AdminShell role={session.user.role} userName={session.user.name}>
+    <AdminShell role={session.user.role} userName={session.user.name} branding={branding}>
       {children}
     </AdminShell>
   );

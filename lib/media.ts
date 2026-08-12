@@ -6,11 +6,22 @@ export type MediaRecord = {
   id: string;
   folderId: string | null;
   filename: string;
+  originalName: string | null;
   path: string;
   type: MediaType;
   size: number;
+  mimeType: string | null;
+  extension: string | null;
+  width: number | null;
+  height: number | null;
+  altText: string | null;
+  title: string | null;
+  caption: string | null;
   createdAt: Date;
+  updatedAt: Date;
 };
+
+export type MediaSort = "newest" | "oldest" | "name-asc" | "name-desc";
 
 export function buildMediaWhere({
   folderId,
@@ -28,10 +39,64 @@ export function buildMediaWhere({
   }
 
   if (type) where.type = type;
-  if (q) where.filename = { contains: q };
+
+  if (q) {
+    where.OR = [
+      { filename: { contains: q } },
+      { title: { contains: q } },
+      { altText: { contains: q } },
+    ];
+  }
 
   return where;
 }
+
+export function parseMediaPage(input: { page?: number; take?: number }) {
+  const page = Math.max(1, Number.isFinite(input.page) ? Number(input.page) : 1);
+  const rawTake = Number.isFinite(input.take) ? Number(input.take) : 40;
+  const take = Math.min(100, Math.max(1, rawTake));
+  return { page, take, skip: (page - 1) * take };
+}
+
+export function buildMediaPageMeta(input: { total: number; page: number; take: number }) {
+  const { total, page, take } = input;
+  const totalPages = total === 0 ? 0 : Math.ceil(total / take);
+  const hasMore = page * take < total;
+  return { total, page, take, totalPages, hasMore };
+}
+
+export function buildMediaOrderBy(sort?: MediaSort): Prisma.MediaOrderByWithRelationInput {
+  switch (sort) {
+    case "oldest":
+      return { createdAt: "asc" };
+    case "name-asc":
+      return { filename: "asc" };
+    case "name-desc":
+      return { filename: "desc" };
+    case "newest":
+    default:
+      return { createdAt: "desc" };
+  }
+}
+
+export const mediaListSelect = {
+  id: true,
+  folderId: true,
+  filename: true,
+  originalName: true,
+  path: true,
+  type: true,
+  size: true,
+  mimeType: true,
+  extension: true,
+  width: true,
+  height: true,
+  altText: true,
+  title: true,
+  caption: true,
+  createdAt: true,
+  updatedAt: true,
+} as const;
 
 export async function buildUniqueFolderSlug(name: string, excludeId?: string) {
   const baseSlug = generateSlug(name) || "folder";

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 
 import { Sidebar } from "@/components/admin/sidebar";
 import { Topbar } from "@/components/admin/topbar";
+import type { SiteBranding } from "@/lib/site-branding";
 import type { AppRole } from "@/types";
 
 const STORAGE_KEY = "paseo-admin-sidebar-open";
@@ -13,10 +14,12 @@ const MOBILE_MQ = "(max-width: 1023px)";
 export function AdminShell({
   role,
   userName,
+  branding,
   children,
 }: {
   role: AppRole | null;
   userName?: string | null;
+  branding: SiteBranding;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -81,7 +84,7 @@ export function AdminShell({
         />
       ) : null}
 
-      <Sidebar role={role} open={open} isMobile={isMobile} onClose={close} />
+      <Sidebar role={role} branding={branding} open={open} isMobile={isMobile} onClose={close} />
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <Topbar userName={userName} sidebarOpen={open} onToggleSidebar={toggle} />

@@ -1,10 +1,10 @@
 import { getTranslations } from "next-intl/server";
 
 import { Link } from "@/i18n/navigation";
-import Image from "next/image";
 import type { PostKind } from "@prisma/client";
 
-import { POST_KIND_LABELS, POST_KIND_ORDER, formatPostKindLabel } from "@/lib/post-archives";
+import { HomeNewsSection } from "@/features/home/home-news-section";
+import { POST_KIND_LABELS, POST_KIND_ORDER } from "@/lib/post-archives";
 import { prisma } from "@/lib/prisma";
 
 export const revalidate = 300;
@@ -34,17 +34,27 @@ export default async function NewsPage({ searchParams }: NewsPageProps) {
           : []),
       ],
     },
-    include: { category: true, seo: true, tags: { include: { tag: true } } },
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      excerpt: true,
+      featuredImage: true,
+      coverImageAlt: true,
+      kind: true,
+      publishedAt: true,
+      category: { select: { name: true } },
+    },
     orderBy: { publishedAt: "desc" },
     take: 24,
   });
 
   return (
-    <main className="min-h-screen bg-[#FCFAF6] text-foreground">
-      <section className="mx-auto w-full max-w-7xl px-5 py-12 sm:px-8">
+    <main className="min-h-screen bg-white text-foreground">
+      <section className="mx-auto w-full max-w-7xl px-5 pt-12 sm:px-8">
         <div className="max-w-3xl">
-          <p className="text-sm font-semibold uppercase text-paseo">{t("title")}</p>
-          <h1 className="mt-2 text-4xl font-semibold">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-paseo-dark">{t("title")}</p>
+          <h1 className="mt-2 text-3xl font-semibold tracking-[-0.03em] sm:text-4xl">
             {branch ? t("storiesFrom", { name: branch.name }) : t("storiesDefault")}
           </h1>
           {selectedKind ? (
@@ -63,30 +73,9 @@ export default async function NewsPage({ searchParams }: NewsPageProps) {
             />
           ))}
         </div>
-
-        <div className="mt-6 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-          {posts.map((post) => (
-            <Link key={post.id} href={`/news/${post.slug}`} className="overflow-hidden rounded-lg border border-border bg-white hover:border-paseo">
-              {post.featuredImage ? (
-                <div className="relative aspect-[16/10]">
-                  <Image
-                    src={post.featuredImage}
-                    alt={post.coverImageAlt || post.title}
-                    fill
-                    sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
-                    className="object-cover"
-                  />
-                </div>
-              ) : null}
-              <article className="p-5">
-                <p className="text-xs font-medium uppercase text-muted">{post.category?.name ?? formatPostKindLabel(post.kind)}</p>
-                <h2 className="mt-2 text-lg font-semibold">{post.title}</h2>
-                {post.excerpt ? <p className="mt-3 line-clamp-3 text-sm leading-6 text-muted">{post.excerpt}</p> : null}
-              </article>
-            </Link>
-          ))}
-        </div>
       </section>
+
+      <HomeNewsSection posts={posts} showViewAll={false} showHeading={false} variant="compact" className="pt-6" />
     </main>
   );
 }

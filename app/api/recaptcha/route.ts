@@ -2,11 +2,9 @@ import { NextResponse } from "next/server";
 
 import { forbiddenError, validationError } from "@/lib/content-api";
 import { getRecaptchaEnvStatus } from "@/lib/recaptcha";
-import { checkRole } from "@/lib/rbac";
+import { checkModuleAccess } from "@/lib/rbac";
 import { getRecaptchaSettings, saveSettings } from "@/lib/settings";
 import { recaptchaSchema } from "@/validators/content.validator";
-
-const RECAPTCHA_ROLES = ["SUPER_ADMIN", "ADMIN"] as const;
 
 function normalizeRecaptchaValues(values: {
   recaptchaSiteKey?: string | null;
@@ -19,7 +17,7 @@ function normalizeRecaptchaValues(values: {
 }
 
 export async function GET() {
-  const { authorized, status } = await checkRole([...RECAPTCHA_ROLES]);
+  const { authorized, status } = await checkModuleAccess("recaptcha");
   if (!authorized) return forbiddenError(status);
 
   const recaptcha = await getRecaptchaSettings();
@@ -31,7 +29,7 @@ export async function GET() {
 }
 
 export async function PATCH(request: Request) {
-  const { authorized, status } = await checkRole([...RECAPTCHA_ROLES]);
+  const { authorized, status } = await checkModuleAccess("recaptcha");
   if (!authorized) return forbiddenError(status);
 
   const parsed = recaptchaSchema.safeParse(await request.json());

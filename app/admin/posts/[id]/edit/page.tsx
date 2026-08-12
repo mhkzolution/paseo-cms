@@ -3,16 +3,19 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
 import { PostEditorForm } from "@/features/content/post-editor-form";
+import { ensureDefaultPostCategories, mapPostCategoryOptions } from "@/lib/categories";
 import { toDateTimeInputValue } from "@/lib/content-form";
 import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/lib/rbac";
+import { resolveInternalLinkSuggestions } from "@/lib/seo-internal-links";
+import { requireModuleAccess } from "@/lib/rbac";
 
 interface EditPostPageProps {
   params: Promise<{ id: string }>;
 }
 
 export default async function EditPostPage({ params }: EditPostPageProps) {
-  await requireRole(["SUPER_ADMIN", "ADMIN", "EDITOR"]);
+  await requireModuleAccess("news");
+  await ensureDefaultPostCategories();
 
   const { id } = await params;
   const [post, categories, branches, tags, posts] = await Promise.all([
@@ -28,7 +31,11 @@ export default async function EditPostPage({ params }: EditPostPageProps) {
         images: { where: { deletedAt: null }, orderBy: { sortOrder: "asc" } },
       },
     }),
-    prisma.category.findMany({ where: { deletedAt: null }, orderBy: { name: "asc" } }),
+    prisma.category.findMany({
+      where: { deletedAt: null, scope: "POST" },
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+      select: { id: true, name: true, slug: true, postKind: true },
+    }),
     prisma.branch.findMany({ where: { deletedAt: null }, orderBy: { name: "asc" } }),
     prisma.tag.findMany({ where: { deletedAt: null }, orderBy: { name: "asc" } }),
     prisma.post.findMany({
@@ -40,6 +47,15 @@ export default async function EditPostPage({ params }: EditPostPageProps) {
 
   if (!post) notFound();
   const seo = post.seo;
+
+  const internalLinkSuggestions = await resolveInternalLinkSuggestions({
+    contentType: "post",
+    contentId: post.id,
+    categoryId: post.categoryId,
+    postKind: post.kind,
+    tagIds: post.tags.map((tag) => tag.tagId),
+    branchIds: post.branches.map((branch) => branch.branchId),
+  });
 
   return (
     <div className="flex flex-col gap-6">
@@ -56,7 +72,12 @@ export default async function EditPostPage({ params }: EditPostPageProps) {
         endpoint={`/api/posts/${post.id}`}
         returnHref="/admin/posts"
         submitLabel="Save changes"
-        categories={categories.map((category) => ({ label: category.name, value: category.id }))}
+        internalLinkSuggestions={internalLinkSuggestions}
+        savedInternalLinkContext={{
+          categoryId: post.categoryId ?? "",
+          tagIds: post.tags.map((tag) => tag.tagId),
+        }}
+        categories={mapPostCategoryOptions(categories)}
         branches={branches.map((branch) => ({ label: branch.name, value: branch.id }))}
         tags={tags.map((tag) => ({ label: tag.name, value: tag.id }))}
         posts={posts.map((relatedPost) => ({ label: relatedPost.title, value: relatedPost.id }))}

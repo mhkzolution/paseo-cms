@@ -5,14 +5,15 @@ import { ArrowLeft } from "lucide-react";
 import { PromotionEditorForm } from "@/features/content/promotion-editor-form";
 import { toDateTimeInputValue } from "@/lib/content-form";
 import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/lib/rbac";
+import { resolveInternalLinkSuggestions } from "@/lib/seo-internal-links";
+import { requireModuleAccess } from "@/lib/rbac";
 
 interface EditPromotionPageProps {
   params: Promise<{ id: string }>;
 }
 
 export default async function EditPromotionPage({ params }: EditPromotionPageProps) {
-  await requireRole(["SUPER_ADMIN", "ADMIN", "EDITOR", "MARKETING"]);
+  await requireModuleAccess("promotions");
 
   const { id } = await params;
   const [promotion, branches, tags, promotions] = await Promise.all([
@@ -39,6 +40,14 @@ export default async function EditPromotionPage({ params }: EditPromotionPagePro
   if (!promotion) notFound();
   const seo = promotion.seo;
 
+  const internalLinkSuggestions = await resolveInternalLinkSuggestions({
+    contentType: "promotion",
+    contentId: promotion.id,
+    promotionCategory: promotion.category,
+    tagIds: promotion.tags.map((tag) => tag.tagId),
+    branchIds: promotion.branches.map((branch) => branch.branchId),
+  });
+
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -54,6 +63,11 @@ export default async function EditPromotionPage({ params }: EditPromotionPagePro
         endpoint={`/api/promotions/${promotion.id}`}
         returnHref="/admin/promotions"
         submitLabel="Save changes"
+        internalLinkSuggestions={internalLinkSuggestions}
+        savedInternalLinkContext={{
+          categoryId: promotion.category,
+          tagIds: promotion.tags.map((tag) => tag.tagId),
+        }}
         branches={branches.map((branch) => ({ label: branch.name, value: branch.id }))}
         tags={tags.map((tag) => ({ label: tag.name, value: tag.id }))}
         promotions={promotions.map((item) => ({ label: item.title, value: item.id }))}

@@ -5,14 +5,15 @@ import { ArrowLeft } from "lucide-react";
 import { EventEditorForm } from "@/features/content/event-editor-form";
 import { toDateTimeInputValue } from "@/lib/content-form";
 import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/lib/rbac";
+import { resolveInternalLinkSuggestions } from "@/lib/seo-internal-links";
+import { requireModuleAccess } from "@/lib/rbac";
 
 interface EditEventPageProps {
   params: Promise<{ id: string }>;
 }
 
 export default async function EditEventPage({ params }: EditEventPageProps) {
-  await requireRole(["SUPER_ADMIN", "ADMIN", "EDITOR", "MARKETING"]);
+  await requireModuleAccess("events");
 
   const { id } = await params;
   const [event, branches, tags, events] = await Promise.all([
@@ -40,6 +41,13 @@ export default async function EditEventPage({ params }: EditEventPageProps) {
   if (!event) notFound();
   const seo = event.seo;
 
+  const internalLinkSuggestions = await resolveInternalLinkSuggestions({
+    contentType: "event",
+    contentId: event.id,
+    tagIds: event.tags.map((tag) => tag.tagId),
+    branchIds: event.branches.map((branch) => branch.branchId),
+  });
+
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -55,6 +63,11 @@ export default async function EditEventPage({ params }: EditEventPageProps) {
         endpoint={`/api/events/${event.id}`}
         returnHref="/admin/events"
         submitLabel="Save changes"
+        internalLinkSuggestions={internalLinkSuggestions}
+        savedInternalLinkContext={{
+          categoryId: "",
+          tagIds: event.tags.map((tag) => tag.tagId),
+        }}
         branches={branches.map((branch) => ({ label: branch.name, value: branch.id }))}
         tags={tags.map((tag) => ({ label: tag.name, value: tag.id }))}
         events={events.map((relatedEvent) => ({ label: relatedEvent.title, value: relatedEvent.id }))}

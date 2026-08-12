@@ -1,23 +1,18 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import Image from "next/image";
-import { Check, FolderOpen, ImageIcon, Search, Upload, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { FolderOpen, ImageIcon, Upload, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { uploadMediaFiles } from "@/lib/media-upload";
-import { formatBytes } from "@/lib/format";
-import { cn } from "@/lib/utils";
-
-type MediaItem = {
-  id: string;
-  folderId: string | null;
-  filename: string;
-  path: string;
-  type: "IMAGE" | "PDF" | "VIDEO";
-  size: number;
-  createdAt: string;
-};
+import { AssetDrawer } from "@/features/media/asset-drawer";
+import { MediaGrid } from "@/features/media/media-grid";
+import { MediaGridSkeleton } from "@/features/media/media-grid-skeleton";
+import { MediaInventory } from "@/features/media/media-inventory";
+import { MediaLoadMore } from "@/features/media/media-load-more";
+import { MediaToolbar, type MediaFilter, type MediaSort } from "@/features/media/media-toolbar";
+import { useMediaList } from "@/features/media/use-media-list";
+import type { MediaListItem } from "@/features/media/types";
 
 type MediaFolder = {
   id: string;
@@ -25,11 +20,30 @@ type MediaFolder = {
   slug: string;
 };
 
+type AcceptType = "IMAGE" | "PDF" | "VIDEO";
+
+const MEDIA_TYPES: AcceptType[] = ["IMAGE", "PDF", "VIDEO"];
+
+function buildTypeOptions(accept: AcceptType[]): MediaFilter[] {
+  const options: MediaFilter[] = [];
+  if (accept.length > 1) options.push("all");
+  for (const mediaType of MEDIA_TYPES) {
+    if (accept.includes(mediaType)) options.push(mediaType);
+  }
+  return options;
+}
+
+function deriveApiType(toolbarType: MediaFilter, accept: AcceptType[]): MediaFilter {
+  if (toolbarType !== "all") return toolbarType;
+  if (accept.length === 1) return accept[0];
+  return "all";
+}
+
 interface MediaPickerDialogProps {
   open: boolean;
   onClose: () => void;
-  onSelect?: (media: MediaItem) => void;
-  onSelectMany?: (media: MediaItem[]) => void;
+  onSelect?: (media: MediaListItem) => void;
+  onSelectMany?: (media: MediaListItem[]) => void;
   multiple?: boolean;
   minSelections?: number;
   maxSelections?: number;
@@ -54,36 +68,26 @@ function MediaPickerDialogContent({
 }: MediaPickerDialogProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [folders, setFolders] = useState<MediaFolder[]>([]);
-  const [media, setMedia] = useState<MediaItem[]>([]);
   const [folderId, setFolderId] = useState<string>("root");
   const [query, setQuery] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
+  const typeOptions = useMemo(() => buildTypeOptions(accept), [accept]);
+  const [type, setType] = useState<MediaFilter>(() => (accept.length === 1 ? accept[0] : "all"));
+  const [sort, setSort] = useState<MediaSort>("newest");
   const [isUploading, setIsUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-
-  const loadMedia = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-
-    const params = new URLSearchParams();
-    params.set("folderId", folderId);
-    if (accept.length === 1) params.set("type", accept[0]!);
-    if (query.trim()) params.set("q", query.trim());
-
-    const response = await fetch(`/api/media?${params.toString()}`);
-    const body = (await response.json().catch(() => null)) as { media?: MediaItem[]; error?: string } | null;
-
-    if (!response.ok) {
-      setError(body?.error ?? "Could not load media.");
-      setMedia([]);
-      setIsLoading(false);
-      return;
-    }
-
-    setMedia((body?.media ?? []).filter((item) => accept.includes(item.type)));
-    setIsLoading(false);
-  }, [accept, folderId, query]);
+  const [selectedAsset, setSelectedAsset] = useState<MediaListItem | null>(null);
+  const apiType = useMemo(() => deriveApiType(type, accept), [type, accept]);
+  const acceptFilter = apiType === "all" ? accept : undefined;
+  const { media, total, hasMore, isLoading, isLoadingMore, error, reload, loadMore } = useMediaList({
+    folderId: folderId === "root" ? null : folderId,
+    query,
+    type: apiType,
+    sort,
+    accept: acceptFilter,
+  });
+  const selectedFolder = folders.find((folder) => folder.id === folderId);
+  const inventoryTitle = query.trim() ? "Search Results" : selectedFolder?.name ?? "All Files";
 
   useEffect(() => {
     let active = true;
@@ -103,39 +107,6 @@ function MediaPickerDialogContent({
   }, []);
 
   useEffect(() => {
-    let active = true;
-
-    void (async () => {
-      setIsLoading(true);
-      setError(null);
-
-      const params = new URLSearchParams();
-      params.set("folderId", folderId);
-      if (accept.length === 1) params.set("type", accept[0]!);
-      if (query.trim()) params.set("q", query.trim());
-
-      const response = await fetch(`/api/media?${params.toString()}`);
-      const body = (await response.json().catch(() => null)) as { media?: MediaItem[]; error?: string } | null;
-
-      if (!active) return;
-
-      if (!response.ok) {
-        setError(body?.error ?? "Could not load media.");
-        setMedia([]);
-        setIsLoading(false);
-        return;
-      }
-
-      setMedia((body?.media ?? []).filter((item) => accept.includes(item.type)));
-      setIsLoading(false);
-    })();
-
-    return () => {
-      active = false;
-    };
-  }, [accept, folderId, query]);
-
-  useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
     };
@@ -147,14 +118,14 @@ function MediaPickerDialogContent({
   const confirmMany = () => {
     const selected = selectedIds
       .map((id) => media.find((item) => item.id === id))
-      .filter((item): item is MediaItem => Boolean(item));
+      .filter((item): item is MediaListItem => Boolean(item));
 
     if (selected.length < minSelections || selected.length > maxSelections) return;
     onSelectMany?.(selected);
     onClose();
   };
 
-  const toggleSelect = (item: MediaItem) => {
+  const selectAsset = (item: MediaListItem) => {
     if (!multiple) {
       onSelect?.(item);
       onClose();
@@ -175,11 +146,11 @@ function MediaPickerDialogContent({
     if (!files.length) return;
 
     setIsUploading(true);
-    setError(null);
+    setUploadError(null);
 
     try {
       const { uploaded, errors } = await uploadMediaFiles(files, folderId === "root" ? null : folderId);
-      await loadMedia();
+      reload();
 
       const accepted = uploaded.filter((item) => accept.includes(item.type));
 
@@ -194,24 +165,25 @@ function MediaPickerDialogContent({
             return next;
           });
         } else if (errors.length) {
-          setError(errors[0] ?? "Upload failed.");
+          setUploadError(errors[0] ?? "Upload failed.");
         }
       } else {
         const selected = accepted[0];
         if (selected) {
           onSelect?.({
             ...selected,
-            createdAt: new Date().toISOString(),
+            createdAt: selected.createdAt,
+            updatedAt: selected.updatedAt,
           });
           onClose();
         } else if (uploaded.length && errors.length) {
-          setError(`Uploaded ${uploaded.length} file(s). ${errors.length} failed.`);
+          setUploadError(`Uploaded ${uploaded.length} file(s). ${errors.length} failed.`);
         } else if (errors.length) {
-          setError(errors[0] ?? "Upload failed.");
+          setUploadError(errors[0] ?? "Upload failed.");
         }
       }
     } catch (uploadError) {
-      setError(uploadError instanceof Error ? uploadError.message : "Upload failed.");
+      setUploadError(uploadError instanceof Error ? uploadError.message : "Upload failed.");
     } finally {
       setIsUploading(false);
       event.target.value = "";
@@ -258,7 +230,7 @@ function MediaPickerDialogContent({
               value={folderId}
               onChange={(event) => setFolderId(event.target.value)}
             >
-              <option value="root">All files (no folder)</option>
+              <option value="root">All Files</option>
               {folders.map((folder) => (
                 <option key={folder.id} value={folder.id}>
                   {folder.name}
@@ -267,15 +239,16 @@ function MediaPickerDialogContent({
             </select>
           </div>
 
-          <div className="relative min-w-[12rem] flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
-            <input
-              className="w-full rounded-md border border-border bg-background py-2 pl-9 pr-3 text-sm"
-              placeholder="Search files..."
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-            />
-          </div>
+          <MediaToolbar
+            query={query}
+            type={type}
+            sort={sort}
+            onQueryChange={setQuery}
+            onTypeChange={setType}
+            onSortChange={setSort}
+            typeOptions={typeOptions}
+            className="min-w-[16rem] flex-1"
+          />
 
           <Button type="button" variant="secondary" isLoading={isUploading} onClick={() => inputRef.current?.click()}>
             <Upload className="h-4 w-4" aria-hidden="true" />
@@ -291,50 +264,39 @@ function MediaPickerDialogContent({
           />
         </div>
 
-        {error ? <p className="px-5 py-2 text-sm text-destructive">{error}</p> : null}
+        {error || uploadError ? (
+          <p role="alert" className="px-5 py-2 text-sm text-destructive">
+            {uploadError ?? error}
+          </p>
+        ) : null}
 
         <div className="flex-1 overflow-y-auto p-5">
+          <div className="mb-4">
+            <MediaInventory title={inventoryTitle} total={total} />
+          </div>
           {isLoading ? (
-            <p className="text-sm text-muted">Loading media...</p>
+            <MediaGridSkeleton />
           ) : media.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-12 text-center text-muted">
               <ImageIcon className="h-8 w-8" aria-hidden="true" />
               <p className="text-sm">No files in this folder yet.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-              {media.map((item) => {
-                const isSelected = selectedIds.includes(item.id);
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => toggleSelect(item)}
-                    className={cn(
-                      "group relative flex flex-col overflow-hidden rounded-lg border bg-background text-left transition-colors",
-                      isSelected ? "border-paseo ring-2 ring-paseo/30" : "border-border hover:border-paseo",
-                    )}
-                  >
-                    <div className="relative aspect-square bg-surface">
-                      {item.type === "IMAGE" ? (
-                        <Image src={item.path} alt={item.filename} fill className="object-cover" sizes="180px" />
-                      ) : (
-                        <div className="flex h-full items-center justify-center text-muted">{item.type}</div>
-                      )}
-                      {multiple && isSelected ? (
-                        <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-paseo text-white">
-                          <Check className="h-3.5 w-3.5" aria-hidden="true" />
-                        </span>
-                      ) : null}
-                    </div>
-                    <div className="px-3 py-2">
-                      <p className="truncate text-sm font-medium text-foreground">{item.filename}</p>
-                      <p className="text-xs text-muted">{formatBytes(item.size)}</p>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+            <>
+              <MediaGrid
+                media={media}
+                onSelect={setSelectedAsset}
+                selectedId={selectedAsset?.id}
+                selectedIds={multiple ? selectedIds : undefined}
+              />
+              <MediaLoadMore
+                loadedCount={media.length}
+                total={total}
+                hasMore={hasMore}
+                isLoadingMore={isLoadingMore}
+                onLoadMore={() => void loadMore()}
+              />
+            </>
           )}
         </div>
 
@@ -349,6 +311,16 @@ function MediaPickerDialogContent({
           </div>
         ) : null}
       </div>
+
+      <AssetDrawer
+        mode="picker"
+        asset={selectedAsset}
+        onClose={() => setSelectedAsset(null)}
+        onSelect={(asset) => {
+          selectAsset(asset);
+          setSelectedAsset(null);
+        }}
+      />
     </div>
   );
 }

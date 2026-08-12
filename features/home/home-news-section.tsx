@@ -15,6 +15,9 @@ type HomeNewsSectionProps = {
   eyebrow?: string;
   title?: string;
   showViewAll?: boolean;
+  showHeading?: boolean;
+  /** Lighter padding for archive pages (e.g. /news) instead of homepage sections. */
+  variant?: "default" | "compact";
 };
 
 export function HomeNewsSection({
@@ -23,44 +26,42 @@ export function HomeNewsSection({
   eyebrow = "News",
   title = "บทความน่าสนใจ",
   showViewAll = true,
+  showHeading = true,
+  variant = "default",
 }: HomeNewsSectionProps) {
   return (
     <section
       id="news"
       className={cn(
-        "scroll-mt-[72px] bg-white py-8 sm:py-20 lg:py-24",
+        variant === "compact"
+          ? "bg-white pb-10 sm:pb-12"
+          : "scroll-mt-[72px] bg-white py-8 sm:py-20 lg:py-24",
         className,
       )}
     >
       <div className="mx-auto w-full max-w-7xl px-5 sm:px-8">
-        {/* Heading */}
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-paseo-dark">
-            {eyebrow}
-          </p>
+        {showHeading ? (
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-paseo-dark">
+              {eyebrow}
+            </p>
 
-          <h2 className="mt-2 text-3xl font-semibold tracking-[-0.03em] text-foreground sm:text-4xl">
-            {title}
-          </h2>
-        </div>
+            <h2 className="mt-2 text-3xl font-semibold tracking-[-0.03em] text-foreground sm:text-4xl">
+              {title}
+            </h2>
+          </div>
+        ) : null}
 
         {posts.length ? (
           <>
             {/* Post List */}
             <ul
-              className="
-                mt-9
-                -mx-5 flex snap-x snap-mandatory gap-4
-                overflow-x-auto px-5 pb-4
-                [scrollbar-width:none]
-                [&::-webkit-scrollbar]:hidden
-
-                sm:mx-0 sm:grid sm:grid-cols-2
-                sm:gap-x-5 sm:gap-y-10
-                sm:overflow-visible sm:px-0 sm:pb-0
-
-                lg:grid-cols-3 lg:gap-x-6
-              "
+              className={cn(
+                showHeading ? "mt-9" : "mt-0",
+                "-mx-5 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-4 scrollbar-hidden",
+                "sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-x-5 sm:gap-y-10 sm:overflow-visible sm:px-0 sm:pb-0",
+                "lg:grid-cols-3 lg:gap-x-6",
+              )}
             >
               {posts.map((post) => (
                 <li

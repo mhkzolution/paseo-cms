@@ -2,16 +2,18 @@ import Link from "next/link";
 import { Plus, Users as UsersIcon } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/lib/rbac";
+import { requireModuleAccess } from "@/lib/rbac";
 import { RoleBadge } from "@/components/admin/role-badge";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { AdminPageHeader, AdminTableShell } from "@/components/admin/admin-table";
 import { EmptyState } from "@/components/admin/empty-state";
 import { DeleteUserButton } from "@/features/users/delete-user-button";
 import { formatDate } from "@/lib/format";
+import { getLocalizationSettings } from "@/lib/settings-cache";
 
 export default async function UsersPage() {
-  const session = await requireRole(["SUPER_ADMIN", "ADMIN"]);
+  const session = await requireModuleAccess("users");
+  const localization = await getLocalizationSettings();
 
   const users = await prisma.user.findMany({
     where: { deletedAt: null },
@@ -64,7 +66,7 @@ export default async function UsersPage() {
                   <td className="px-4 py-3">
                     <StatusBadge status={user.status} />
                   </td>
-                  <td className="px-4 py-3 text-muted">{formatDate(user.createdAt)}</td>
+                  <td className="px-4 py-3 text-muted">{formatDate(user.createdAt, localization)}</td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex flex-nowrap items-center justify-end gap-1 whitespace-nowrap sm:gap-2">
                       <Link

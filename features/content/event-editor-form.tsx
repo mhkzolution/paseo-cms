@@ -1,20 +1,35 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { Resolver, UseFormRegisterReturn } from "react-hook-form";
+import type { Resolver } from "react-hook-form";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, FileText, Globe2, Link2, Search, Tags } from "lucide-react";
+import { Check } from "lucide-react";
 import type { z } from "zod";
 
 import { SeoScoreBadge } from "@/components/admin/seo-score-badge";
 import { RichTextEditor } from "@/components/editor/rich-text-editor";
 import { Button } from "@/components/ui/button";
-import { SeoScorePanel, useDebouncedSeoScore } from "@/features/content/seo-score-panel";
+import { ContentPreviewPanel } from "@/features/content/content-preview-panel";
+import {
+  CheckboxField,
+  CheckboxGroup,
+  EDITOR_TABS,
+  Field,
+  inputClass,
+  SLUG_FIELD_HINT,
+} from "@/features/content/editor-form-shared";
+import { SeoOptimizationAssistant } from "@/features/content/seo-optimization";
+import { useSeoAssistant } from "@/hooks/use-seo-assistant";
 import { CoverImageField } from "@/features/media/cover-image-field";
 import { AlbumImagesField, type AlbumImageValue } from "@/features/media/album-images-field";
 import { MediaPickerDialog } from "@/features/media/media-picker-dialog";
+import type { InternalLinkSuggestion } from "@/lib/seo-assistant";
+import {
+  isInternalLinkContextStale,
+  type InternalLinkSavedContext,
+} from "@/lib/seo-internal-link-context";
 import { shouldWarnOnPublish } from "@/lib/seo-score";
 import { cn } from "@/lib/utils";
 import { eventSchema } from "@/validators/content.validator";
@@ -35,20 +50,14 @@ interface EventEditorFormProps {
   tags: Option[];
   events: Option[];
   defaultValues: EventFormValues;
+  internalLinkSuggestions: InternalLinkSuggestion[];
+  savedInternalLinkContext: InternalLinkSavedContext;
 }
 
 const STATUS_OPTIONS = [
   { label: "Draft", value: "DRAFT" },
   { label: "Published", value: "PUBLISHED" },
   { label: "Archived", value: "ARCHIVED" },
-] as const;
-
-const TABS = [
-  { id: "content", label: "Content", icon: FileText },
-  { id: "taxonomy", label: "Taxonomy", icon: Tags },
-  { id: "seo", label: "SEO", icon: Search },
-  { id: "schema", label: "Schema", icon: Globe2 },
-  { id: "links", label: "Links", icon: Link2 },
 ] as const;
 
 export function EventEditorForm({
@@ -60,9 +69,11 @@ export function EventEditorForm({
   tags,
   events,
   defaultValues,
+  internalLinkSuggestions,
+  savedInternalLinkContext,
 }: EventEditorFormProps) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<(typeof TABS)[number]["id"]>("content");
+  const [activeTab, setActiveTab] = useState<(typeof EDITOR_TABS)[number]["id"]>("content");
   const [serverError, setServerError] = useState<string | null>(null);
   const [editorImagePickerOpen, setEditorImagePickerOpen] = useState(false);
   const [editorImagePickerMode, setEditorImagePickerMode] = useState<"single" | "multi">("single");
@@ -83,26 +94,57 @@ export function EventEditorForm({
     "slug",
     "content",
     "excerpt",
+    "subtitle",
     "featuredImage",
     "coverImageAlt",
+    "coverImageCaption",
+    "tagIds",
+    "newTags",
     "seo.seoTitle",
     "seo.seoDescription",
     "seo.focusKeyword",
+    "seo.keywords",
+    "seo.secondaryKeywords",
     "seo.ogImage",
+    "seo.ogTitle",
+    "seo.ogDescription",
   ]);
-  const seoScore = useDebouncedSeoScore({
+  const tagIds = Array.isArray(watched[8]) ? watched[8].filter((id): id is string => typeof id === "string") : [];
+  const linkSuggestionsStale = useMemo(
+    () =>
+      isInternalLinkContextStale(savedInternalLinkContext, {
+        categoryId: "",
+        tagIds,
+      }),
+    [savedInternalLinkContext, tagIds],
+  );
+  const rawSeo = {
+    seoTitle: typeof watched[10] === "string" ? watched[10] : "",
+    seoDescription: typeof watched[11] === "string" ? watched[11] : "",
+    focusKeyword: typeof watched[12] === "string" ? watched[12] : "",
+    keywords: typeof watched[13] === "string" ? watched[13] : "",
+    secondaryKeywords: typeof watched[14] === "string" ? watched[14] : "",
+    ogImage: typeof watched[15] === "string" ? watched[15] : "",
+    ogTitle: typeof watched[16] === "string" ? watched[16] : "",
+    ogDescription: typeof watched[17] === "string" ? watched[17] : "",
+  };
+  const assistantFormState = {
     title: typeof watched[0] === "string" ? watched[0] : "",
     slug: typeof watched[1] === "string" ? watched[1] : "",
     content: typeof watched[2] === "string" ? watched[2] : "",
     excerpt: typeof watched[3] === "string" ? watched[3] : "",
-    featuredImage: typeof watched[4] === "string" ? watched[4] : "",
-    coverImageAlt: typeof watched[5] === "string" ? watched[5] : "",
-    seo: {
-      seoTitle: typeof watched[6] === "string" ? watched[6] : "",
-      seoDescription: typeof watched[7] === "string" ? watched[7] : "",
-      focusKeyword: typeof watched[8] === "string" ? watched[8] : "",
-      ogImage: typeof watched[9] === "string" ? watched[9] : "",
-    },
+    featuredImage: typeof watched[5] === "string" ? watched[5] : "",
+    coverImageAlt: typeof watched[6] === "string" ? watched[6] : "",
+    contentType: "event" as const,
+    tagIds,
+    newTags: typeof watched[9] === "string" ? watched[9] : "",
+    tags,
+    seo: rawSeo,
+  };
+  const assistantState = useSeoAssistant({
+    formState: assistantFormState,
+    internalLinkSuggestions,
+    linkSuggestionsStale,
   });
 
   const alternates = useFieldArray({ control, name: "alternates" });
@@ -135,9 +177,9 @@ export function EventEditorForm({
   const onSubmit = async (values: EventFormValues) => {
     setServerError(null);
 
-    if (values.status === "PUBLISHED" && shouldWarnOnPublish(seoScore.seoScore)) {
+    if (values.status === "PUBLISHED" && shouldWarnOnPublish(assistantState.score.seoScore)) {
       const confirmed = window.confirm(
-        `คะแนน SEO ต่ำ (${seoScore.seoScore}/100) ต้องการ publish ต่อไหม?`,
+        `คะแนน SEO ต่ำ (${assistantState.score.seoScore}/100) ต้องการ publish ต่อไหม?`,
       );
       if (!confirmed) return;
     }
@@ -158,10 +200,22 @@ export function EventEditorForm({
     router.refresh();
   };
 
+  const previewTitle = typeof watched[0] === "string" ? watched[0] : "";
+  const previewContent = typeof watched[2] === "string" ? watched[2] : "";
+  const previewExcerpt = typeof watched[3] === "string" ? watched[3] : "";
+  const previewSubtitle = typeof watched[4] === "string" ? watched[4] : "";
+  const previewFeaturedImage = typeof watched[5] === "string" ? watched[5] : "";
+  const previewCoverImageAlt = typeof watched[6] === "string" ? watched[6] : "";
+  const previewCoverImageCaption = typeof watched[7] === "string" ? watched[7] : "";
+  const previewEventDate = watch("eventDate");
+  const previewEventEndDate = watch("eventEndDate");
+  const previewLocation = watch("location");
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex max-w-6xl flex-col gap-5">
+    <div className="flex gap-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="flex min-w-0 flex-1 flex-col gap-5">
       <div className="flex flex-wrap gap-2 border-b border-border">
-        {TABS.map((tab) => {
+        {EDITOR_TABS.map((tab) => {
           const Icon = tab.icon;
           return (
             <button
@@ -177,71 +231,70 @@ export function EventEditorForm({
             >
               <Icon className="h-4 w-4" aria-hidden="true" />
               {tab.label}
-              {tab.id === "seo" ? <SeoScoreBadge score={seoScore.seoScore} className="ml-0.5" /> : null}
+              {tab.id === "seo" ? <SeoScoreBadge score={assistantState.score.seoScore} className="ml-0.5" /> : null}
             </button>
           );
         })}
       </div>
 
-      <section className={cn("grid gap-4 md:grid-cols-2", activeTab !== "content" && "hidden")}>
-        <Field label="Title" error={errors.title?.message}>
-          <input className={inputClass} {...register("title")} />
-        </Field>
-        <Field label="Slug" error={errors.slug?.message}>
-          <input className={inputClass} placeholder="Auto generated if blank" {...register("slug")} />
-        </Field>
-        <Field label="H1 override" error={errors.h1?.message}>
-          <input className={inputClass} placeholder="Defaults to title" {...register("h1")} />
-        </Field>
-        <Field label="Status" error={errors.status?.message}>
-          <select className={inputClass} {...register("status")}>
-            {STATUS_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Field label="วันเริ่มกิจกรรม" error={errors.eventDate?.message}>
-          <input className={inputClass} type="datetime-local" {...register("eventDate")} />
-        </Field>
-        <Field label="วันสิ้นสุดกิจกรรม" error={errors.eventEndDate?.message}>
-          <input className={inputClass} type="datetime-local" {...register("eventEndDate")} />
-        </Field>
-        <Field label="Location" error={errors.location?.message}>
-          <input className={inputClass} placeholder="e.g. Central Plaza, Lat Krabang" {...register("location")} />
-        </Field>
-        <Field label="Published at">
-          <input className={inputClass} type="datetime-local" {...register("publishedAt")} />
-        </Field>
-        <Field label="Reviewed at">
-          <input className={inputClass} type="datetime-local" {...register("reviewedAt")} />
-        </Field>
-        <Field label="Expires at">
-          <input className={inputClass} type="datetime-local" {...register("expiresAt")} />
-        </Field>
-        <Field label="Cover image" error={errors.featuredImage?.message}>
-          <Controller
-            name="featuredImage"
-            control={control}
-            render={({ field }) => (
-              <CoverImageField value={typeof field.value === "string" ? field.value : ""} onChange={field.onChange} />
-            )}
-          />
-        </Field>
-        <Field label="Cover alt text" error={errors.coverImageAlt?.message}>
-          <input className={inputClass} {...register("coverImageAlt")} />
-        </Field>
-        <Field label="Cover caption" error={errors.coverImageCaption?.message}>
-          <input className={inputClass} {...register("coverImageCaption")} />
-        </Field>
-        <Field label="Excerpt" className="md:col-span-2" error={errors.excerpt?.message}>
+      <section className={cn("grid gap-4", activeTab !== "content" && "hidden")}>
+        <div className="grid gap-4 md:grid-cols-2 md:items-start">
+          <div className="grid gap-4">
+            <Field label="Title" error={errors.title?.message}>
+              <input className={inputClass} {...register("title")} />
+            </Field>
+            <Field label="Status" error={errors.status?.message}>
+              <select className={inputClass} {...register("status")}>
+                {STATUS_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="วันเริ่มกิจกรรม" error={errors.eventDate?.message}>
+              <input className={inputClass} type="datetime-local" {...register("eventDate")} />
+            </Field>
+            <Field label="วันสิ้นสุดกิจกรรม" error={errors.eventEndDate?.message}>
+              <input className={inputClass} type="datetime-local" {...register("eventEndDate")} />
+            </Field>
+            <Field label="Location" error={errors.location?.message}>
+              <input className={inputClass} placeholder="e.g. Central Plaza, Lat Krabang" {...register("location")} />
+            </Field>
+            <Field label="Published at">
+              <input className={inputClass} type="datetime-local" {...register("publishedAt")} />
+            </Field>
+            <Field label="Cover alt text" error={errors.coverImageAlt?.message}>
+              <input className={inputClass} {...register("coverImageAlt")} />
+            </Field>
+            <Field label="Cover caption" error={errors.coverImageCaption?.message}>
+              <input className={inputClass} {...register("coverImageCaption")} />
+            </Field>
+          </div>
+
+          <div className="grid gap-4">
+            <Field label="Slug" description={SLUG_FIELD_HINT} error={errors.slug?.message}>
+              <input className={inputClass} placeholder="สร้างอัตโนมัติจาก Title ถ้าว่างไว้" {...register("slug")} />
+            </Field>
+            <Field label="Cover image" error={errors.featuredImage?.message}>
+              <Controller
+                name="featuredImage"
+                control={control}
+                render={({ field }) => (
+                  <CoverImageField value={typeof field.value === "string" ? field.value : ""} onChange={field.onChange} />
+                )}
+              />
+            </Field>
+          </div>
+        </div>
+
+        <Field label="Excerpt" error={errors.excerpt?.message}>
           <textarea className={inputClass} rows={4} {...register("excerpt")} />
         </Field>
-        <Field label="Subtitle" className="md:col-span-2" error={errors.subtitle?.message}>
+        <Field label="Subtitle" error={errors.subtitle?.message}>
           <textarea className={inputClass} rows={2} placeholder="Subtitle" {...register("subtitle")} />
         </Field>
-        <Field label="Content" className="md:col-span-2" error={errors.content?.message}>
+        <Field label="Content" error={errors.content?.message}>
           <Controller
             name="content"
             control={control}
@@ -256,7 +309,7 @@ export function EventEditorForm({
             )}
           />
         </Field>
-        <Field label="อัลบั้มรูปภาพ" className="md:col-span-2" error={errors.images?.message}>
+        <Field label="อัลบั้มรูปภาพ" error={errors.images?.message}>
           <Controller
             name="images"
             control={control}
@@ -281,7 +334,7 @@ export function EventEditorForm({
       </section>
 
       <section className={cn("grid gap-4 md:grid-cols-2", activeTab !== "seo" && "hidden")}>
-        <SeoScorePanel result={seoScore} className="md:col-span-2" />
+        <SeoOptimizationAssistant state={assistantState} className="md:col-span-2" />
         <Field label="SEO title">
           <input className={inputClass} {...register("seo.seoTitle")} />
         </Field>
@@ -427,68 +480,21 @@ export function EventEditorForm({
         </Button>
       </div>
     </form>
-  );
-}
 
-const inputClass =
-  "w-full rounded-md border border-border bg-surface px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent";
-
-function Field({
-  label,
-  error,
-  className,
-  children,
-}: {
-  label: string;
-  error?: string;
-  className?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <label className={cn("grid gap-1.5 text-sm font-medium text-foreground", className)}>
-      {label}
-      {children}
-      {error ? <span className="text-sm font-normal text-destructive">{error}</span> : null}
-    </label>
-  );
-}
-
-function CheckboxField({
-  label,
-  ...props
-}: React.InputHTMLAttributes<HTMLInputElement> & { label: string }) {
-  return (
-    <label className="inline-flex items-center gap-2 text-sm text-foreground">
-      <input type="checkbox" className="h-4 w-4 rounded border-border accent-paseo" {...props} />
-      {label}
-    </label>
-  );
-}
-
-function CheckboxGroup({
-  label,
-  options,
-  register,
-}: {
-  label: string;
-  options: Option[];
-  register: UseFormRegisterReturn;
-}) {
-  return (
-    <fieldset className="grid gap-2 rounded-md border border-border p-4">
-      <legend className="px-1 text-sm font-medium text-foreground">{label}</legend>
-      {options.length ? (
-        <div className="grid gap-2">
-          {options.map((option) => (
-            <label key={option.value} className="inline-flex items-center gap-2 text-sm text-foreground">
-              <input type="checkbox" value={option.value} className="h-4 w-4 rounded border-border accent-paseo" {...register} />
-              {option.label}
-            </label>
-          ))}
-        </div>
-      ) : (
-        <p className="text-sm text-muted">No options yet.</p>
-      )}
-    </fieldset>
+    <ContentPreviewPanel
+      type="event"
+      title={previewTitle}
+      subtitle={previewSubtitle}
+      excerpt={previewExcerpt}
+      content={previewContent}
+      featuredImage={previewFeaturedImage}
+      coverImageAlt={previewCoverImageAlt}
+      coverImageCaption={previewCoverImageCaption}
+      eventDate={typeof previewEventDate === "string" ? previewEventDate : ""}
+      eventEndDate={typeof previewEventEndDate === "string" ? previewEventEndDate : ""}
+      location={typeof previewLocation === "string" ? previewLocation : ""}
+      className="hidden shrink-0 lg:flex"
+    />
+    </div>
   );
 }

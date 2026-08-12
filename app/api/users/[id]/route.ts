@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 
-import { checkRole } from "@/lib/rbac";
+import { checkModuleAccess } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 import { updateUserSchema } from "@/validators/user.validator";
 
@@ -10,7 +10,7 @@ interface RouteParams {
 }
 
 export async function PATCH(request: Request, { params }: RouteParams) {
-  const { authorized, status } = await checkRole(["SUPER_ADMIN", "ADMIN"]);
+  const { authorized, status } = await checkModuleAccess("users");
   if (!authorized) {
     return NextResponse.json({ error: "Forbidden" }, { status });
   }
@@ -38,7 +38,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 }
 
 export async function DELETE(_request: Request, { params }: RouteParams) {
-  const { authorized, status, session } = await checkRole(["SUPER_ADMIN", "ADMIN"]);
+  const { authorized, status, session } = await checkModuleAccess("users");
   if (!authorized) {
     return NextResponse.json({ error: "Forbidden" }, { status });
   }

@@ -1,12 +1,12 @@
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 
-import { checkRole } from "@/lib/rbac";
+import { checkModuleAccess } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 import { createUserSchema } from "@/validators/user.validator";
 
 export async function GET() {
-  const { authorized, status } = await checkRole(["SUPER_ADMIN", "ADMIN"]);
+  const { authorized, status } = await checkModuleAccess("users");
   if (!authorized) {
     return NextResponse.json({ error: "Forbidden" }, { status });
   }
@@ -21,7 +21,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const { authorized, status } = await checkRole(["SUPER_ADMIN", "ADMIN"]);
+  const { authorized, status } = await checkModuleAccess("users");
   if (!authorized) {
     return NextResponse.json({ error: "Forbidden" }, { status });
   }

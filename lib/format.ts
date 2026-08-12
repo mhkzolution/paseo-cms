@@ -1,3 +1,6 @@
+import { formatDateWithSettings } from "@/lib/datetime-formatters";
+import { DEFAULT_LOCALIZATION_SETTINGS, type LocalizationSettings } from "@/lib/localization-settings";
+
 export function formatBytes(bytes: number): string {
   if (bytes === 0) return "0 B";
 
@@ -8,10 +11,9 @@ export function formatBytes(bytes: number): string {
   return `${value.toFixed(value >= 10 || exponent === 0 ? 0 : 1)} ${units[exponent]}`;
 }
 
-export function formatDate(date: Date | string): string {
-  return new Date(date).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
+export function formatDate(
+  date: Date | string,
+  settings: LocalizationSettings = DEFAULT_LOCALIZATION_SETTINGS,
+): string {
+  return formatDateWithSettings(new Date(date), settings);
 }

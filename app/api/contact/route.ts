@@ -2,13 +2,11 @@ import { NextResponse } from "next/server";
 
 import { forbiddenError, validationError } from "@/lib/content-api";
 import { prisma } from "@/lib/prisma";
-import { checkRole } from "@/lib/rbac";
+import { checkModuleAccess } from "@/lib/rbac";
 import { contactSchema } from "@/validators/content.validator";
 
-const CONTACT_ROLES = ["SUPER_ADMIN", "ADMIN", "EDITOR", "MARKETING"] as const;
-
 export async function GET() {
-  const { authorized, status } = await checkRole([...CONTACT_ROLES]);
+  const { authorized, status } = await checkModuleAccess("contact-messages");
   if (!authorized) return forbiddenError(status);
 
   const submissions = await prisma.contactSubmission.findMany({

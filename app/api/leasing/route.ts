@@ -3,13 +3,11 @@ import { NextResponse } from "next/server";
 import { forbiddenError, validationError } from "@/lib/content-api";
 import { prisma } from "@/lib/prisma";
 import { verifyRecaptcha } from "@/lib/recaptcha";
-import { checkRole } from "@/lib/rbac";
+import { checkModuleAccess } from "@/lib/rbac";
 import { leasingSchema } from "@/validators/content.validator";
 
-const LEASING_ROLES = ["SUPER_ADMIN", "ADMIN", "EDITOR", "MARKETING"] as const;
-
 export async function GET() {
-  const { authorized, status } = await checkRole([...LEASING_ROLES]);
+  const { authorized, status } = await checkModuleAccess("leasing-inquiries");
   if (!authorized) return forbiddenError(status);
 
   const submissions = await prisma.leasingSubmission.findMany({

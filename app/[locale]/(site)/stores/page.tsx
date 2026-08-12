@@ -1,15 +1,16 @@
 import type { Metadata } from "next";
 import { getLocale, getTranslations } from "next-intl/server";
 
-import { StoreArchivePageGrid, StoreFilters } from "@/features/stores/store-archive-section";
 import { redirect } from "@/i18n/navigation";
 import type { AppLocale } from "@/i18n/routing";
+import { StoresDirectory } from "@/features/stores/stores-directory";
 import { DEFAULT_STORE_BRANCH_SLUG } from "@/lib/branches/branch-config";
 import { getBranchBySlug } from "@/lib/events";
 import { getLocalizedName } from "@/lib/i18n/localized-name";
 import { withLocaleAlternates } from "@/lib/i18n/locale-alternates";
 import { DEFAULT_SETTINGS, getSettings } from "@/lib/settings";
 import { buildStoresHref, getCategoryBySlug, getPublishedStores, getStoreBranches, getStoreCategories } from "@/lib/stores";
+import { getStorePromotionLabels } from "@/lib/stores/store-promotions";
 
 export const revalidate = 300;
 
@@ -76,38 +77,30 @@ export default async function StoresPage({ params, searchParams }: StoresPagePro
     }),
   ]);
 
-  const branchLabel = branch ? getLocalizedName(branch, appLocale) : null;
-  const listingQuery = { branch: resolvedBranchSlug, category: category?.slug };
+  const promotionLabels = branch?.id
+    ? await getStorePromotionLabels(
+        stores.map((store) => ({ id: store.id, name: store.name, slug: store.slug })),
+        branch.id,
+      )
+    : {};
 
   return (
-    <main className="min-h-screen bg-[#FCFAF6] text-foreground">
-      <section className="bg-paseo py-12 sm:py-16">
-        <div className="mx-auto w-full max-w-7xl px-5 sm:px-8">
-          <p className="text-sm font-semibold uppercase text-foreground/80">{t("title")}</p>
-          <h1 className="mt-2 text-4xl font-bold tracking-tight sm:text-5xl">
-            {category && branchLabel
-              ? `${t("title")} — ${category.name} · ${branchLabel}`
-              : category
-                ? `${t("title")} — ${category.name}`
-                : branchLabel
-                  ? `${t("title")} — ${branchLabel}`
-                  : t("title")}
-          </h1>
-        </div>
-      </section>
-
-      <section className="mx-auto w-full max-w-7xl px-5 py-12 sm:px-8">
-        <StoreFilters
-          branches={branches}
-          categories={categories}
-          activeBranchSlug={branch?.slug}
-          activeCategorySlug={category?.slug}
-          activeCategoryColor={category?.color}
-        />
-        <div className="mt-10">
-          <StoreArchivePageGrid stores={stores} listingQuery={listingQuery} emptyMessage={t("empty")} />
-        </div>
-      </section>
-    </main>
+    <StoresDirectory
+      title={t("title")}
+      stores={stores}
+      branches={branches}
+      categories={categories.map((item) => ({
+        slug: item.slug,
+        name: item.name,
+        image: item.image,
+        color: item.color,
+        storeCount: item.storeCount,
+      }))}
+      activeBranchSlug={branch?.slug}
+      activeCategorySlug={category?.slug}
+      promotionLabels={promotionLabels}
+      searchPlaceholder={t("searchPlaceholder")}
+      emptyMessage={t("empty")}
+    />
   );
 }

@@ -23,6 +23,16 @@
 }
 
 @layer utilities {
+  /* Hide scrollbar while keeping scroll (carousels, tab strips) */
+  .scrollbar-hidden {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hidden::-webkit-scrollbar {
+    display: none;
+  }
+
   /* Thin branded scrollbar — light surfaces */
   .scrollbar-paseo {
     scrollbar-width: thin;
@@ -81,6 +91,49 @@
 
   .scrollbar-paseo-dark::-webkit-scrollbar-corner {
     background: transparent;
+  }
+
+  /* User site: branded scrollbars on page + scrollable regions */
+  html.site-scrollbar,
+  html.site-scrollbar body {
+    scrollbar-width: thin;
+    scrollbar-color: #9dc93c transparent;
+  }
+
+  html.site-scrollbar::-webkit-scrollbar,
+  html.site-scrollbar body::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  html.site-scrollbar::-webkit-scrollbar-track,
+  html.site-scrollbar body::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  html.site-scrollbar::-webkit-scrollbar-thumb,
+  html.site-scrollbar body::-webkit-scrollbar-thumb {
+    background-color: #c5d99a;
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  html.site-scrollbar::-webkit-scrollbar-thumb:hover,
+  html.site-scrollbar body::-webkit-scrollbar-thumb:hover {
+    background-color: #9dc93c;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  html.site-scrollbar::-webkit-scrollbar-corner,
+  html.site-scrollbar body::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  html.site-scrollbar
+    :is(.overflow-auto, .overflow-x-auto, .overflow-y-auto, .overflow-scroll):not(.scrollbar-hidden) {
+    @apply scrollbar-paseo;
   }
 }
 
@@ -208,4 +261,12 @@
   float: left;
   height: 0;
   pointer-events: none;
+}
+
+/* Preserve blank lines created by empty paragraphs in rich text */
+.tiptap p:empty::before,
+.content-prose p:empty::before,
+.prose p:empty::before {
+  content: "\00a0";
+  white-space: pre;
 }

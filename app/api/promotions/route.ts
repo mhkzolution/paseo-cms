@@ -1,18 +1,19 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 
+import { AuditModule } from "@/lib/audit-log";
 import { forbiddenError, validationError } from "@/lib/content-api";
+import { auditContentCreate } from "@/lib/content-audit";
 import { buildUniquePromotionSlug, resolveTagIds, syncPromotionRelations } from "@/lib/promotion-write";
 import { prisma } from "@/lib/prisma";
-import { checkRole } from "@/lib/rbac";
+import { checkModuleAccess } from "@/lib/rbac";
+import { enrichSeoForSave } from "@/lib/seo-content-save";
 import { persistSeoAudit, toSeoScoreInput } from "@/lib/seo-audit";
 import { estimateReadingTime, generateSlug, parseJsonObject, splitKeywords } from "@/lib/seo";
 import { promotionSchema } from "@/validators/content.validator";
 
-const MARKETING_ROLES = ["SUPER_ADMIN", "ADMIN", "EDITOR", "MARKETING"] as const;
-
 export async function GET() {
-  const { authorized, status } = await checkRole([...MARKETING_ROLES]);
+  const { authorized, status } = await checkModuleAccess("promotions");
   if (!authorized) return forbiddenError(status);
 
   const promotions = await prisma.promotion.findMany({
@@ -30,7 +31,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const { authorized, status, session } = await checkRole([...MARKETING_ROLES]);
+  const { authorized, status, session } = await checkModuleAccess("promotions");
   if (!authorized) return forbiddenError(status);
 
   const parsed = promotionSchema.safeParse(await request.json());
@@ -45,13 +46,18 @@ export async function POST(request: Request) {
 
   const baseSlug = generateSlug(parsed.data.slug ?? parsed.data.title) || "promotion";
   const slug = await buildUniquePromotionSlug(baseSlug);
-  const { tagIds, branchIds, relatedPromotionIds, newTags, seo, alternates, faqs, ...promotionInput } = parsed.data;
+  const enriched = await enrichSeoForSave(prisma, parsed.data, {
+    contentType: "promotion",
+    slug,
+    isCreate: true,
+  });
+  const { tagIds, branchIds, relatedPromotionIds, newTags, seo, alternates, faqs, ...promotionInput } = enriched;
 
   const promotion = await prisma.$transaction(async (tx) => {
     const created = await tx.promotion.create({
       data: {
         ...promotionInput,
-        slug,
+        slug: enriched.slug,
         authorId: session.user.id,
         readingTimeMinutes: estimateReadingTime(promotionInput.content),
         seo: {
@@ -74,13 +80,22 @@ export async function POST(request: Request) {
       faqs,
     });
 
-    await persistSeoAudit(tx, { promotionId: created.id }, toSeoScoreInput(parsed.data));
+    await persistSeoAudit(tx, { promotionId: created.id }, toSeoScoreInput(enriched, { contentType: "promotion" }));
 
     return tx.promotion.findUnique({
       where: { id: created.id },
       include: { seo: true, tags: { include: { tag: true } }, branches: { include: { branch: true } } },
     });
   });
+
+  if (promotion) {
+    await auditContentCreate({
+      user: session.user,
+      module: AuditModule.PROMOTIONS,
+      entityType: "Promotion",
+      entity: promotion,
+    });
+  }
 
   return NextResponse.json({ promotion }, { status: 201 });
 }

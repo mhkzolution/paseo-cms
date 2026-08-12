@@ -61,7 +61,7 @@ export default async function RootLayout({
   const [seo, locale] = await Promise.all([getSeoSettings(), getLocale().catch(() => "th")]);
 
   return (
-    <html lang={locale} className={`${prompt.variable} ${cormorant.variable}`}>
+    <html lang={locale} className={`${prompt.variable} ${cormorant.variable} site-scrollbar`}>
       <body className="font-sans">
         {seo.jsonLd ? (
           <script

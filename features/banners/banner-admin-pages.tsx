@@ -5,7 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import { BannerForm } from "@/features/banners/banner-form";
 import { BANNER_SCOPE_LABELS, getBranchPlacementLabels, type BannerScope } from "@/lib/banners";
 import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/lib/rbac";
+import { requireModuleAccess } from "@/lib/rbac";
 
 const EMPTY_SITE_BANNER = {
   title: "",
@@ -33,7 +33,7 @@ interface NewBannerPageProps {
 }
 
 export async function NewBannerPageContent({ scope }: NewBannerPageProps) {
-  await requireRole(["SUPER_ADMIN", "ADMIN", "EDITOR", "MARKETING"]);
+  await requireModuleAccess("banners");
   const branchLabels = scope === "site" ? await getBranchPlacementLabels() : undefined;
   const baseHref = `/admin/banners/${scope}`;
 
@@ -68,7 +68,7 @@ interface EditBannerPageProps {
 }
 
 export async function EditBannerPageContent({ scope, id }: EditBannerPageProps) {
-  await requireRole(["SUPER_ADMIN", "ADMIN", "EDITOR", "MARKETING"]);
+  await requireModuleAccess("banners");
 
   const [item, branchLabels] = await Promise.all([
     prisma.banner.findFirst({ where: { id, deletedAt: null } }),

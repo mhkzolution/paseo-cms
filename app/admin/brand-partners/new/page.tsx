@@ -3,7 +3,7 @@ import { ArrowLeft } from "lucide-react";
 
 import { BrandPartnerForm } from "@/features/brand-partners/brand-partner-form";
 import { getBranchPlacementLabels } from "@/lib/banners";
-import { requireRole } from "@/lib/rbac";
+import { requireModuleAccess } from "@/lib/rbac";
 
 const EMPTY_BRAND_PARTNER = {
   name: "",
@@ -18,7 +18,7 @@ const EMPTY_BRAND_PARTNER = {
 } as const;
 
 export default async function NewBrandPartnerPage() {
-  await requireRole(["SUPER_ADMIN", "ADMIN", "EDITOR", "MARKETING"]);
+  await requireModuleAccess("brand-partners");
   const branchLabels = await getBranchPlacementLabels();
 
   return (

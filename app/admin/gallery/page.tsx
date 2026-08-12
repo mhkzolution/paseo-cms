@@ -5,11 +5,13 @@ import { AdminPageHeader, AdminTableShell } from "@/components/admin/admin-table
 import { EmptyState } from "@/components/admin/empty-state";
 import { DeleteResourceButton } from "@/features/content/delete-resource-button";
 import { formatDate } from "@/lib/format";
+import { getLocalizationSettings } from "@/lib/settings-cache";
 import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/lib/rbac";
+import { requireModuleAccess } from "@/lib/rbac";
 
 export default async function GalleryPage() {
-  await requireRole(["SUPER_ADMIN", "ADMIN", "EDITOR", "MARKETING"]);
+  await requireModuleAccess("gallery");
+  const localization = await getLocalizationSettings();
 
   const gallery = await prisma.gallery.findMany({
     where: { deletedAt: null },
@@ -50,7 +52,7 @@ export default async function GalleryPage() {
                 <tr key={item.id}>
                   <td className="px-4 py-3 font-medium text-foreground">{item.album}</td>
                   <td className="max-w-xs truncate px-4 py-3 text-muted">{item.image}</td>
-                  <td className="px-4 py-3 text-muted">{formatDate(item.createdAt)}</td>
+                  <td className="px-4 py-3 text-muted">{formatDate(item.createdAt, localization)}</td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex flex-nowrap items-center justify-end gap-1 whitespace-nowrap sm:gap-2">
                       <Link
