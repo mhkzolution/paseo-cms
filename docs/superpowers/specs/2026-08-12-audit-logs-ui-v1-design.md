@@ -1,7 +1,8 @@
 # Audit Logs UI V1 Design
 
 **Date:** 2026-08-12  
-**Status:** Approved for implementation (pending user review of this file)  
+**Status:** Final Spec — ready for implementation  
+
 **Depends on:** Audit Infrastructure V1 (`docs/superpowers/specs/audit-logs-v1.md`) — shipped  
 **Scope:** Sprint 2 — read-only admin UI + list/detail APIs over existing `audit_logs`
 
@@ -14,7 +15,7 @@ Give `SUPER_ADMIN` and `ADMIN` a production Audit Logs screen under System setti
 **Approach 3 — Server list + client drawer fetch**
 
 - Page / filters / table: server-driven via URL `searchParams` (shareable, refresh-stable, browser back/forward)
-- Drawer: client component; on **View**, fetch `GET /api/admin/audit-logs/[id]` once
+- Drawer: client component; on **View**, fetch `GET /api/admin/audit-logs/[id]`; discard detail on close; fetch again on reopen
 - List API returns table metadata only (no `changes` / `ipAddress` / `userAgent`)
 - Detail API returns full row for the drawer
 
@@ -129,10 +130,12 @@ All filters sync via `searchParams`. Refresh and browser Back/Forward must resto
 | `module` | `AuditModule` | optional |
 | `action` | `AuditAction` | optional |
 | `severity` | `AuditSeverity` | optional |
-| `search` | string | matches `entityName` OR `entitySlug` OR `userName` (case-insensitive contains) |
-| `dateFrom` | ISO date | inclusive start of day (project timezone: Asia/Bangkok unless existing admin util says otherwise) |
-| `dateTo` | ISO date | inclusive end of day |
+| `search` | string | matches `entityName` OR `entitySlug` OR `userName` (case-insensitive contains). **Normalize before query:** trim whitespace; empty string → treated as unset; length **&lt; 2** → ignored (do not apply LIKE). |
+| `dateFrom` | `YYYY-MM-DD` | inclusive **startOfDay** in project timezone **`Asia/Bangkok`** |
+| `dateTo` | `YYYY-MM-DD` | inclusive **endOfDay** in project timezone **`Asia/Bangkok`** |
 | `preset` | optional | `today` \| `7d` \| `30d` — UI helper; resolve to `dateFrom`/`dateTo` when applied |
+
+**Timezone (locked):** Audit Logs UI V1 uses project timezone **`Asia/Bangkok`** for all date-range bounds. Do not use UTC midnight for `dateFrom`/`dateTo` interpretation.
 
 Date range presets: **Today**, **Last 7 Days**, **Last 30 Days**, **Custom Range**.
 
@@ -191,7 +194,17 @@ by User
 
 ## 4. Detail Drawer
 
-Opened by View → fetch detail once per open (unless same `id` already loaded and cached in component state for that open cycle).
+Opened by View → **always fetch detail on open**.
+
+**Drawer cache policy (locked):**
+
+```txt
+Open drawer  = fetch detail
+Close drawer = discard detail state
+Open again   = fetch again
+```
+
+Do not retain detail payload across close/open in V1. No stale-while-revalidate cache.
 
 ### Structure
 
@@ -207,6 +220,8 @@ Section: Entity
   Type
   Name
   Slug
+
+**Entity display rule (locked):** `entityId`, `entityType`, `entityName`, and `entitySlug` are nullable. When a value is missing, the UI shows an em dash (`—`). LOGIN / LOGOUT / some SETTINGS rows may have no entity — the Entity section must still render without layout breakage.
 
 Section: Changes
   Field list (default)
@@ -354,6 +369,8 @@ ORDER BY createdAt DESC, id DESC
 LIMIT ? OFFSET ?
 ```
 
+`search` must be normalized (trim; ignore if empty or length &lt; 2) before building the LIKE clause. Date bounds must be converted with **Asia/Bangkok** startOfDay / endOfDay before comparing to `createdAt`.
+
 Uses existing indexes: `module`, `action`, `severity`, `createdAt`, `[module, createdAt]`, `[action, createdAt]`.
 
 ### Detail
@@ -422,8 +439,11 @@ Exact component split is an implementation concern; keep filter URL sync and dra
 - [ ] Pagination page + pageSize (25/50/100, default 50)
 - [ ] Table columns match desktop spec; View opens drawer
 - [ ] Opening drawer does not reload list
-- [ ] Drawer fetches detail **once** per open
+- [ ] Open drawer always fetches detail; close discards state; reopen fetches again
 - [ ] Field list + View JSON; empty changes copy shown when `changes` is null
+- [ ] Entity fields nullable → display `—` when missing
+- [ ] Search trims; empty/`length < 2` ignored
+- [ ] Date range bounds use Asia/Bangkok startOfDay/endOfDay
 - [ ] Advanced Details collapsed: IP, User-Agent, Audit ID
 - [ ] List API omits heavy fields; Detail API returns full row
 - [ ] Detail 404 → error in drawer
