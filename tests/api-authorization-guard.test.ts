@@ -224,6 +224,7 @@ describe("API authorization registry coverage", () => {
       "seo",
       "seo-settings",
       "settings",
+      "integrations",
       "localization",
       "about-the-paseo",
       "recaptcha",
