@@ -452,6 +452,33 @@ export const settingsSchema = z.object({
   aboutVision: optionalText,
 });
 
+function parseJsonValue(raw: string, context: z.RefinementCtx, message: string): unknown {
+  try {
+    return JSON.parse(raw);
+  } catch {
+    context.addIssue({ code: z.ZodIssueCode.custom, message });
+    return z.NEVER;
+  }
+}
+
+const optionalJsonObjectText = z.preprocess(emptyToNull, z.string().nullable().optional()).superRefine((value, context) => {
+  if (!value) return;
+  const parsed = parseJsonValue(value, context, "Enter valid JSON");
+  if (parsed === z.NEVER) return;
+  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+    context.addIssue({ code: z.ZodIssueCode.custom, message: "JSON must be an object" });
+  }
+});
+
+const optionalJsonLdText = z.preprocess(emptyToNull, z.string().nullable().optional()).superRefine((value, context) => {
+  if (!value) return;
+  const parsed = parseJsonValue(value, context, "Enter valid JSON");
+  if (parsed === z.NEVER) return;
+  if (typeof parsed !== "object" || parsed === null) {
+    context.addIssue({ code: z.ZodIssueCode.custom, message: "JSON-LD must be a JSON object or array" });
+  }
+});
+
 export const seoSchema = z.object({
   metaTitle: requiredText("Meta title").max(70, "Meta title should be 70 characters or less"),
   metaDescription: requiredText("Meta description").max(
@@ -461,8 +488,16 @@ export const seoSchema = z.object({
   ogImage: optionalText,
   twitterCard: z.enum(["summary", "summary_large_image"]),
   canonicalUrl: optionalText,
-  jsonLd: optionalText,
+  jsonLd: optionalJsonLdText,
   robots: z.enum(["index,follow", "noindex,nofollow"]),
+  googleVerification: z.string().trim().max(128).optional().default(""),
+  bingVerification: z.string().trim().max(128).optional().default(""),
+  organizationName: z.string().trim().max(200).optional().default(""),
+  organizationUrl: z.union([z.literal(""), z.string().trim().url("Enter a valid URL")]).optional().default(""),
+  organizationLogo: z.union([z.literal(""), z.string().trim().url("Enter a valid URL")]).optional().default(""),
+  organizationPhone: z.string().trim().max(50).optional().default(""),
+  organizationEmail: z.union([z.literal(""), z.string().trim().email("Enter a valid email")]).optional().default(""),
+  customOrganizationSchema: optionalJsonObjectText,
 });
 
 export const localizationSchema = z

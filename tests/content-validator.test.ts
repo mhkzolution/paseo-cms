@@ -193,6 +193,85 @@ describe("content validators", () => {
     assert.equal(parsed.success, false);
   });
 
+  it("accepts extended SEO settings with verification and organization fields", () => {
+    const parsed = seoSchema.safeParse({
+      metaTitle: "The Paseo",
+      metaDescription: "Shopping, events, news, and promotions.",
+      ogImage: "",
+      twitterCard: "summary_large_image",
+      canonicalUrl: "",
+      jsonLd: "",
+      robots: "index,follow",
+      googleVerification: "abc123",
+      bingVerification: "bing456",
+      organizationName: "The Paseo",
+      organizationUrl: "https://thepaseo.co.th",
+      organizationLogo: "",
+      organizationPhone: "",
+      organizationEmail: "",
+      customOrganizationSchema: "",
+    });
+
+    assert.equal(parsed.success, true);
+  });
+
+  it("rejects invalid customOrganizationSchema JSON", () => {
+    const base = {
+      metaTitle: "The Paseo",
+      metaDescription: "Shopping, events, news, and promotions.",
+      ogImage: "",
+      twitterCard: "summary_large_image",
+      canonicalUrl: "",
+      jsonLd: "",
+      robots: "index,follow",
+      googleVerification: "",
+      bingVerification: "",
+      organizationName: "",
+      organizationUrl: "",
+      organizationLogo: "",
+      organizationPhone: "",
+      organizationEmail: "",
+    };
+
+    assert.equal(
+      seoSchema.safeParse({ ...base, customOrganizationSchema: "hello world" }).success,
+      false,
+    );
+    assert.equal(
+      seoSchema.safeParse({ ...base, customOrganizationSchema: "[]" }).success,
+      false,
+    );
+    assert.equal(
+      seoSchema.safeParse({
+        ...base,
+        customOrganizationSchema: '{"@context":"https://schema.org","@type":"Organization"}',
+      }).success,
+      true,
+    );
+  });
+
+  it("rejects invalid jsonLd JSON", () => {
+    const parsed = seoSchema.safeParse({
+      metaTitle: "The Paseo",
+      metaDescription: "Shopping, events, news, and promotions.",
+      ogImage: "",
+      twitterCard: "summary_large_image",
+      canonicalUrl: "",
+      jsonLd: "not-json",
+      robots: "index,follow",
+      googleVerification: "",
+      bingVerification: "",
+      organizationName: "",
+      organizationUrl: "",
+      organizationLogo: "",
+      organizationPhone: "",
+      organizationEmail: "",
+      customOrganizationSchema: "",
+    });
+
+    assert.equal(parsed.success, false);
+  });
+
   it("validates required production settings", () => {
     const parsed = settingsSchema.safeParse({
       siteName: "The Paseo",

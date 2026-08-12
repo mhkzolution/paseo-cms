@@ -45,7 +45,7 @@ export const SETTINGS_KEYS = [
   "aboutVision",
 ] as const;
 
-export const SEO_KEYS = [
+export const BASE_SEO_KEYS = [
   "metaTitle",
   "metaDescription",
   "ogImage",
@@ -53,6 +53,26 @@ export const SEO_KEYS = [
   "canonicalUrl",
   "jsonLd",
   "robots",
+] as const;
+
+export const VERIFICATION_KEYS = [
+  "googleVerification",
+  "bingVerification",
+] as const;
+
+export const ORGANIZATION_KEYS = [
+  "organizationName",
+  "organizationUrl",
+  "organizationLogo",
+  "organizationPhone",
+  "organizationEmail",
+  "customOrganizationSchema",
+] as const;
+
+export const SEO_KEYS = [
+  ...BASE_SEO_KEYS,
+  ...VERIFICATION_KEYS,
+  ...ORGANIZATION_KEYS,
 ] as const;
 
 export const RECAPTCHA_KEYS = ["recaptchaSiteKey", "recaptchaSecretKey"] as const;
@@ -104,6 +124,14 @@ export const DEFAULT_SEO = {
   canonicalUrl: "",
   jsonLd: "",
   robots: "index,follow",
+  googleVerification: "",
+  bingVerification: "",
+  organizationName: "",
+  organizationUrl: "",
+  organizationLogo: "",
+  organizationPhone: "",
+  organizationEmail: "",
+  customOrganizationSchema: "",
 } satisfies SeoSettings;
 
 export const DEFAULT_RECAPTCHA = {
