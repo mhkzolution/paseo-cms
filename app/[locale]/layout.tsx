@@ -2,6 +2,7 @@ import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 
+import { TrackingScripts } from "@/components/integrations/tracking-scripts";
 import { routing } from "@/i18n/routing";
 
 type Props = {
@@ -23,5 +24,10 @@ export default async function LocaleLayout({ children, params }: Props) {
   setRequestLocale(locale);
   const messages = await getMessages();
 
-  return <NextIntlClientProvider messages={messages}>{children}</NextIntlClientProvider>;
+  return (
+    <NextIntlClientProvider messages={messages}>
+      <TrackingScripts />
+      {children}
+    </NextIntlClientProvider>
+  );
 }
