@@ -58,6 +58,7 @@ No SPA / soft-navigation tracking beyond App Router defaults
 No scripts in app/layout.tsx or app/admin/**
 No changing Integrations Admin UI or API contracts
 No @next/third-parties dependency requirement
+No tenant-scoped integrations (Runtime V1 resolves site-wide settings only)
 ```
 
 ---
@@ -147,6 +148,8 @@ components/integrations/
 - **`TrackingScripts`** is a **Server Component**. It calls `getIntegrationSettings()`.
 - **Provider components** are **render-only** (receive resolved IDs as props). Do not move settings fetching into the client.
 - Use `next/script` with `strategy="afterInteractive"`.
+- **Fail-safe:** If settings retrieval throws, render nothing and do not break page rendering. Analytics must never take down the public site.
+- Runtime V1 resolves **site-wide** settings only. Tenant-scoped integrations are out of scope.
 
 ### Stable Script IDs
 
@@ -156,6 +159,8 @@ components/integrations/
 | GA4 loader | `ga4-loader` |
 | GA4 config | `ga4-config` |
 | Meta Pixel | `meta-pixel` |
+
+`<noscript>` fallbacks (GTM iframe, Meta 1×1 image) are **not** part of script-id assertions.
 
 ### Provider behavior
 
