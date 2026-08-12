@@ -1,4 +1,11 @@
+import { Suspense } from "react";
+
 import { requireModuleAccess } from "@/lib/rbac";
+import { listAuditLogs, parseAuditLogsListQuery } from "@/lib/audit-logs-query";
+import { getLocalizationSettings } from "@/lib/settings-cache";
+
+import { parseAuditLogsFilterState } from "@/features/audit-logs/audit-logs-filter-state";
+import { AuditLogsPageClient } from "@/features/audit-logs/audit-logs-page-client";
 
 export default async function AuditLogsPage({
   searchParams,
@@ -6,17 +13,41 @@ export default async function AuditLogsPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   await requireModuleAccess("audit-logs");
-  const params = await searchParams;
-  void params; // wired in Task 3
+
+  const rawParams = await searchParams;
+  const query = parseAuditLogsListQuery(rawParams);
+  const [result, localization] = await Promise.all([
+    listAuditLogs(query),
+    getLocalizationSettings(),
+  ]);
+
+  const urlParams = new URLSearchParams();
+  for (const [key, value] of Object.entries(rawParams)) {
+    if (Array.isArray(value)) {
+      if (value[0]) urlParams.set(key, value[0]);
+    } else if (value) {
+      urlParams.set(key, value);
+    }
+  }
+
+  const filterState = parseAuditLogsFilterState(urlParams);
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <div className="text-sm font-medium text-muted">System</div>
-        <h1 className="mt-2 text-2xl font-semibold text-foreground">Audit Logs</h1>
-        <p className="text-sm text-muted">Review who changed what across the CMS.</p>
-      </div>
-      <p className="text-sm text-muted">Coming next: filters and table.</p>
-    </div>
+    <Suspense>
+      <AuditLogsPageClient
+        items={result.items}
+        pagination={result.pagination}
+        filters={{
+          module: filterState.module,
+          action: filterState.action,
+          severity: filterState.severity,
+          search: filterState.search,
+          dateFrom: filterState.dateFrom,
+          dateTo: filterState.dateTo,
+          preset: filterState.preset,
+        }}
+        localization={localization}
+      />
+    </Suspense>
   );
 }
