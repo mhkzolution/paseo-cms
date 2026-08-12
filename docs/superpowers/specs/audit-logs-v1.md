@@ -35,6 +35,24 @@ Add an append-only audit trail so The Paseo CMS starts recording real operationa
 ❌ CRITICAL entries in default severity map (Users/Permissions later)
 ```
 
+## Non-Goals
+
+Sprint 1 deliberately does **not** include:
+
+```txt
+No Audit Logs UI
+No Prisma middleware auto-tracking
+No message queue / background worker
+No event bus
+No deep nested diff
+No relation diff (tags, branches, faqs, images, relatedPosts)
+No shared transaction with business mutations
+No CSV export
+No retention / purge
+No failed-login audit
+No RESTORE call-site (enum only)
+```
+
 ## Decisions
 
 | Topic | Choice |
@@ -184,17 +202,6 @@ apiKey
 smtpPassword
 ```
 
-Output:
-
-```json
-{
-  "smtpPassword": {
-    "changed": true,
-    "masked": true
-  }
-}
-```
-
 #### Long-text marker
 
 ```txt
@@ -205,7 +212,39 @@ schemaOverrides
 robotsDirectives
 ```
 
-Output:
+#### Objects / arrays (V1)
+
+Shallow compare only. If an object/array value changed, store the whole before/after values — do **not** recurse into nested diffs.
+
+#### Empty result
+
+`buildDiff()` returns `null` when there are no changes (not `{}`).
+
+### Smart diff examples
+
+#### Normal field
+
+```json
+{
+  "title": {
+    "before": "Old Title",
+    "after": "New Title"
+  }
+}
+```
+
+#### Masked sensitive field
+
+```json
+{
+  "smtpPassword": {
+    "changed": true,
+    "masked": true
+  }
+}
+```
+
+#### Long-text field
 
 ```json
 {
@@ -215,24 +254,25 @@ Output:
 }
 ```
 
-#### Normal fields
+#### Mixed update (typical Post PATCH)
 
 ```json
 {
   "title": {
     "before": "Summer Sale",
     "after": "Summer Sale 2026"
+  },
+  "status": {
+    "before": "DRAFT",
+    "after": "PUBLISHED"
+  },
+  "content": {
+    "changed": true
   }
 }
 ```
 
-#### Objects / arrays (V1)
-
-Shallow compare only. If an object/array value changed, store the whole before/after values — do **not** recurse into nested diffs.
-
-#### Empty result
-
-`buildDiff()` returns `null` when there are no changes (not `{}`).
+(When status transitions to `PUBLISHED`, the **audit action** is `PUBLISH`, not `UPDATE` — see Action Resolution Table. The `changes` object may still include `status`.)
 
 ### Types
 
@@ -334,12 +374,25 @@ Always set `entityName` (never leave null for these rows).
 | HTTP | Condition | Action |
 |------|-----------|--------|
 | `POST /api/{resource}` | create success | `CREATE` |
-| `PATCH /api/{resource}/[id]` | status → `PUBLISHED` | `PUBLISH` |
-| `PATCH` | `PUBLISHED` → `DRAFT` | `UNPUBLISH` |
-| `PATCH` | otherwise | `UPDATE` |
+| `PATCH /api/{resource}/[id]` | see Action Resolution Table | `PUBLISH` / `UNPUBLISH` / `UPDATE` |
 | `DELETE /api/{resource}/[id]` | soft-delete success | `DELETE` |
 
-#### Action resolution
+#### Action Resolution Table
+
+Use this table only — do not invent additional publish/unpublish meanings.
+
+| Before status | After status | Audit action |
+|---------------|--------------|--------------|
+| `DRAFT` | `PUBLISHED` | `PUBLISH` |
+| `ARCHIVED` | `PUBLISHED` | `PUBLISH` |
+| `PUBLISHED` | `DRAFT` | `UNPUBLISH` |
+| `DRAFT` | `DRAFT` | `UPDATE` |
+| `PUBLISHED` | `PUBLISHED` | `UPDATE` |
+| `DRAFT` | `ARCHIVED` | `UPDATE` |
+| `PUBLISHED` | `ARCHIVED` | `UPDATE` |
+| `ARCHIVED` | `DRAFT` | `UPDATE` |
+
+#### Action resolution helper
 
 ```ts
 function resolveContentAction(beforeStatus, afterStatus): AuditAction {
@@ -353,7 +406,7 @@ function resolveContentAction(beforeStatus, afterStatus): AuditAction {
 }
 ```
 
-`DRAFT → ARCHIVED` (and other non-publish transitions) remain `UPDATE`, never `UNPUBLISH`.
+`PUBLISHED → ARCHIVED` is **not** `UNPUBLISH`. Only `PUBLISHED → DRAFT` is `UNPUBLISH`.
 
 #### Entity metadata
 
@@ -368,9 +421,9 @@ Load entity before soft-delete so name/slug are available.
 
 `RESTORE` has no API in Sprint 1 — do not invent a caller.
 
-### Content snapshot include / exclude
+### Content snapshot include / exclude (explicit)
 
-Snapshots passed to `before` / `after` must follow this list so call-sites stay consistent.
+Snapshots passed to `before` / `after` **must** use these lists. Do not paraphrase as “scalar fields only.”
 
 #### Include
 
@@ -391,7 +444,7 @@ noindex
 nofollow
 ```
 
-(Map SEO fields from the related SEO model / flattened save payload as available per content type.)
+Map SEO fields from the related SEO model / flattened save payload as available per content type. Omit a listed field only when that content type does not have it.
 
 #### Exclude
 
@@ -411,6 +464,67 @@ relatedPosts
 ```
 
 If an excluded or sensitive/long-text field is accidentally passed into `before`/`after`, `buildDiff` still applies Ignore / Mask / LongText rules as a safety net.
+
+### Example audit rows
+
+Canonical shapes developers and QA should expect after smoke tests.
+
+#### LOGIN
+
+```json
+{
+  "action": "LOGIN",
+  "module": "AUTH",
+  "severity": "INFO",
+  "entityId": null,
+  "entityType": null,
+  "entityName": null,
+  "entitySlug": null,
+  "changes": null,
+  "userId": "…",
+  "userName": "Kritsada",
+  "userRole": "ADMIN",
+  "ipAddress": "203.0.113.10",
+  "userAgent": "Mozilla/5.0 …"
+}
+```
+
+#### UPDATE (Post title change)
+
+```json
+{
+  "action": "UPDATE",
+  "module": "POSTS",
+  "severity": "INFO",
+  "entityId": "…",
+  "entityType": "Post",
+  "entityName": "Summer Sale",
+  "entitySlug": "summer-sale",
+  "changes": {
+    "title": {
+      "before": "Old Title",
+      "after": "Summer Sale"
+    }
+  }
+}
+```
+
+#### DELETE (soft delete)
+
+```json
+{
+  "action": "DELETE",
+  "module": "POSTS",
+  "severity": "WARNING",
+  "entityId": "…",
+  "entityType": "Post",
+  "entityName": "Summer Sale",
+  "entitySlug": "summer-sale",
+  "changes": null
+}
+```
+
+(`changes` may be `null` on pure soft-delete because `deletedAt` is ignored by `buildDiff`; the `action` carries the meaning.)
 
 ### Files to touch
 
