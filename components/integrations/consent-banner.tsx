@@ -19,33 +19,37 @@ export function ConsentBanner() {
     closePreferences,
   } = useConsent();
 
-  const [isCustomizing, setIsCustomizing] = useState(false);
+  const isVisible = consent === null || isPreferencesOpen;
+  const isReopen = isPreferencesOpen && consent !== null;
+
+  const [manualCustomize, setManualCustomize] = useState(false);
   const [draftAnalytics, setDraftAnalytics] = useState(false);
   const [draftMarketing, setDraftMarketing] = useState(false);
 
-  const isVisible = consent === null || isPreferencesOpen;
+  const seedToken = isReopen
+    ? `reopen:${consent.updatedAt}`
+    : consent === null
+      ? "undecided"
+      : "hidden";
 
-  useEffect(() => {
-    if (!isVisible) {
-      return;
-    }
-
-    if (isPreferencesOpen && consent !== null) {
-      setIsCustomizing(true);
+  const [appliedSeed, setAppliedSeed] = useState(seedToken);
+  if (appliedSeed !== seedToken) {
+    setAppliedSeed(seedToken);
+    if (isReopen) {
       setDraftAnalytics(consent.analytics);
       setDraftMarketing(consent.marketing);
-      return;
-    }
-
-    if (consent === null) {
-      setIsCustomizing(false);
+      setManualCustomize(false);
+    } else if (consent === null) {
       setDraftAnalytics(false);
       setDraftMarketing(false);
+      setManualCustomize(false);
     }
-  }, [consent, isPreferencesOpen, isVisible]);
+  }
+
+  const showCustomize = isReopen || manualCustomize;
 
   useEffect(() => {
-    if (!isVisible || consent === null || !isPreferencesOpen) {
+    if (!isVisible || !isReopen) {
       return;
     }
 
@@ -57,20 +61,21 @@ export function ConsentBanner() {
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [closePreferences, consent, isPreferencesOpen, isVisible]);
+  }, [closePreferences, isReopen, isVisible]);
 
   if (!isVisible) {
     return null;
   }
 
   function handleCustomize() {
-    setIsCustomizing(true);
+    setManualCustomize(true);
     setDraftAnalytics(consent?.analytics ?? false);
     setDraftMarketing(consent?.marketing ?? false);
   }
 
   function handleSaveCustom() {
     saveCustom({ analytics: draftAnalytics, marketing: draftMarketing });
+    setManualCustomize(false);
   }
 
   return (
@@ -91,7 +96,7 @@ export function ConsentBanner() {
           </p>
         </div>
 
-        {isCustomizing ? (
+        {showCustomize ? (
           <div className="flex flex-col gap-4">
             <fieldset className="space-y-3">
               <legend className="sr-only">{t("customize")}</legend>

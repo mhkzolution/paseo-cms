@@ -47,6 +47,8 @@ export function ConsentProvider({ children }: { children: ReactNode }) {
   const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
 
   useEffect(() => {
+    // V1: start null on SSR/first paint, then hydrate from localStorage (avoids mismatch).
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional client hydration
     setConsent(readStoredConsent());
   }, []);
 
