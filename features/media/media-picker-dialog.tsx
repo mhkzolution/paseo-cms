@@ -1,13 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FolderOpen, ImageIcon, Upload, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { uploadMediaFiles } from "@/lib/media-upload";
 import { AssetDrawer } from "@/features/media/asset-drawer";
 import { MediaGrid } from "@/features/media/media-grid";
+import { MediaGridSkeleton } from "@/features/media/media-grid-skeleton";
+import { MediaInventory } from "@/features/media/media-inventory";
+import { MediaLoadMore } from "@/features/media/media-load-more";
 import { MediaToolbar, type MediaFilter, type MediaSort } from "@/features/media/media-toolbar";
+import { useMediaList } from "@/features/media/use-media-list";
 import type { MediaListItem } from "@/features/media/types";
 
 type MediaFolder = {
@@ -45,37 +49,23 @@ function MediaPickerDialogContent({
 }: MediaPickerDialogProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [folders, setFolders] = useState<MediaFolder[]>([]);
-  const [media, setMedia] = useState<MediaListItem[]>([]);
   const [folderId, setFolderId] = useState<string>("root");
   const [query, setQuery] = useState("");
   const [type, setType] = useState<MediaFilter>("all");
   const [sort, setSort] = useState<MediaSort>("newest");
-  const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectedAsset, setSelectedAsset] = useState<MediaListItem | null>(null);
-
-  const loadMedia = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-
-    const params = new URLSearchParams({ folderId, sort });
-    if (type !== "all") params.set("type", type);
-    if (query.trim()) params.set("q", query.trim());
-
-    try {
-      const response = await fetch(`/api/media?${params.toString()}`);
-      const body = (await response.json().catch(() => null)) as { media?: MediaListItem[]; error?: string } | null;
-      if (!response.ok) throw new Error(body?.error ?? "Could not load media.");
-      setMedia((body?.media ?? []).filter((item) => accept.includes(item.type)));
-    } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : "Could not load media.");
-      setMedia([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [accept, folderId, query, sort, type]);
+  const { media, total, hasMore, isLoading, isLoadingMore, error, reload, loadMore } = useMediaList({
+    folderId: folderId === "root" ? null : folderId,
+    query,
+    type,
+    sort,
+    accept,
+  });
+  const selectedFolder = folders.find((folder) => folder.id === folderId);
+  const inventoryTitle = query.trim() ? "Search Results" : selectedFolder?.name ?? "All Files";
 
   useEffect(() => {
     let active = true;
@@ -93,11 +83,6 @@ function MediaPickerDialogContent({
       active = false;
     };
   }, []);
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => void loadMedia(), 0);
-    return () => window.clearTimeout(timer);
-  }, [loadMedia]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -139,11 +124,11 @@ function MediaPickerDialogContent({
     if (!files.length) return;
 
     setIsUploading(true);
-    setError(null);
+    setUploadError(null);
 
     try {
       const { uploaded, errors } = await uploadMediaFiles(files, folderId === "root" ? null : folderId);
-      await loadMedia();
+      reload();
 
       const accepted = uploaded.filter((item) => accept.includes(item.type));
 
@@ -158,7 +143,7 @@ function MediaPickerDialogContent({
             return next;
           });
         } else if (errors.length) {
-          setError(errors[0] ?? "Upload failed.");
+          setUploadError(errors[0] ?? "Upload failed.");
         }
       } else {
         const selected = accepted[0];
@@ -170,13 +155,13 @@ function MediaPickerDialogContent({
           });
           onClose();
         } else if (uploaded.length && errors.length) {
-          setError(`Uploaded ${uploaded.length} file(s). ${errors.length} failed.`);
+          setUploadError(`Uploaded ${uploaded.length} file(s). ${errors.length} failed.`);
         } else if (errors.length) {
-          setError(errors[0] ?? "Upload failed.");
+          setUploadError(errors[0] ?? "Upload failed.");
         }
       }
     } catch (uploadError) {
-      setError(uploadError instanceof Error ? uploadError.message : "Upload failed.");
+      setUploadError(uploadError instanceof Error ? uploadError.message : "Upload failed.");
     } finally {
       setIsUploading(false);
       event.target.value = "";
@@ -223,7 +208,7 @@ function MediaPickerDialogContent({
               value={folderId}
               onChange={(event) => setFolderId(event.target.value)}
             >
-              <option value="root">All files (no folder)</option>
+              <option value="root">All Files</option>
               {folders.map((folder) => (
                 <option key={folder.id} value={folder.id}>
                   {folder.name}
@@ -256,23 +241,39 @@ function MediaPickerDialogContent({
           />
         </div>
 
-        {error ? <p className="px-5 py-2 text-sm text-destructive">{error}</p> : null}
+        {error || uploadError ? (
+          <p role="alert" className="px-5 py-2 text-sm text-destructive">
+            {uploadError ?? error}
+          </p>
+        ) : null}
 
         <div className="flex-1 overflow-y-auto p-5">
+          <div className="mb-4">
+            <MediaInventory title={inventoryTitle} total={total} />
+          </div>
           {isLoading ? (
-            <p className="text-sm text-muted">Loading media...</p>
+            <MediaGridSkeleton />
           ) : media.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-12 text-center text-muted">
               <ImageIcon className="h-8 w-8" aria-hidden="true" />
               <p className="text-sm">No files in this folder yet.</p>
             </div>
           ) : (
-            <MediaGrid
-              media={media}
-              onSelect={setSelectedAsset}
-              selectedId={selectedAsset?.id}
-              selectedIds={multiple ? selectedIds : undefined}
-            />
+            <>
+              <MediaGrid
+                media={media}
+                onSelect={setSelectedAsset}
+                selectedId={selectedAsset?.id}
+                selectedIds={multiple ? selectedIds : undefined}
+              />
+              <MediaLoadMore
+                loadedCount={media.length}
+                total={total}
+                hasMore={hasMore}
+                isLoadingMore={isLoadingMore}
+                onLoadMore={() => void loadMore()}
+              />
+            </>
           )}
         </div>
 

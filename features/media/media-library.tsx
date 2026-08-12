@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Folder, FolderOpen, Plus } from "lucide-react";
@@ -11,7 +11,11 @@ import { cn } from "@/lib/utils";
 import { MediaUploadButton } from "@/features/media/media-upload-button";
 import { AssetDrawer } from "@/features/media/asset-drawer";
 import { MediaGrid } from "@/features/media/media-grid";
+import { MediaGridSkeleton } from "@/features/media/media-grid-skeleton";
+import { MediaInventory } from "@/features/media/media-inventory";
+import { MediaLoadMore } from "@/features/media/media-load-more";
 import { MediaToolbar, type MediaFilter, type MediaSort } from "@/features/media/media-toolbar";
+import { useMediaList } from "@/features/media/use-media-list";
 import type { MediaFolderOption, MediaListItem } from "@/features/media/types";
 
 type MediaFolder = {
@@ -27,46 +31,25 @@ interface MediaLibraryProps {
   currentFolderId: string | null;
 }
 
-export function MediaLibrary({ folders, media: initialMedia, currentFolderId }: MediaLibraryProps) {
+export function MediaLibrary({ folders, currentFolderId }: MediaLibraryProps) {
   const router = useRouter();
   const [folderName, setFolderName] = useState("");
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [folderError, setFolderError] = useState<string | null>(null);
-  const [media, setMedia] = useState<MediaListItem[]>(initialMedia);
   const [query, setQuery] = useState("");
   const [type, setType] = useState<MediaFilter>("all");
   const [sort, setSort] = useState<MediaSort>("newest");
-  const [isLoading, setIsLoading] = useState(false);
-  const [mediaError, setMediaError] = useState<string | null>(null);
   const [selectedAsset, setSelectedAsset] = useState<MediaListItem | null>(null);
 
   const currentFolder = folders.find((folder) => folder.id === currentFolderId) ?? null;
   const folderOptions: MediaFolderOption[] = folders.map(({ id, name }) => ({ id, name }));
-
-  const loadMedia = useCallback(async () => {
-    setIsLoading(true);
-    setMediaError(null);
-
-    const params = new URLSearchParams({ folderId: currentFolderId ?? "root", sort });
-    if (query.trim()) params.set("q", query.trim());
-    if (type !== "all") params.set("type", type);
-
-    try {
-      const response = await fetch(`/api/media?${params.toString()}`);
-      const body = (await response.json().catch(() => null)) as { media?: MediaListItem[]; error?: string } | null;
-      if (!response.ok) throw new Error(body?.error ?? "Could not load media.");
-      setMedia(body?.media ?? []);
-    } catch (error) {
-      setMediaError(error instanceof Error ? error.message : "Could not load media.");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [currentFolderId, query, sort, type]);
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => void loadMedia(), 0);
-    return () => window.clearTimeout(timer);
-  }, [loadMedia]);
+  const { media, total, hasMore, isLoading, isLoadingMore, error, reload, loadMore } = useMediaList({
+    folderId: currentFolderId,
+    query,
+    type,
+    sort,
+  });
+  const inventoryTitle = query.trim() ? "Search Results" : currentFolder?.name ?? "All Files";
 
   const handleCreateFolder = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -101,17 +84,19 @@ export function MediaLibrary({ folders, media: initialMedia, currentFolderId }: 
           Folders
         </div>
 
-        <nav className="mt-4 grid gap-1">
+        <nav className="mt-4 grid gap-1.5">
           <Link
             href="/admin/media"
             className={cn(
-              "flex items-center justify-between rounded-md px-3 py-2 text-sm transition-colors",
-              currentFolderId === null ? "bg-paseo-hover text-paseo-dark" : "text-foreground hover:bg-background",
+              "flex items-center justify-between rounded-md px-3 py-2.5 text-sm transition-colors",
+              currentFolderId === null
+                ? "bg-paseo-hover font-medium text-paseo-dark"
+                : "text-foreground hover:bg-background",
             )}
           >
             <span className="inline-flex items-center gap-2">
               <Folder className="h-4 w-4" aria-hidden="true" />
-              All files
+              All Files
             </span>
           </Link>
           {folders.map((folder) => (
@@ -119,15 +104,19 @@ export function MediaLibrary({ folders, media: initialMedia, currentFolderId }: 
               key={folder.id}
               href={`/admin/media?folderId=${folder.id}`}
               className={cn(
-                "flex items-center justify-between rounded-md px-3 py-2 text-sm transition-colors",
-                currentFolderId === folder.id ? "bg-paseo-hover text-paseo-dark" : "text-foreground hover:bg-background",
+                "flex items-center justify-between rounded-md px-3 py-2.5 text-sm transition-colors",
+                currentFolderId === folder.id
+                  ? "bg-paseo-hover font-medium text-paseo-dark"
+                  : "text-foreground hover:bg-background",
               )}
             >
               <span className="inline-flex items-center gap-2">
                 <Folder className="h-4 w-4" aria-hidden="true" />
                 {folder.name}
               </span>
-              <span className="text-xs text-muted">{folder._count.media}</span>
+              <span className="min-w-6 rounded-full bg-background px-2 py-0.5 text-center text-xs text-muted">
+                {folder._count.media}
+              </span>
             </Link>
           ))}
         </nav>
@@ -153,13 +142,8 @@ export function MediaLibrary({ folders, media: initialMedia, currentFolderId }: 
 
       <div className="min-w-0 flex-1">
         <div className="mb-4 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-          <div>
-            <h2 className="text-lg font-semibold text-foreground">{currentFolder?.name ?? "All files"}</h2>
-            <p className="text-sm text-muted">
-              {currentFolder ? "Files uploaded to this folder" : "All uploaded files across every folder"}
-            </p>
-          </div>
-          <MediaUploadButton folderId={currentFolderId} onBatchUploaded={() => void loadMedia()} />
+          <MediaInventory title={inventoryTitle} total={total} />
+          <MediaUploadButton folderId={currentFolderId} onBatchUploaded={reload} />
         </div>
 
         <MediaToolbar
@@ -172,10 +156,10 @@ export function MediaLibrary({ folders, media: initialMedia, currentFolderId }: 
           className="mb-5"
         />
 
-        {mediaError ? <p role="alert" className="mb-4 text-sm text-destructive">{mediaError}</p> : null}
+        {error ? <p role="alert" className="mb-4 text-sm text-destructive">{error}</p> : null}
 
         {isLoading ? (
-          <p className="text-sm text-muted">Loading media...</p>
+          <MediaGridSkeleton />
         ) : media.length === 0 ? (
           <EmptyState
             icon={FolderOpen}
@@ -187,7 +171,16 @@ export function MediaLibrary({ folders, media: initialMedia, currentFolderId }: 
             }
           />
         ) : (
-          <MediaGrid media={media} onSelect={setSelectedAsset} selectedId={selectedAsset?.id} />
+          <>
+            <MediaGrid media={media} onSelect={setSelectedAsset} selectedId={selectedAsset?.id} />
+            <MediaLoadMore
+              loadedCount={media.length}
+              total={total}
+              hasMore={hasMore}
+              isLoadingMore={isLoadingMore}
+              onLoadMore={() => void loadMore()}
+            />
+          </>
         )}
       </div>
 
@@ -197,12 +190,12 @@ export function MediaLibrary({ folders, media: initialMedia, currentFolderId }: 
         folders={folderOptions}
         onClose={() => setSelectedAsset(null)}
         onSaved={(saved) => {
-          setMedia((current) => current.map((asset) => (asset.id === saved.id ? saved : asset)));
           setSelectedAsset(saved);
+          reload();
         }}
-        onDeleted={(deleted) => {
-          setMedia((current) => current.filter((asset) => asset.id !== deleted.id));
+        onDeleted={() => {
           setSelectedAsset(null);
+          reload();
           router.refresh();
         }}
       />
