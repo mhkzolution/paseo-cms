@@ -51,6 +51,20 @@ export function buildMediaWhere({
   return where;
 }
 
+export function parseMediaPage(input: { page?: number; take?: number }) {
+  const page = Math.max(1, Number.isFinite(input.page) ? Number(input.page) : 1);
+  const rawTake = Number.isFinite(input.take) ? Number(input.take) : 40;
+  const take = Math.min(100, Math.max(1, rawTake));
+  return { page, take, skip: (page - 1) * take };
+}
+
+export function buildMediaPageMeta(input: { total: number; page: number; take: number }) {
+  const { total, page, take } = input;
+  const totalPages = total === 0 ? 0 : Math.ceil(total / take);
+  const hasMore = page * take < total;
+  return { total, page, take, totalPages, hasMore };
+}
+
 export function buildMediaOrderBy(sort?: MediaSort): Prisma.MediaOrderByWithRelationInput {
   switch (sort) {
     case "oldest":

@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 
-import { buildMediaOrderBy, buildMediaWhere, mediaListSelect } from "@/lib/media";
+import {
+  buildMediaOrderBy,
+  buildMediaPageMeta,
+  buildMediaWhere,
+  mediaListSelect,
+  parseMediaPage,
+} from "@/lib/media";
 import { forbiddenError, validationError } from "@/lib/content-api";
 import { prisma } from "@/lib/prisma";
 import { checkModuleAccess } from "@/lib/rbac";
@@ -16,16 +22,28 @@ export async function GET(request: Request) {
     type: searchParams.get("type") ?? undefined,
     q: searchParams.get("q") ?? undefined,
     sort: searchParams.get("sort") ?? undefined,
+    page: searchParams.get("page") ?? undefined,
+    take: searchParams.get("take") ?? undefined,
   });
 
   if (!parsed.success) return validationError(parsed.error);
 
-  const media = await prisma.media.findMany({
-    where: buildMediaWhere(parsed.data),
-    orderBy: buildMediaOrderBy(parsed.data.sort),
-    take: 120,
-    select: mediaListSelect,
-  });
+  const where = buildMediaWhere(parsed.data);
+  const { page, take, skip } = parseMediaPage(parsed.data);
 
-  return NextResponse.json({ media });
+  const [media, total] = await Promise.all([
+    prisma.media.findMany({
+      where,
+      orderBy: buildMediaOrderBy(parsed.data.sort),
+      skip,
+      take,
+      select: mediaListSelect,
+    }),
+    prisma.media.count({ where }),
+  ]);
+
+  return NextResponse.json({
+    media,
+    ...buildMediaPageMeta({ total, page, take }),
+  });
 }

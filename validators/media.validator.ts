@@ -11,6 +11,8 @@ export const mediaListSchema = z.object({
   type: z.enum(MEDIA_TYPE_VALUES).optional(),
   q: z.string().trim().max(100).optional(),
   sort: z.enum(["newest", "oldest", "name-asc", "name-desc"]).optional(),
+  page: z.coerce.number().int().optional(),
+  take: z.coerce.number().int().optional(),
 });
 
 export const mediaPatchSchema = z.object({
