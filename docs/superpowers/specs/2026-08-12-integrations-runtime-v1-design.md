@@ -15,7 +15,7 @@ When admins configure tracking IDs in CMS, the **public website** loads the corr
 **Approach 1 — Orchestrator + provider components**
 
 ```txt
-app/[locale]/(site)/layout.tsx
+app/[locale]/layout.tsx               (covers / and all locale public routes)
   ↓
 <TrackingScripts />                    (Server Component)
   ↓
@@ -39,7 +39,7 @@ Resolution logic is separated from script markup so matrix behavior is unit-test
 |-------|--------|
 | GA4 vs GTM | **Hybrid:** GTM overrides direct GA4 |
 | Meta Pixel | **Independent:** always inject when `metaPixelId` set |
-| Mount point | `app/[locale]/(site)/layout.tsx` only |
+| Mount point | `app/[locale]/layout.tsx` only (not `(site)/layout` — homepage lives outside `(site)`) |
 | Consent | Abstraction only (`canLoadTracking()` → `true`); no banner |
 | Script loading | `next/script` with `afterInteractive` |
 | `@next/third-parties` | Not required in V1 |
@@ -182,20 +182,21 @@ components/integrations/
 ### Layout wiring
 
 ```txt
-app/[locale]/(site)/layout.tsx
-  <TrackingScripts />
-  <SiteHeaderLoader />
-  {children}
-  <SiteFooter />
+app/[locale]/layout.tsx
+  <NextIntlClientProvider>
+    <TrackingScripts />
+    {children}                         ← includes homepage + (site)/*
+  </NextIntlClientProvider>
 ```
 
 ```txt
-Tracking scripts are injected only on public site routes.
-Admin routes are never tracked.
-Implementation target: app/[locale]/(site)/layout.tsx
+Tracking scripts are injected on all public locale routes, including homepage (/).
+Homepage is app/[locale]/page.tsx and does NOT use (site)/layout.tsx.
+Admin routes (/admin/**) and non-locale auth routes (e.g. /login) are never tracked.
+Implementation target: app/[locale]/layout.tsx
 ```
 
-Do **not** place tracking in `app/layout.tsx` (would wrap admin) or use pathname conditionals as the primary boundary.
+Do **not** place tracking in `app/layout.tsx` (would wrap admin) or use pathname conditionals as the primary boundary. Do **not** mount only in `(site)/layout.tsx` — that misses the homepage.
 
 ---
 
@@ -205,7 +206,7 @@ Do **not** place tracking in `app/layout.tsx` (would wrap admin) or use pathname
 
 1. **`resolve-tracking` unit tests** — full matrix including whitespace → empty; GTM+GA4 → GTM only; GTM+Meta → both.
 2. **`canLoadTracking`** — returns `true` in V1.
-3. **Layout wiring (static/source)** — `(site)/layout.tsx` imports `TrackingScripts`; `app/layout.tsx` and `app/admin/layout.tsx` do not.
+3. **Layout wiring (static/source)** — `[locale]/layout.tsx` imports `TrackingScripts`; `(site)/layout.tsx`, `app/layout.tsx`, and `app/admin/layout.tsx` do not.
 4. **Optional shallow render** — providers emit expected script `id`s when given IDs.
 
 ### Not required
@@ -229,7 +230,7 @@ Empty settings → no scripts
 1. `consent.ts` + `resolve-tracking.ts` + unit tests (TDD)
 2. Provider components (GTM / GA4 / Meta) + optional script-id assertions
 3. `TrackingScripts` orchestrator
-4. Wire into `app/[locale]/(site)/layout.tsx`
+4. Wire into `app/[locale]/layout.tsx` (not `(site)/layout` — homepage is outside `(site)`)
 5. Layout-wiring static tests + manual smoke on public homepage
 
 ## 5. Branch / PR

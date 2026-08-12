@@ -4,7 +4,7 @@
 
 **Goal:** Inject GTM, GA4 (fallback when GTM absent), and Meta Pixel on public site routes only, driven by existing integration settings.
 
-**Architecture:** Server `TrackingScripts` orchestrator loads settings, gates via `canLoadTracking()`, resolves via pure `resolveTrackingConfiguration()`, then renders provider components with `next/script`. Mount only in `app/[locale]/(site)/layout.tsx`.
+**Architecture:** Server `TrackingScripts` orchestrator loads settings, gates via `canLoadTracking()`, resolves via pure `resolveTrackingConfiguration()`, then renders provider components with `next/script`. Mount only in `app/[locale]/layout.tsx` (covers homepage + `(site)/*`; admin stays untracked).
 
 **Tech Stack:** Next.js App Router, `next/script`, existing `getIntegrationSettings()`, `node:test` + `tsx`
 
@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - GTM overrides direct GA4; Meta always independent when configured
-- Public-only: `app/[locale]/(site)/layout.tsx` — never `app/layout.tsx` or `app/admin/**`
+- Public-only: `app/[locale]/layout.tsx` — never `app/layout.tsx`, `app/admin/**`, or `(site)/layout.tsx` alone (homepage bypasses `(site)`)
 - Consent: `canLoadTracking()` returns `true` in V1 (abstraction only)
 - Trim IDs before resolution; whitespace → unset
 - Fail-safe: settings fetch failure → render null (do not break the page)
@@ -33,7 +33,7 @@
 | `components/integrations/google-analytics.tsx` | gtag.js fallback |
 | `components/integrations/meta-pixel.tsx` | Meta Pixel + noscript |
 | `components/integrations/tracking-scripts.tsx` | Server orchestrator |
-| `app/[locale]/(site)/layout.tsx` | Mount `<TrackingScripts />` |
+| `app/[locale]/layout.tsx` | Mount `<TrackingScripts />` |
 | `tests/resolve-tracking.test.ts` | Resolution matrix |
 | `tests/integrations-runtime-wiring.test.ts` | Layout import / script-id checks |
 
