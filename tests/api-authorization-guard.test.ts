@@ -68,6 +68,7 @@ const API_ROUTE_REGISTRY: ApiRouteExpectation[] = [
   { file: "app/api/admin/seo/workspace/route.ts", moduleId: "seo", authPattern: "checkModuleAccess" },
   { file: "app/api/admin/seo/recalculate/route.ts", moduleId: "seo", authPattern: "checkModuleAccess" },
   { file: "app/api/admin/audit-logs/route.ts", moduleId: "audit-logs", authPattern: "checkModuleAccess" },
+  { file: "app/api/admin/audit-logs/[id]/route.ts", moduleId: "audit-logs", authPattern: "checkModuleAccess" },
   { file: "app/api/settings/route.ts", moduleId: "settings", authPattern: "checkModuleAccess" },
   { file: "app/api/settings/localization/route.ts", moduleId: "localization", authPattern: "checkModuleAccess" },
   { file: "app/api/settings/introduction/route.ts", moduleId: "about-the-paseo", authPattern: "checkModuleAccess" },

@@ -163,3 +163,37 @@ export async function listAuditLogs(filters: ParsedAuditLogsListQuery) {
     },
   };
 }
+
+export const auditLogDetailSelect = {
+  id: true,
+  createdAt: true,
+  severity: true,
+  module: true,
+  action: true,
+  userId: true,
+  userName: true,
+  userRole: true,
+  entityId: true,
+  entityType: true,
+  entityName: true,
+  entitySlug: true,
+  changes: true,
+  ipAddress: true,
+  userAgent: true,
+} as const;
+
+export async function getAuditLogById(id: string) {
+  const row = await prisma.auditLog.findUnique({
+    where: { id },
+    select: auditLogDetailSelect,
+  });
+
+  if (!row) return null;
+
+  return {
+    ...row,
+    createdAt: row.createdAt.toISOString(),
+    userRole: row.userRole ?? null,
+    changes: row.changes as Record<string, unknown> | null,
+  };
+}

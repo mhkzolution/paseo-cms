@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 import type { LocalizationSettings } from "@/lib/localization-settings";
 
+import { AuditLogDrawer } from "@/features/audit-logs/audit-log-drawer";
 import { AuditLogsFilters } from "@/features/audit-logs/audit-logs-filters";
 import { hasActiveAuditFilters } from "@/features/audit-logs/audit-logs-filter-state";
 import { AuditLogsPagination } from "@/features/audit-logs/audit-logs-pagination";
@@ -38,6 +39,7 @@ export function AuditLogsPageClient({
 }: AuditLogsPageClientProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const [selectedAuditLogId, setSelectedAuditLogId] = useState<string | null>(null);
 
   const filtersActive = hasActiveAuditFilters({
     page: pagination.page,
@@ -46,8 +48,12 @@ export function AuditLogsPageClient({
     preset: filters.preset as "" | "today" | "7d" | "30d",
   });
 
-  const handleView = useCallback((_id: string) => {
-    // Task 4 wires the detail drawer; no fetch or drawer in Phase 3.
+  const handleView = useCallback((id: string) => {
+    setSelectedAuditLogId(id);
+  }, []);
+
+  const handleCloseDrawer = useCallback(() => {
+    setSelectedAuditLogId(null);
   }, []);
 
   const handleClearFilters = useCallback(() => {
@@ -93,6 +99,13 @@ export function AuditLogsPageClient({
           ) : null}
         </div>
       </div>
+
+      <AuditLogDrawer
+        open={selectedAuditLogId !== null}
+        auditLogId={selectedAuditLogId}
+        onClose={handleCloseDrawer}
+        localization={localization}
+      />
     </div>
   );
 }
