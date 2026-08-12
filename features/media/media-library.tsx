@@ -27,7 +27,6 @@ type MediaFolder = {
 
 interface MediaLibraryProps {
   folders: MediaFolder[];
-  media: MediaListItem[];
   currentFolderId: string | null;
 }
 
