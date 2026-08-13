@@ -14,6 +14,7 @@ import { IntegrationsAnalyticsSection } from "@/features/settings/integrations-a
 import { IntegrationsDiagnosticsPanel } from "@/features/settings/integrations-diagnostics-panel";
 import { IntegrationsLineSection } from "@/features/settings/integrations-line-section";
 import { IntegrationsMetaSection } from "@/features/settings/integrations-meta-section";
+import { IntegrationsOverviewCards } from "@/features/settings/integrations-overview-cards";
 import { IntegrationsTagManagerSection } from "@/features/settings/integrations-tag-manager-section";
 import type { IntegrationSettings } from "@/lib/integration-settings";
 import { integrationSchema } from "@/validators/content.validator";
@@ -66,22 +67,11 @@ export function IntegrationsForm({ defaultValues, initialDiagnostics }: Integrat
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="grid w-full max-w-none gap-8">
-      <section aria-labelledby="monitoring-heading" className="grid gap-4">
-        <header>
-          <h2 id="monitoring-heading" className="text-base font-semibold text-foreground">
-            Monitoring
-          </h2>
-          <p className="mt-1 text-sm text-muted">
-            Runtime status and consent simulation
-          </p>
-        </header>
-
-        <IntegrationsDiagnosticsPanel diagnostics={diagnostics} settings={settings} />
-      </section>
+      <IntegrationsOverviewCards diagnostics={diagnostics} />
 
       <section
         aria-labelledby="integration-configuration-heading"
-        className="grid gap-4 border-t border-border pt-8"
+        className="grid gap-4"
       >
         <header>
           <h2
@@ -113,6 +103,22 @@ export function IntegrationsForm({ defaultValues, initialDiagnostics }: Integrat
             Save Integrations
           </Button>
         </div>
+      </section>
+
+      <section
+        aria-labelledby="monitoring-heading"
+        className="grid gap-4 border-t border-border pt-8"
+      >
+        <header>
+          <h2 id="monitoring-heading" className="text-base font-semibold text-foreground">
+            Monitoring
+          </h2>
+          <p className="mt-1 text-sm text-muted">
+            Runtime status and consent simulation
+          </p>
+        </header>
+
+        <IntegrationsDiagnosticsPanel diagnostics={diagnostics} settings={settings} />
       </section>
     </form>
   );
