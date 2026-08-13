@@ -110,7 +110,7 @@ export function IntegrationsDiagnosticsPanel({ diagnostics, settings }: Props) {
   const consentAware = resolveConsentAwareDiagnostics(settings, simulation);
 
   return (
-    <div className="grid w-full min-w-0 gap-4 lg:grid-cols-2 lg:items-start lg:gap-6">
+    <div className="flex w-full min-w-0 flex-col gap-4">
       <section
         className="min-w-0 rounded-lg border border-border bg-surface p-5 shadow-sm"
         aria-labelledby="runtime-status-heading"

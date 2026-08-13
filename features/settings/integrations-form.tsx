@@ -14,7 +14,7 @@ import { IntegrationsAnalyticsSection } from "@/features/settings/integrations-a
 import { IntegrationsDiagnosticsPanel } from "@/features/settings/integrations-diagnostics-panel";
 import { IntegrationsLineSection } from "@/features/settings/integrations-line-section";
 import { IntegrationsMetaSection } from "@/features/settings/integrations-meta-section";
-import { IntegrationsOverviewCards } from "@/features/settings/integrations-overview-cards";
+import { IntegrationsConnectionStatus } from "@/features/settings/integrations-overview-cards";
 import { IntegrationsTagManagerSection } from "@/features/settings/integrations-tag-manager-section";
 import type { IntegrationSettings } from "@/lib/integration-settings";
 import { integrationSchema } from "@/validators/content.validator";
@@ -66,62 +66,66 @@ export function IntegrationsForm({ defaultValues, initialDiagnostics }: Integrat
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex w-full min-w-0 flex-col gap-8">
-      <div className="w-full min-w-0">
-        <IntegrationsOverviewCards diagnostics={diagnostics} />
-      </div>
+    <form onSubmit={handleSubmit(onSubmit)} className="w-full min-w-0">
+      <div className="grid w-full min-w-0 gap-8 xl:grid-cols-[1.3fr_0.9fr] xl:items-start">
+        {/* Left — manage */}
+        <div className="flex min-w-0 flex-col gap-6">
+          <IntegrationsConnectionStatus diagnostics={diagnostics} />
 
-      <section
-        aria-labelledby="integration-configuration-heading"
-        className="flex w-full min-w-0 flex-col gap-4"
-      >
-        <header>
-          <h2
-            id="integration-configuration-heading"
-            className="text-base font-semibold text-foreground"
+          <section
+            aria-labelledby="integration-configuration-heading"
+            className="flex min-w-0 flex-col gap-4"
           >
-            Configuration
-          </h2>
-          <p className="mt-1 text-sm text-muted">
-            Provider credentials and identifiers
-          </p>
-        </header>
+            <header>
+              <h2
+                id="integration-configuration-heading"
+                className="text-base font-semibold text-foreground"
+              >
+                Configuration
+              </h2>
+              <p className="mt-1 text-sm text-muted">
+                Provider credentials and identifiers
+              </p>
+            </header>
 
-        <div className="grid w-full min-w-0 gap-6 lg:grid-cols-2 lg:items-start">
-          <IntegrationsAnalyticsSection register={register} errors={errors} />
-          <IntegrationsTagManagerSection register={register} errors={errors} />
-          <IntegrationsMetaSection register={register} errors={errors} />
-          <IntegrationsLineSection register={register} errors={errors} />
+            <div className="grid w-full min-w-0 gap-4 sm:grid-cols-2 sm:items-start">
+              <IntegrationsAnalyticsSection register={register} errors={errors} />
+              <IntegrationsTagManagerSection register={register} errors={errors} />
+              <IntegrationsMetaSection register={register} errors={errors} />
+              <IntegrationsLineSection register={register} errors={errors} />
+            </div>
+
+            {serverMessage ? (
+              <p className={isSuccess ? "text-sm text-emerald-700" : "text-sm text-destructive"}>
+                {serverMessage}
+              </p>
+            ) : null}
+
+            <div className="flex justify-end">
+              <Button type="submit" isLoading={isSubmitting}>
+                Save Integrations
+              </Button>
+            </div>
+          </section>
         </div>
 
-        {serverMessage ? (
-          <p className={isSuccess ? "text-sm text-emerald-700" : "text-sm text-destructive"}>
-            {serverMessage}
-          </p>
-        ) : null}
+        {/* Right — observe */}
+        <section
+          aria-labelledby="monitoring-heading"
+          className="flex min-w-0 flex-col gap-4 border-t border-border pt-8 xl:border-t-0 xl:pt-0"
+        >
+          <header>
+            <h2 id="monitoring-heading" className="text-base font-semibold text-foreground">
+              Monitoring
+            </h2>
+            <p className="mt-1 text-sm text-muted">
+              Runtime status and consent simulation
+            </p>
+          </header>
 
-        <div className="flex justify-end">
-          <Button type="submit" isLoading={isSubmitting}>
-            Save Integrations
-          </Button>
-        </div>
-      </section>
-
-      <section
-        aria-labelledby="monitoring-heading"
-        className="flex w-full min-w-0 flex-col gap-4 border-t border-border pt-8"
-      >
-        <header>
-          <h2 id="monitoring-heading" className="text-base font-semibold text-foreground">
-            Monitoring
-          </h2>
-          <p className="mt-1 text-sm text-muted">
-            Runtime status and consent simulation
-          </p>
-        </header>
-
-        <IntegrationsDiagnosticsPanel diagnostics={diagnostics} settings={settings} />
-      </section>
+          <IntegrationsDiagnosticsPanel diagnostics={diagnostics} settings={settings} />
+        </section>
+      </div>
     </form>
   );
 }
