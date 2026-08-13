@@ -67,22 +67,42 @@ export function IntegrationsForm({ defaultValues, initialDiagnostics }: Integrat
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="grid max-w-7xl gap-6">
       <IntegrationsDiagnosticsPanel diagnostics={diagnostics} settings={settings} />
-      <IntegrationsAnalyticsSection register={register} errors={errors} />
-      <IntegrationsTagManagerSection register={register} errors={errors} />
-      <IntegrationsMetaSection register={register} errors={errors} />
-      <IntegrationsLineSection register={register} errors={errors} />
 
-      {serverMessage ? (
-        <p className={isSuccess ? "text-sm text-emerald-700" : "text-sm text-destructive"}>
-          {serverMessage}
-        </p>
-      ) : null}
+      <section
+        aria-labelledby="integration-configuration-heading"
+        className="grid gap-4"
+      >
+        <header>
+          <h2
+            id="integration-configuration-heading"
+            className="text-base font-semibold text-foreground"
+          >
+            Integration Configuration
+          </h2>
+          <p className="mt-1 text-sm text-muted">
+            Manage provider credentials and identifiers
+          </p>
+        </header>
 
-      <div>
-        <Button type="submit" isLoading={isSubmitting}>
-          Save Integrations
-        </Button>
-      </div>
+        <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
+          <IntegrationsAnalyticsSection register={register} errors={errors} />
+          <IntegrationsTagManagerSection register={register} errors={errors} />
+          <IntegrationsMetaSection register={register} errors={errors} />
+          <IntegrationsLineSection register={register} errors={errors} />
+        </div>
+
+        {serverMessage ? (
+          <p className={isSuccess ? "text-sm text-emerald-700" : "text-sm text-destructive"}>
+            {serverMessage}
+          </p>
+        ) : null}
+
+        <div className="flex justify-end">
+          <Button type="submit" isLoading={isSubmitting}>
+            Save Integrations
+          </Button>
+        </div>
+      </section>
     </form>
   );
 }
