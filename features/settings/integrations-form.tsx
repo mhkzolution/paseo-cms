@@ -65,7 +65,7 @@ export function IntegrationsForm({ defaultValues, initialDiagnostics }: Integrat
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="grid max-w-4xl gap-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="grid max-w-7xl gap-6">
       <IntegrationsDiagnosticsPanel diagnostics={diagnostics} settings={settings} />
       <IntegrationsAnalyticsSection register={register} errors={errors} />
       <IntegrationsTagManagerSection register={register} errors={errors} />
