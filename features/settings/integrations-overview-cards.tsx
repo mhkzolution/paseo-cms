@@ -55,7 +55,7 @@ export function IntegrationsOverviewCards({ diagnostics }: Props) {
   return (
     <section
       aria-label="Integration overview"
-      className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4"
+      className="grid w-full min-w-0 grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4"
     >
       {OVERVIEW_CHANNELS.map((channel) => {
         const status = runtime[channel];

@@ -66,12 +66,14 @@ export function IntegrationsForm({ defaultValues, initialDiagnostics }: Integrat
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="grid w-full max-w-none gap-8">
-      <IntegrationsOverviewCards diagnostics={diagnostics} />
+    <form onSubmit={handleSubmit(onSubmit)} className="flex w-full min-w-0 flex-col gap-8">
+      <div className="w-full min-w-0">
+        <IntegrationsOverviewCards diagnostics={diagnostics} />
+      </div>
 
       <section
         aria-labelledby="integration-configuration-heading"
-        className="grid gap-4"
+        className="flex w-full min-w-0 flex-col gap-4"
       >
         <header>
           <h2
@@ -85,7 +87,7 @@ export function IntegrationsForm({ defaultValues, initialDiagnostics }: Integrat
           </p>
         </header>
 
-        <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
+        <div className="grid w-full min-w-0 gap-6 lg:grid-cols-2 lg:items-start">
           <IntegrationsAnalyticsSection register={register} errors={errors} />
           <IntegrationsTagManagerSection register={register} errors={errors} />
           <IntegrationsMetaSection register={register} errors={errors} />
@@ -107,7 +109,7 @@ export function IntegrationsForm({ defaultValues, initialDiagnostics }: Integrat
 
       <section
         aria-labelledby="monitoring-heading"
-        className="grid gap-4 border-t border-border pt-8"
+        className="flex w-full min-w-0 flex-col gap-4 border-t border-border pt-8"
       >
         <header>
           <h2 id="monitoring-heading" className="text-base font-semibold text-foreground">

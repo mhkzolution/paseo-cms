@@ -110,9 +110,9 @@ export function IntegrationsDiagnosticsPanel({ diagnostics, settings }: Props) {
   const consentAware = resolveConsentAwareDiagnostics(settings, simulation);
 
   return (
-    <div className="grid gap-4 lg:grid-cols-2 lg:items-start lg:gap-6">
+    <div className="grid w-full min-w-0 gap-4 lg:grid-cols-2 lg:items-start lg:gap-6">
       <section
-        className="rounded-lg border border-border bg-surface p-5 shadow-sm"
+        className="min-w-0 rounded-lg border border-border bg-surface p-5 shadow-sm"
         aria-labelledby="runtime-status-heading"
       >
         <div className="mb-3">
@@ -171,7 +171,7 @@ export function IntegrationsDiagnosticsPanel({ diagnostics, settings }: Props) {
       </section>
 
       <section
-        className="rounded-lg border border-border bg-surface p-5 shadow-sm"
+        className="min-w-0 rounded-lg border border-border bg-surface p-5 shadow-sm"
         aria-labelledby="consent-events-heading"
       >
         <div className="mb-3">
@@ -186,7 +186,7 @@ export function IntegrationsDiagnosticsPanel({ diagnostics, settings }: Props) {
           </p>
         </div>
 
-        <fieldset className="mb-4 space-y-2.5">
+        <fieldset className="mb-4 min-w-0 space-y-2.5">
           <legend className="sr-only">Simulated consent</legend>
 
           <label className="flex items-start gap-3 text-sm text-foreground">
@@ -224,26 +224,26 @@ export function IntegrationsDiagnosticsPanel({ diagnostics, settings }: Props) {
           </label>
         </fieldset>
 
-        <ul className="space-y-2">
+        <ul className="min-w-0 space-y-2">
           {consentAware.channels.map((row) => (
             <li
               key={row.channel}
-              className="rounded-md border border-border/80 bg-background px-3 py-2.5"
+              className="min-w-0 rounded-md border border-border/80 bg-background px-3 py-2.5"
             >
               <p className="text-sm font-medium text-foreground">
                 {CHANNEL_TITLES[row.channel]}
               </p>
 
-              <dl className="mt-2 grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1.5 text-xs">
+              <dl className="mt-2 grid min-w-0 grid-cols-[7rem_minmax(0,1fr)] items-start gap-x-3 gap-y-1.5 text-xs">
                 <dt className="text-muted">Requires</dt>
-                <dd>
+                <dd className="min-w-0">
                   <span className="inline-flex items-center rounded-md bg-neutral-100 px-2 py-0.5 font-medium text-foreground ring-1 ring-border">
                     {REQUIRES_CONSENT_LABELS[row.requiresConsent]}
                   </span>
                 </dd>
 
                 <dt className="text-muted">Result</dt>
-                <dd>
+                <dd className="min-w-0">
                   <StatusBadge
                     label={SIMULATION_RESULT_LABELS[row.simulationResult]}
                     tone={simulationTone(row.simulationResult)}
@@ -251,7 +251,9 @@ export function IntegrationsDiagnosticsPanel({ diagnostics, settings }: Props) {
                 </dd>
 
                 <dt className="text-muted">Reason</dt>
-                <dd className="text-foreground">{REASON_LABELS[row.reasonCode]}</dd>
+                <dd className="min-w-0 break-words text-foreground">
+                  {REASON_LABELS[row.reasonCode]}
+                </dd>
               </dl>
 
               {row.capabilityNotes?.map((note) => (
