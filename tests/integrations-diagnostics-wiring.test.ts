@@ -55,4 +55,35 @@ describe("integrations diagnostics wiring", () => {
     assert.match(form, /IntegrationsDiagnosticsPanel/);
     assert.match(form, /settings=\{/);
   });
+
+  it("does not introduce consent storage writes in diagnostics panel", () => {
+    const source = read("features/settings/integrations-diagnostics-panel.tsx");
+    assert.doesNotMatch(source, /integration-consent-v1/);
+    assert.doesNotMatch(source, /writeStoredConsent|localStorage\.setItem/);
+  });
+
+  it("integrations page remains soft (no save blocking from consent diagnostics)", () => {
+    const form = read("features/settings/integrations-form.tsx");
+    assert.match(form, /handleSubmit/);
+    assert.doesNotMatch(form, /resolveConsentAwareDiagnostics\([\s\S]*throw/);
+  });
+
+  it("admin layout still has no public EventsDebugPanel", () => {
+    assert.doesNotMatch(read("app/admin/layout.tsx"), /EventsDebugPanel/);
+  });
+
+  it("consent-aware resolver stays pure (no network / tracking globals)", () => {
+    const source = read("components/integrations/resolve-consent-aware-diagnostics.ts");
+    assert.doesNotMatch(source, /fetch\(/);
+    assert.doesNotMatch(source, /gtag\(|fbq\(|dataLayer/);
+    assert.doesNotMatch(source, /trackEvent/);
+    assert.doesNotMatch(source, /localStorage/);
+  });
+
+  it("diagnostics panel does not call tracking providers or fetch", () => {
+    const source = read("features/settings/integrations-diagnostics-panel.tsx");
+    assert.doesNotMatch(source, /fetch\(/);
+    assert.doesNotMatch(source, /XMLHttpRequest|navigator\.sendBeacon/);
+    assert.doesNotMatch(source, /dataLayer/);
+  });
 });
