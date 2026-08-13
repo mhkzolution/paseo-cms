@@ -81,16 +81,16 @@ function overviewSecondary(
   const { configured, resolved } = diagnostics;
 
   if (channel === "gtm") {
-    return configured.gtmContainerId ?? "No ID configured";
+    return configured.gtmContainerId ?? "Container missing";
   }
   if (channel === "ga4") {
-    return configured.gaMeasurementId ?? "No ID configured";
+    return configured.gaMeasurementId ?? "Measurement ID missing";
   }
   if (channel === "meta") {
-    return configured.metaPixelId ?? "No ID configured";
+    return configured.metaPixelId ?? "Pixel ID missing";
   }
 
-  return resolved.lineOaUrl ?? configured.lineOaId ?? "No ID configured";
+  return resolved.lineOaUrl ?? configured.lineOaId ?? "LINE OA missing";
 }
 
 export function IntegrationsDiagnosticsPanel({ diagnostics, settings }: Props) {
