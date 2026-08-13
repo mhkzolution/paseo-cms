@@ -21,7 +21,7 @@ export function IntegrationsLineSection({
           Configure your LINE Official Account identifier.
         </p>
       </div>
-      <div>
+      <div className="max-w-xl">
         <label htmlFor="lineOaId" className="text-sm font-medium text-foreground">
           LINE OA ID
         </label>

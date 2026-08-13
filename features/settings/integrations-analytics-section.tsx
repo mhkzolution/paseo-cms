@@ -21,7 +21,7 @@ export function IntegrationsAnalyticsSection({
           Configure Google Analytics 4 tracking for your website.
         </p>
       </div>
-      <div>
+      <div className="max-w-xl">
         <label htmlFor="gaMeasurementId" className="text-sm font-medium text-foreground">
           Measurement ID
         </label>

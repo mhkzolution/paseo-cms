@@ -21,7 +21,7 @@ export function IntegrationsTagManagerSection({
           Configure Google Tag Manager container injection.
         </p>
       </div>
-      <div>
+      <div className="max-w-xl">
         <label htmlFor="gtmContainerId" className="text-sm font-medium text-foreground">
           Container ID
         </label>

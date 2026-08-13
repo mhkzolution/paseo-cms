@@ -21,7 +21,7 @@ export function IntegrationsMetaSection({
           Configure Meta Pixel tracking for marketing analytics.
         </p>
       </div>
-      <div>
+      <div className="max-w-xl">
         <label htmlFor="metaPixelId" className="text-sm font-medium text-foreground">
           Pixel ID
         </label>
