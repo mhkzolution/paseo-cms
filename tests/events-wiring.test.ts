@@ -50,6 +50,22 @@ describe("events wiring", () => {
     assert.match(read("features/branches/shared/branch-contact.tsx"), /TrackedPhoneLink/);
   });
 
+  it("leasing form tracks form_submit only on success path", () => {
+    const source = read("features/leasing/leasing-form.tsx");
+    assert.match(source, /trackEvent\(\s*["']form_submit["']/);
+    assert.match(source, /formId:\s*["']leasing["']/);
+
+    const errorReturnIdx = source.indexOf("if (!response.ok)");
+    const errorBlockEnd = source.indexOf("return;", errorReturnIdx) + "return;".length;
+    const errorBlock = source.slice(errorReturnIdx, errorBlockEnd);
+    assert.doesNotMatch(errorBlock, /trackEvent/);
+
+    const successIdx = source.indexOf('setSubmitState("success")');
+    const trackIdx = source.indexOf('trackEvent("form_submit"');
+    assert.ok(trackIdx !== -1 && successIdx !== -1);
+    assert.ok(trackIdx < successIdx);
+  });
+
   it("phone and LINE wiring use explicit onClick, not document listeners", () => {
     for (const file of [
       "components/integrations/events/tracked-phone-link.tsx",

@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
+import { trackEvent } from "@/components/integrations/events/track-event";
 import { Button } from "@/components/ui/button";
 import { getBranchThaiName } from "@/lib/branches/branch-names";
 import type { BranchRecord } from "@/lib/branches/types";
@@ -103,6 +104,7 @@ export function LeasingForm({ branches, recaptchaSiteKey }: LeasingFormProps) {
       return;
     }
 
+    trackEvent("form_submit", { formId: "leasing" });
     setSubmitState("success");
     reset();
     resetRecaptcha();
