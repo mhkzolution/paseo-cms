@@ -93,13 +93,49 @@ function overviewSecondary(
   return resolved.lineOaUrl ?? configured.lineOaId ?? "LINE OA missing";
 }
 
+function runtimeDetail(
+  channel: ChannelKey,
+  diagnostics: IntegrationDiagnostics,
+): string | null {
+  const { runtime, configured, resolved } = diagnostics;
+
+  if (channel === "gtm") {
+    return runtime.gtm === "active" && configured.gtmContainerId
+      ? configured.gtmContainerId
+      : null;
+  }
+
+  if (channel === "ga4") {
+    if (runtime.ga4 === "suppressed") {
+      return "Direct GA4 script will not be injected. Manage GA4 inside GTM.";
+    }
+    return runtime.ga4 === "active" && configured.gaMeasurementId
+      ? configured.gaMeasurementId
+      : null;
+  }
+
+  if (channel === "meta") {
+    return runtime.meta === "active" && configured.metaPixelId
+      ? configured.metaPixelId
+      : null;
+  }
+
+  if (runtime.lineOa === "active") {
+    return resolved.lineOaUrl
+      ? `Floating button + footer link → ${resolved.lineOaUrl}`
+      : "Floating button + footer link will be shown";
+  }
+
+  return null;
+}
+
 export function IntegrationsDiagnosticsPanel({ diagnostics, settings }: Props) {
-  const { runtime, configured, resolved, warnings } = diagnostics;
+  const { runtime, warnings } = diagnostics;
   const [simulation, setSimulation] = useState<SimulatedConsent>(DEFAULT_SIMULATED_CONSENT);
   const consentAware = resolveConsentAwareDiagnostics(settings, simulation);
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-4">
       <section
         aria-label="Integration overview"
         className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4"
@@ -135,7 +171,7 @@ export function IntegrationsDiagnosticsPanel({ diagnostics, settings }: Props) {
           className="rounded-lg border border-border bg-surface p-5 shadow-sm"
           aria-labelledby="runtime-status-heading"
         >
-          <div className="mb-4">
+          <div className="mb-3">
             <h2
               id="runtime-status-heading"
               className="text-base font-semibold text-foreground"
@@ -149,82 +185,35 @@ export function IntegrationsDiagnosticsPanel({ diagnostics, settings }: Props) {
             </p>
           </div>
 
-          <ul className="space-y-4 text-sm">
-            <li>
-              <div className="flex flex-wrap items-center gap-2">
-                <p className="font-medium text-foreground">Google Tag Manager</p>
-                <StatusBadge
-                  label={runtimeStatusLabel("gtm", runtime.gtm)}
-                  tone={runtimeTone(runtime.gtm)}
-                />
-              </div>
-              {configured.gtmContainerId ? (
-                <p className="mt-1 text-xs text-muted">
-                  Container: {configured.gtmContainerId}
-                </p>
-              ) : (
-                <p className="mt-1 text-xs text-muted">Not configured</p>
-              )}
-            </li>
+          <ul className="text-sm">
+            {OVERVIEW_CHANNELS.map((channel) => {
+              const status = runtime[channel];
+              const detail = runtimeDetail(channel, diagnostics);
 
-            <li>
-              <div className="flex flex-wrap items-center gap-2">
-                <p className="font-medium text-foreground">Google Analytics</p>
-                <StatusBadge
-                  label={runtimeStatusLabel("ga4", runtime.ga4)}
-                  tone={runtimeTone(runtime.ga4)}
-                />
-              </div>
-              {runtime.ga4 === "suppressed" ? (
-                <p className="mt-1 text-xs text-muted">
-                  Configured Measurement ID: {configured.gaMeasurementId}. Direct GA4
-                  script will not be injected. Manage GA4 inside GTM.
-                </p>
-              ) : configured.gaMeasurementId ? (
-                <p className="mt-1 text-xs text-muted">
-                  Measurement ID: {configured.gaMeasurementId}
-                </p>
-              ) : (
-                <p className="mt-1 text-xs text-muted">Not configured</p>
-              )}
-            </li>
-
-            <li>
-              <div className="flex flex-wrap items-center gap-2">
-                <p className="font-medium text-foreground">Meta Pixel</p>
-                <StatusBadge
-                  label={runtimeStatusLabel("meta", runtime.meta)}
-                  tone={runtimeTone(runtime.meta)}
-                />
-              </div>
-              {configured.metaPixelId ? (
-                <p className="mt-1 text-xs text-muted">Pixel ID: {configured.metaPixelId}</p>
-              ) : (
-                <p className="mt-1 text-xs text-muted">Not configured</p>
-              )}
-            </li>
-
-            <li>
-              <div className="flex flex-wrap items-center gap-2">
-                <p className="font-medium text-foreground">LINE Official Account</p>
-                <StatusBadge
-                  label={runtimeStatusLabel("lineOa", runtime.lineOa)}
-                  tone={runtimeTone(runtime.lineOa)}
-                />
-              </div>
-              {runtime.lineOa === "active" ? (
-                <p className="mt-1 text-xs text-muted">
-                  Floating button + footer link will be shown
-                  {resolved.lineOaUrl ? ` → ${resolved.lineOaUrl}` : ""}
-                </p>
-              ) : (
-                <p className="mt-1 text-xs text-muted">Not configured</p>
-              )}
-            </li>
+              return (
+                <li
+                  key={channel}
+                  className="border-b border-border/70 py-2.5 last:border-b-0"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="font-medium text-foreground">{CHANNEL_TITLES[channel]}</p>
+                    <StatusBadge
+                      label={runtimeStatusLabel(channel, status)}
+                      tone={runtimeTone(status)}
+                    />
+                  </div>
+                  {detail ? (
+                    <p className="mt-1 text-xs text-muted" title={detail}>
+                      {detail}
+                    </p>
+                  ) : null}
+                </li>
+              );
+            })}
           </ul>
 
           {warnings.length > 0 ? (
-            <div className="mt-4 border-t border-border pt-4">
+            <div className="mt-3 border-t border-border pt-3">
               <h3 className="text-sm font-semibold text-foreground">Warnings</h3>
               <ul className="mt-2 space-y-1.5 text-xs text-amber-800">
                 {warnings.map((w) => (
@@ -241,7 +230,7 @@ export function IntegrationsDiagnosticsPanel({ diagnostics, settings }: Props) {
           className="rounded-lg border border-border bg-surface p-5 shadow-sm"
           aria-labelledby="consent-events-heading"
         >
-          <div className="mb-4">
+          <div className="mb-3">
             <h2
               id="consent-events-heading"
               className="text-base font-semibold text-foreground"
@@ -253,7 +242,7 @@ export function IntegrationsDiagnosticsPanel({ diagnostics, settings }: Props) {
             </p>
           </div>
 
-          <fieldset className="mb-5 space-y-3">
+          <fieldset className="mb-4 space-y-2.5">
             <legend className="sr-only">Simulated consent</legend>
 
             <label className="flex items-start gap-3 text-sm text-foreground">
@@ -291,45 +280,41 @@ export function IntegrationsDiagnosticsPanel({ diagnostics, settings }: Props) {
             </label>
           </fieldset>
 
-          <ul className="space-y-3">
+          <ul className="space-y-2">
             {consentAware.channels.map((row) => (
               <li
                 key={row.channel}
-                className="rounded-md border border-border/80 bg-background p-3"
+                className="rounded-md border border-border/80 bg-background px-3 py-2.5"
               >
                 <p className="text-sm font-medium text-foreground">
                   {CHANNEL_TITLES[row.channel]}
                 </p>
 
-                <div className="mt-3 grid gap-2 text-xs">
-                  <div>
-                    <p className="text-muted">Requires</p>
-                    <span className="mt-1 inline-flex items-center rounded-md bg-neutral-100 px-2 py-0.5 font-medium text-foreground ring-1 ring-border">
+                <dl className="mt-2 grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1.5 text-xs">
+                  <dt className="text-muted">Requires</dt>
+                  <dd>
+                    <span className="inline-flex items-center rounded-md bg-neutral-100 px-2 py-0.5 font-medium text-foreground ring-1 ring-border">
                       {REQUIRES_CONSENT_LABELS[row.requiresConsent]}
                     </span>
-                  </div>
+                  </dd>
 
-                  <div>
-                    <p className="text-muted">Result</p>
-                    <div className="mt-1">
-                      <StatusBadge
-                        label={SIMULATION_RESULT_LABELS[row.simulationResult]}
-                        tone={simulationTone(row.simulationResult)}
-                      />
-                    </div>
-                  </div>
+                  <dt className="text-muted">Result</dt>
+                  <dd>
+                    <StatusBadge
+                      label={SIMULATION_RESULT_LABELS[row.simulationResult]}
+                      tone={simulationTone(row.simulationResult)}
+                    />
+                  </dd>
 
-                  <div>
-                    <p className="text-muted">Reason</p>
-                    <p className="mt-0.5 text-foreground">{REASON_LABELS[row.reasonCode]}</p>
-                  </div>
+                  <dt className="text-muted">Reason</dt>
+                  <dd className="text-foreground">{REASON_LABELS[row.reasonCode]}</dd>
+                </dl>
 
-                  {row.capabilityNotes?.map((note) => (
-                    <p key={note} className="text-muted">
-                      {note}
-                    </p>
-                  ))}
-                </div>
+                {row.capabilityNotes?.map((note) => (
+                  <p key={note} className="mt-1.5 text-xs text-muted">
+                    {note}
+                  </p>
+                ))}
               </li>
             ))}
           </ul>

@@ -65,22 +65,33 @@ export function IntegrationsForm({ defaultValues, initialDiagnostics }: Integrat
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="grid w-full max-w-none gap-6">
-      <IntegrationsDiagnosticsPanel diagnostics={diagnostics} settings={settings} />
+    <form onSubmit={handleSubmit(onSubmit)} className="grid w-full max-w-none gap-8">
+      <section aria-labelledby="monitoring-heading" className="grid gap-4">
+        <header>
+          <h2 id="monitoring-heading" className="text-base font-semibold text-foreground">
+            Monitoring
+          </h2>
+          <p className="mt-1 text-sm text-muted">
+            Runtime status and consent simulation
+          </p>
+        </header>
+
+        <IntegrationsDiagnosticsPanel diagnostics={diagnostics} settings={settings} />
+      </section>
 
       <section
         aria-labelledby="integration-configuration-heading"
-        className="grid gap-4"
+        className="grid gap-4 border-t border-border pt-8"
       >
         <header>
           <h2
             id="integration-configuration-heading"
             className="text-base font-semibold text-foreground"
           >
-            Integration Configuration
+            Configuration
           </h2>
           <p className="mt-1 text-sm text-muted">
-            Manage provider credentials and identifiers
+            Provider credentials and identifiers
           </p>
         </header>
 
