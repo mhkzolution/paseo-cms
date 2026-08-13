@@ -1,6 +1,22 @@
+import { ADAPTERS } from "./adapters";
+import { resolveAdapters } from "./adapters/resolve-adapters";
 import { isCatalogEvent } from "./catalog";
 import { isEventsDebugEnabled, pushDebugEvent } from "./debug-ring";
+import { getEventRuntime } from "./event-runtime-context";
+import type { StoredConsent } from "@/components/integrations/consent-types";
+
 import type { EventName, TrackEventArgs } from "./types";
+
+function consentSnapshot(consent: StoredConsent) {
+  if (!consent) {
+    return undefined;
+  }
+
+  return {
+    analytics: consent.analytics,
+    marketing: consent.marketing,
+  };
+}
 
 export function trackEvent<E extends EventName>(
   name: E,
@@ -21,13 +37,31 @@ export function trackEvent(name: string, payload?: unknown): void {
       return;
     }
 
-    // Task 2: dispatch adapters. Task 1: optional debug record with empty adapters when flag on.
+    const runtime = getEventRuntime();
+    const config = runtime?.config ?? {
+      gtmContainerId: null,
+      gaMeasurementId: null,
+      metaPixelId: null,
+    };
+    const consent = runtime?.consent ?? null;
+
+    const adapterIds = resolveAdapters(config);
+    const adapterResults = adapterIds.map((adapterId) =>
+      ADAPTERS[adapterId].dispatch({
+        name,
+        payload,
+        consent,
+        config,
+      }),
+    );
+
     if (isEventsDebugEnabled()) {
       pushDebugEvent({
         name,
         timestamp: Date.now(),
         payload,
-        adapters: [],
+        consent: consentSnapshot(consent),
+        adapters: adapterResults,
       });
     }
   } catch {
