@@ -6,12 +6,30 @@ const MAX_DEBUG_EVENTS = 30;
 
 const ring: DebugEvent[] = [];
 
+function hasEventsDebugQueryFlag(): boolean {
+  if (typeof window === "undefined") {
+    return false;
+  }
+  return new URLSearchParams(window.location.search).get("eventsDebug") === "1";
+}
+
 export function isEventsDebugEnabled(): boolean {
   try {
-    if (typeof localStorage === "undefined") {
-      return false;
+    if (typeof localStorage !== "undefined" && localStorage.getItem(DEBUG_FLAG_KEY) === "1") {
+      return true;
     }
-    return localStorage.getItem(DEBUG_FLAG_KEY) === "1";
+
+    if (typeof window !== "undefined" && hasEventsDebugQueryFlag()) {
+      // Persist query flag so debug stays on after navigation without ?eventsDebug=1.
+      try {
+        localStorage.setItem(DEBUG_FLAG_KEY, "1");
+      } catch {
+        // Ignore quota / private-mode write failures; query flag still enables this session.
+      }
+      return true;
+    }
+
+    return false;
   } catch {
     return false;
   }
