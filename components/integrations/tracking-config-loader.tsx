@@ -1,4 +1,6 @@
 import { ConsentAwareTrackingScripts } from "@/components/integrations/consent-aware-tracking-scripts";
+import { EventsDebugPanel } from "@/components/integrations/events/debug-panel";
+import { EventRuntimeProvider } from "@/components/integrations/events/event-runtime-context";
 import { resolveTrackingConfiguration } from "@/components/integrations/resolve-tracking";
 import { getIntegrationSettings } from "@/lib/integration-settings";
 
@@ -14,10 +16,19 @@ export async function TrackingConfigLoader() {
   const config = resolveTrackingConfiguration(settings);
 
   return (
-    <ConsentAwareTrackingScripts
-      gtmContainerId={config.gtmContainerId}
-      gaMeasurementId={config.gaMeasurementId}
-      metaPixelId={config.metaPixelId}
-    />
+    <EventRuntimeProvider
+      config={{
+        gtmContainerId: config.gtmContainerId,
+        gaMeasurementId: config.gaMeasurementId,
+        metaPixelId: config.metaPixelId,
+      }}
+    >
+      <ConsentAwareTrackingScripts
+        gtmContainerId={config.gtmContainerId}
+        gaMeasurementId={config.gaMeasurementId}
+        metaPixelId={config.metaPixelId}
+      />
+      <EventsDebugPanel />
+    </EventRuntimeProvider>
   );
 }

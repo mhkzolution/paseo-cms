@@ -3,6 +3,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { FaPhone } from "react-icons/fa6";
 
 import { CookieSettingsButton } from "@/components/integrations/cookie-settings-button";
+import { TrackedPhoneLink } from "@/components/integrations/events/tracked-phone-link";
 import { LineFooterLink } from "@/components/integrations/line-footer-link";
 import { resolveLineOaUrl } from "@/components/integrations/resolve-line-oa";
 import { SiteSocialIcons } from "@/features/layout/site-social-icons";
@@ -138,15 +139,16 @@ export async function SiteFooter() {
                       ) : null}
 
                       {branch.phone ? (
-                        <a
+                        <TrackedPhoneLink
                           href={formatTelHref(branch.phone)}
+                          location="footer"
                           className="mt-1 inline-flex items-center gap-2 text-sm font-medium text-foreground transition-colors hover:text-paseo-dark"
                         >
                           <span className="flex h-6 w-6 items-center justify-center rounded-full bg-paseo/10">
                             <FaPhone className="h-3 w-3 text-paseo-dark" aria-hidden="true" />
                           </span>
                           {branch.phone}
-                        </a>
+                        </TrackedPhoneLink>
                       ) : null}
                     </div>
                   </article>
@@ -188,14 +190,15 @@ export async function SiteFooter() {
 
                     <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1.5">
                       {phones.map((phone) => (
-                        <a
+                        <TrackedPhoneLink
                           key={phone}
                           href={formatTelHref(phone)}
+                          location="footer"
                           className="group inline-flex items-center gap-2 text-sm text-muted transition-colors hover:text-paseo-dark"
                         >
                           <FaPhone className="h-3 w-3 shrink-0 text-paseo-dark" aria-hidden="true" />
                           <span>{phone}</span>
-                        </a>
+                        </TrackedPhoneLink>
                       ))}
                     </div>
                   </div>

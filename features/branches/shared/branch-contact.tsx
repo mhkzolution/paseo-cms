@@ -1,5 +1,6 @@
 import { MapPin, Phone } from "lucide-react";
 
+import { TrackedPhoneLink } from "@/components/integrations/events/tracked-phone-link";
 import { resolveBranchMapsUrl } from "@/lib/branches/maps";
 import type { BranchRecord } from "@/lib/branches/types";
 
@@ -29,9 +30,13 @@ export function BranchContact({ branch }: BranchContactProps) {
             {branch.phone ? (
               <p className="flex items-center gap-2 font-medium">
                 <Phone className="h-4 w-4 text-[var(--branch-primary)]" aria-hidden="true" />
-                <a href={`tel:${branch.phone.replace(/\s/g, "")}`} className="hover:text-[var(--branch-primary)]">
+                <TrackedPhoneLink
+                  href={`tel:${branch.phone.replace(/\s/g, "")}`}
+                  location="branch_card"
+                  className="hover:text-[var(--branch-primary)]"
+                >
                   {branch.phone}
-                </a>
+                </TrackedPhoneLink>
               </p>
             ) : null}
           </div>
