@@ -3,7 +3,7 @@
 import {
   createContext,
   useContext,
-  useEffect,
+  useLayoutEffect,
   type ReactNode,
 } from "react";
 
@@ -30,10 +30,9 @@ export function EventRuntimeProvider({
 }) {
   const { consent } = useConsent();
 
-  // Same-tick clicks before effect runs still see current consent/config.
-  runtimeRef = { config, consent };
-
-  useEffect(() => {
+  // useLayoutEffect (not render): keep module ref for sync trackEvent() without
+  // violating react-hooks/globals. Layout phase still runs before user paint/click.
+  useLayoutEffect(() => {
     runtimeRef = { config, consent };
     return () => {
       runtimeRef = null;
