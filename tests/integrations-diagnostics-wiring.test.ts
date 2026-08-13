@@ -38,4 +38,21 @@ describe("integrations diagnostics wiring", () => {
     const form = read("features/settings/integrations-form.tsx");
     assert.doesNotMatch(form, /integrations\/diagnostics/);
   });
+
+  it("diagnostics panel includes Consent & Events simulation UI", () => {
+    const source = read("features/settings/integrations-diagnostics-panel.tsx");
+    assert.match(source, /Consent & Events/);
+    assert.match(source, /Simulation only/);
+    assert.match(source, /resolveConsentAwareDiagnostics/);
+    assert.match(source, /DEFAULT_SIMULATED_CONSENT/);
+    assert.doesNotMatch(source, /trackEvent\(/);
+    assert.doesNotMatch(source, /fbq\(|gtag\(/);
+    assert.doesNotMatch(source, /Run Test Event/);
+  });
+
+  it("form passes settings into diagnostics panel", () => {
+    const form = read("features/settings/integrations-form.tsx");
+    assert.match(form, /IntegrationsDiagnosticsPanel/);
+    assert.match(form, /settings=\{/);
+  });
 });

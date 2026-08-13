@@ -26,6 +26,7 @@ interface IntegrationsFormProps {
 
 export function IntegrationsForm({ defaultValues, initialDiagnostics }: IntegrationsFormProps) {
   const [diagnostics, setDiagnostics] = useState(initialDiagnostics);
+  const [settings, setSettings] = useState<IntegrationSettings>(defaultValues);
   const [serverMessage, setServerMessage] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
   const resolver = zodResolver(integrationSchema) as Resolver<IntegrationFormValues>;
@@ -54,6 +55,7 @@ export function IntegrationsForm({ defaultValues, initialDiagnostics }: Integrat
       }
 
       const saved = (await response.json()) as IntegrationSettings;
+      setSettings(saved);
       setDiagnostics(resolveIntegrationDiagnostics(saved));
       setIsSuccess(true);
       setServerMessage("Integrations settings saved.");
@@ -64,7 +66,7 @@ export function IntegrationsForm({ defaultValues, initialDiagnostics }: Integrat
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="grid max-w-4xl gap-6">
-      <IntegrationsDiagnosticsPanel diagnostics={diagnostics} />
+      <IntegrationsDiagnosticsPanel diagnostics={diagnostics} settings={settings} />
       <IntegrationsAnalyticsSection register={register} errors={errors} />
       <IntegrationsTagManagerSection register={register} errors={errors} />
       <IntegrationsMetaSection register={register} errors={errors} />
