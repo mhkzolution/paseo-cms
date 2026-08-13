@@ -37,4 +37,28 @@ describe("events wiring", () => {
     const source = read("components/integrations/events/debug-ring.ts");
     assert.match(source, /eventsDebug|integration-events-debug/);
   });
+
+  it("LINE surfaces call trackEvent line_oa_click", () => {
+    assert.match(read("components/integrations/line-floating-button.tsx"), /line_oa_click/);
+    assert.match(read("components/integrations/line-floating-button.tsx"), /surface:\s*["']floating["']/);
+    assert.match(read("components/integrations/line-footer-link.tsx"), /line_oa_click/);
+    assert.match(read("components/integrations/line-footer-link.tsx"), /surface:\s*["']footer["']/);
+  });
+
+  it("footer and branch-contact use TrackedPhoneLink", () => {
+    assert.match(read("features/layout/site-footer.tsx"), /TrackedPhoneLink/);
+    assert.match(read("features/branches/shared/branch-contact.tsx"), /TrackedPhoneLink/);
+  });
+
+  it("phone and LINE wiring use explicit onClick, not document listeners", () => {
+    for (const file of [
+      "components/integrations/events/tracked-phone-link.tsx",
+      "components/integrations/line-floating-button.tsx",
+      "components/integrations/line-footer-link.tsx",
+    ]) {
+      const source = read(file);
+      assert.match(source, /onClick/);
+      assert.doesNotMatch(source, /document\.addEventListener/);
+    }
+  });
 });
