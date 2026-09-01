@@ -8,6 +8,7 @@ import { AdminPageHeader, AdminTableShell } from "@/components/admin/admin-table
 import { EmptyState } from "@/components/admin/empty-state";
 import { DeleteResourceButton } from "@/features/content/delete-resource-button";
 import { formatDate } from "@/lib/format";
+import { sortNewestFirst } from "@/lib/content-order";
 import { getLocalizationSettings } from "@/lib/settings-cache";
 import { latestSeoAuditInclude } from "@/lib/seo-audit";
 import { prisma } from "@/lib/prisma";
@@ -17,17 +18,18 @@ export default async function EventsPage() {
   await requireModuleAccess("events");
   const localization = await getLocalizationSettings();
 
-  const events = await prisma.event.findMany({
-    where: { deletedAt: null },
-    include: {
-      author: true,
-      seo: true,
-      tags: { include: { tag: true } },
-      branches: { include: { branch: true } },
-      seoAudits: latestSeoAuditInclude,
-    },
-    orderBy: { createdAt: "desc" },
-  });
+  const events = sortNewestFirst(
+    await prisma.event.findMany({
+      where: { deletedAt: null },
+      include: {
+        author: true,
+        seo: true,
+        tags: { include: { tag: true } },
+        branches: { include: { branch: true } },
+        seoAudits: latestSeoAuditInclude,
+      },
+    }),
+  );
 
   return (
     <div className="flex flex-col gap-6">

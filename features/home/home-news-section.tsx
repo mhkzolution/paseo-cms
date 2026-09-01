@@ -77,7 +77,7 @@ export function HomeNewsSection({
                       className="block"
                     >
                       {/* Image 4:5 */}
-                      <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-[#F0EDE8]">
+                      <div className="relative aspect-[5/4] overflow-hidden rounded-2xl bg-[#F0EDE8]">
                         {post.featuredImage ? (
                           <Image
                             src={post.featuredImage}

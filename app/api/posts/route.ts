@@ -7,6 +7,7 @@ import { resolvePostKindForSave } from "@/lib/categories";
 import { AuditModule } from "@/lib/audit-log";
 import { buildUniquePostSlug, resolveTagIds, syncPostRelations } from "@/lib/post-write";
 import { prisma } from "@/lib/prisma";
+import { sortNewestFirst } from "@/lib/content-order";
 import { checkModuleAccess } from "@/lib/rbac";
 import { enrichSeoForSave } from "@/lib/seo-content-save";
 import { persistSeoAudit, toSeoScoreInput } from "@/lib/seo-audit";
@@ -17,17 +18,18 @@ export async function GET() {
   const { authorized, status } = await checkModuleAccess("news");
   if (!authorized) return forbiddenError(status);
 
-  const posts = await prisma.post.findMany({
-    where: { deletedAt: null },
-    include: {
-      category: true,
-      author: true,
-      seo: true,
-      tags: { include: { tag: true } },
-      branches: { include: { branch: true } },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+  const posts = sortNewestFirst(
+    await prisma.post.findMany({
+      where: { deletedAt: null },
+      include: {
+        category: true,
+        author: true,
+        seo: true,
+        tags: { include: { tag: true } },
+        branches: { include: { branch: true } },
+      },
+    }),
+  );
 
   return NextResponse.json({ posts });
 }

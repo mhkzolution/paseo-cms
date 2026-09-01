@@ -10,6 +10,7 @@ import {
   searchSchema,
   seoSchema,
   settingsSchema,
+  thePaseoLifeSchema,
 } from "@/validators/content.validator";
 
 describe("content validators", () => {
@@ -359,5 +360,32 @@ describe("content validators", () => {
       recaptchaToken: "token",
     });
     assert.equal(missingBranch.success, false);
+  });
+
+  it("validates ThePaseoLife promotional cards", () => {
+    const parsed = thePaseoLifeSchema.parse({
+      image: "/uploads/life.jpg",
+      title: "Summer campaign",
+      description: "Stories from The Paseo",
+      linkUrl: "/news/summer-campaign",
+      openInNewTab: false,
+      sortOrder: 1,
+      isActive: true,
+      publishedAt: "",
+    });
+
+    assert.equal(parsed.linkUrl, "/news/summer-campaign");
+    assert.equal(parsed.publishedAt, null);
+
+    assert.equal(
+      thePaseoLifeSchema.safeParse({
+        image: "/uploads/life.jpg",
+        title: "Too long title".repeat(20),
+        linkUrl: "javascript:alert(1)",
+        sortOrder: 0,
+        isActive: true,
+      }).success,
+      false,
+    );
   });
 });

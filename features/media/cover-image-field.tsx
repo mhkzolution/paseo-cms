@@ -11,9 +11,14 @@ import { MediaPickerDialog } from "@/features/media/media-picker-dialog";
 interface CoverImageFieldProps {
   value: string;
   onChange: (value: string) => void;
+  previewClassName?: string;
 }
 
-export function CoverImageField({ value, onChange }: CoverImageFieldProps) {
+export function CoverImageField({
+  value,
+  onChange,
+  previewClassName = "h-28 w-40",
+}: CoverImageFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -40,7 +45,7 @@ export function CoverImageField({ value, onChange }: CoverImageFieldProps) {
   return (
     <div className="grid gap-2">
       <div className="flex flex-wrap items-start gap-4">
-        <div className="relative h-28 w-40 overflow-hidden rounded-md border border-border bg-background">
+        <div className={`relative overflow-hidden rounded-md border border-border bg-background ${previewClassName}`}>
           {value ? (
             <Image src={value} alt="Cover preview" fill className="object-cover" sizes="160px" />
           ) : (

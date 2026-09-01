@@ -6,6 +6,7 @@ import { forbiddenError, validationError } from "@/lib/content-api";
 import { auditContentCreate } from "@/lib/content-audit";
 import { buildUniqueEventSlug, resolveTagIds, syncEventRelations } from "@/lib/event-write";
 import { prisma } from "@/lib/prisma";
+import { sortNewestFirst } from "@/lib/content-order";
 import { checkModuleAccess } from "@/lib/rbac";
 import { enrichSeoForSave } from "@/lib/seo-content-save";
 import { persistSeoAudit, toSeoScoreInput } from "@/lib/seo-audit";
@@ -16,16 +17,17 @@ export async function GET() {
   const { authorized, status } = await checkModuleAccess("events");
   if (!authorized) return forbiddenError(status);
 
-  const events = await prisma.event.findMany({
-    where: { deletedAt: null },
-    include: {
-      author: true,
-      seo: true,
-      tags: { include: { tag: true } },
-      branches: { include: { branch: true } },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+  const events = sortNewestFirst(
+    await prisma.event.findMany({
+      where: { deletedAt: null },
+      include: {
+        author: true,
+        seo: true,
+        tags: { include: { tag: true } },
+        branches: { include: { branch: true } },
+      },
+    }),
+  );
 
   return NextResponse.json({ events });
 }

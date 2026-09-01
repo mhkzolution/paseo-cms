@@ -380,6 +380,32 @@ export const bannerSchema = z.object({
   isActive: z.boolean(),
 });
 
+const destinationUrl = requiredText("Destination URL")
+  .max(2048, "Destination URL is too long")
+  .refine(
+    (value) => value.startsWith("/") || /^https?:\/\//i.test(value),
+    "Enter an internal path or a valid http(s) URL",
+  );
+
+export const thePaseoLifeSchema = z.object({
+  image: requiredText("Image"),
+  title: requiredText("Title").max(150, "Title must be 150 characters or fewer"),
+  description: z.preprocess(
+    emptyToNull,
+    z.string().max(300, "Description must be 300 characters or fewer").nullable().optional(),
+  ),
+  linkUrl: destinationUrl,
+  openInNewTab: optionalBoolean,
+  sortOrder: z.coerce.number().int().min(0, "Sort order must be 0 or greater"),
+  isActive: z.boolean(),
+  publishedAt: optionalDate,
+});
+
+export const thePaseoLifeBulkSchema = z.object({
+  action: z.enum(["delete", "activate", "deactivate", "reorder"]),
+  ids: z.array(z.string().trim().min(1)).min(1, "Select at least one item"),
+});
+
 export const brandPartnerSchema = z.object({
   name: requiredText("Name"),
   logo: requiredText("Logo"),
@@ -572,6 +598,8 @@ export type PromotionInput = z.infer<typeof promotionSchema>;
 export type EventInput = z.infer<typeof eventSchema>;
 export type GalleryInput = z.infer<typeof gallerySchema>;
 export type BannerInput = z.infer<typeof bannerSchema>;
+export type ThePaseoLifeInput = z.infer<typeof thePaseoLifeSchema>;
+export type ThePaseoLifeFormValues = z.input<typeof thePaseoLifeSchema>;
 export type BrandPartnerInput = z.infer<typeof brandPartnerSchema>;
 export type SearchInput = z.infer<typeof searchSchema>;
 export type ContactInput = z.infer<typeof contactSchema>;

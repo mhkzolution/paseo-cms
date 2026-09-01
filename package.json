@@ -15,6 +15,7 @@
     "prisma:studio": "prisma studio",
     "prisma:seed": "tsx prisma/seed.ts",
     "import:paseolife-stores": "tsx scripts/import-paseolife-stores.ts",
+    "import:wordpress-content": "tsx scripts/import-wordpress-content.ts",
     "media:backfill": "tsx scripts/media-backfill.ts"
   },
   "dependencies": {
@@ -29,6 +30,8 @@
     "@tiptap/starter-kit": "^2.10.0",
     "bcryptjs": "^2.4.3",
     "clsx": "^2.1.1",
+    "embla-carousel-autoplay": "^8.6.0",
+    "embla-carousel-react": "^8.6.0",
     "framer-motion": "^11.15.0",
     "image-size": "^2.0.2",
     "lucide-react": "^0.468.0",

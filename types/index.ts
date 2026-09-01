@@ -5,6 +5,7 @@ export type AppRole = "SUPER_ADMIN" | "ADMIN" | "EDITOR" | "MARKETING" | "VIEWER
 export type AdminModuleId =
   | "news"
   | "events"
+  | "thepaseolife"
   | "promotions"
   | "stores"
   | "branches"

@@ -14,7 +14,7 @@ export const HOME_SECTIONS = [
   { id: "news", label: "บทความน่าสนใจ" },
   { id: "introduction", label: "Introduction" },
   { id: "directory", label: "Directory" },
-  { id: "membership", label: "Membership PaseoLife" },
+  { id: "membership", label: "MEMBERSHIP PASEO LIFE" },
 ] as const;
 
 export const HOME_INTRO_IMAGE = "/images/paseo-frontviewmail.jpg";

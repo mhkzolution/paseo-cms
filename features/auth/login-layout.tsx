@@ -2,10 +2,17 @@ import Image from "next/image";
 
 import { cn } from "@/lib/utils";
 
+export type LoginBrandStats = {
+  branches: number;
+  stores: number;
+  campaigns: number;
+};
+
 type LoginLayoutProps = {
   children: React.ReactNode;
   siteName?: string;
   siteLogo?: string;
+  stats?: LoginBrandStats;
 };
 
 const BRAND_IMAGE = "/images/paseo-frontviewmail.jpg";
@@ -23,13 +30,13 @@ function BrandMark({
 }) {
   if (siteLogo) {
     return (
-      <span className={cn("relative block h-10 w-40 sm:h-11 sm:w-44", className)}>
+      <span className={cn("relative block h-10 w-44 sm:h-11 sm:w-52", className)}>
         <Image
           src={siteLogo}
           alt={siteName}
           fill
-          className="object-contain object-left"
-          sizes="176px"
+          className={cn("object-contain", inverted ? "object-center xl:object-left" : "object-center")}
+          sizes="208px"
           priority
         />
       </span>
@@ -39,7 +46,7 @@ function BrandMark({
   return (
     <span
       className={cn(
-        "font-serif text-3xl font-medium tracking-[0.22em] sm:text-4xl",
+        "font-serif text-3xl font-medium tracking-[0.22em]",
         inverted ? "text-white" : "text-foreground",
         className,
       )}
@@ -49,74 +56,82 @@ function BrandMark({
   );
 }
 
-function BrandingOverlay() {
-  return (
-    <>
-      <div
-        className="absolute inset-0 bg-gradient-to-br from-[#1C1B19]/92 via-[#24211D]/78 to-[#688e22]/35"
-        aria-hidden="true"
-      />
-      <div
-        className="absolute inset-0 opacity-[0.07]"
-        style={{
-          backgroundImage:
-            "radial-gradient(circle at 1px 1px, white 1px, transparent 0)",
-          backgroundSize: "28px 28px",
-        }}
-        aria-hidden="true"
-      />
-    </>
-  );
+function formatStat(value: number) {
+  if (value >= 100) return `${value}+`;
+  return String(value);
 }
 
-function BrandingContent({
+function BrandingPanel({
   siteName,
   siteLogo,
-  compact = false,
+  stats,
 }: {
   siteName?: string;
   siteLogo?: string;
-  compact?: boolean;
+  stats?: LoginBrandStats;
 }) {
+  const statItems = [
+    { value: stats?.branches || 9, label: "Branches" },
+    { value: stats?.stores || 500, label: "Stores" },
+    { value: stats?.campaigns || 100, label: "Campaigns" },
+  ];
+
   return (
-    <div className={cn("relative z-10", compact ? "px-5 py-6" : "flex h-full flex-col justify-between p-10 lg:p-14")}>
-      <BrandMark siteName={siteName} siteLogo={siteLogo} inverted />
+    <aside className="relative hidden h-[360px] w-full shrink-0 overflow-hidden md:flex xl:h-auto xl:min-h-screen xl:w-3/5">
+      <Image
+        src={BRAND_IMAGE}
+        alt=""
+        fill
+        className="object-cover object-[center_20%]"
+        sizes="(min-width: 1280px) 60vw, 100vw"
+        priority
+      />
+      <div
+        className="absolute inset-0 bg-gradient-to-br from-black/82 via-[#1C1B19]/72 to-[#1C1B19]/55"
+        aria-hidden="true"
+      />
+      <div
+        className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent"
+        aria-hidden="true"
+      />
 
-      {!compact ? (
-        <div className="max-w-md">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-paseo">
-            Content Management
+      <div className="relative z-10 flex h-full w-full flex-col items-center justify-center px-8 py-7 text-center xl:items-start xl:justify-between xl:p-12 xl:text-left 2xl:p-16">
+        <BrandMark siteName={siteName} siteLogo={siteLogo} inverted className="mx-auto xl:mx-0" />
+
+        <div className="mt-5 w-full max-w-xl xl:mt-0">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-paseo xl:text-xl">
+            THE PASEO CMS
           </p>
-          <h1 className="mt-3 font-serif text-4xl font-medium leading-tight text-white lg:text-5xl">
-            Manage your mall experience
+          <h1 className="mt-3 font-serif text-[1.75rem] font-medium leading-tight text-white md:text-3xl xl:mt-5 xl:text-5xl 2xl:text-[3.5rem] 2xl:leading-[1.12]">
+            Manage every branch from one platform.
           </h1>
-          <p className="mt-4 text-base leading-relaxed text-white/72">
-            Sign in to update stores, events, promotions, and everything visitors see across The Paseo branches.
+          <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-white xl:mx-0 xl:mt-5 xl:text-base 2xl:text-lg">
+            Stores, Events, Promotions, Directory and Content Management.
           </p>
 
-          <ul className="mt-10 space-y-3 text-sm text-white/65">
-            <li className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-paseo" aria-hidden="true" />
-              Multi-branch content in one place
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-paseo" aria-hidden="true" />
-              Publish news, events &amp; promotions
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-paseo" aria-hidden="true" />
-              Role-based access for your team
-            </li>
-          </ul>
+          <dl className="mx-auto mt-5 grid max-w-md grid-cols-3 gap-2 xl:mx-0 xl:mt-10 xl:max-w-lg xl:gap-3">
+            {statItems.map((item) => (
+              <div
+                key={item.label}
+                className="rounded-xl border border-white/15 bg-white/10 px-2 py-2.5 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-md xl:rounded-2xl xl:px-3 xl:py-4"
+              >
+                <dt className="sr-only">{item.label}</dt>
+                <dd className="text-base font-semibold tracking-tight text-white xl:text-2xl">
+                  {formatStat(item.value)}
+                </dd>
+                <p className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.12em] text-white/65 xl:mt-1 xl:text-[11px] xl:tracking-[0.14em]">
+                  {item.label}
+                </p>
+              </div>
+            ))}
+          </dl>
         </div>
-      ) : null}
 
-      {!compact ? (
-        <p className="text-xs text-white/45">
+        <p className="mt-4 hidden text-xs text-white/45 xl:mt-0 xl:block">
           &copy; {new Date().getFullYear()} {siteName}. All rights reserved.
         </p>
-      ) : null}
-    </div>
+      </div>
+    </aside>
   );
 }
 
@@ -124,59 +139,33 @@ export function LoginLayout({
   children,
   siteName = "The Paseo",
   siteLogo,
+  stats,
 }: LoginLayoutProps) {
   return (
-    <div className="min-h-screen bg-background">
-      {/* Mobile — compact branding header */}
-      <header className="relative h-36 overflow-hidden md:hidden">
-        <Image
-          src={BRAND_IMAGE}
-          alt=""
-          fill
-          className="object-cover object-top"
-          sizes="100vw"
-          priority
-        />
-        <BrandingOverlay />
-        <div className="relative flex h-full items-end">
-          <BrandingContent siteName={siteName} siteLogo={siteLogo} compact />
-        </div>
-      </header>
+    <div className="flex min-h-screen flex-col bg-[#F6F3EC] xl:flex-row">
+      <BrandingPanel siteName={siteName} siteLogo={siteLogo} stats={stats} />
 
-      <div className="grid min-h-[calc(100vh-9rem)] md:min-h-screen md:grid-cols-[40%_60%] lg:grid-cols-[55%_45%]">
-        {/* Desktop / Tablet — visual panel */}
-        <aside className="relative hidden overflow-hidden md:block">
-          <Image
-            src={BRAND_IMAGE}
-            alt=""
-            fill
-            className="object-cover object-top"
-            sizes="(min-width: 1024px) 55vw, 40vw"
-            priority
-          />
-          <BrandingOverlay />
-          <BrandingContent siteName={siteName} siteLogo={siteLogo} />
-        </aside>
-
-        {/* Authentication panel */}
-        <section className="flex flex-col justify-center px-6 py-10 sm:px-10 md:px-12 lg:px-16 xl:px-20">
-          <div className="mx-auto w-full max-w-[400px]">
-            <div className="mb-8 md:mb-10">
-              <p className="text-sm font-medium uppercase tracking-[0.16em] text-paseo-dark">
-                Admin Portal
-              </p>
-              <h2 className="mt-2 text-2xl font-semibold text-foreground sm:text-3xl">
-                Welcome back
-              </h2>
-              <p className="mt-2 text-sm leading-relaxed text-muted">
-                Sign in with your team credentials to access the CMS dashboard.
-              </p>
-            </div>
-
-            {children}
+      <section className="flex w-full flex-1 flex-col items-center justify-center px-5 py-12 sm:px-8 md:justify-start md:px-10 md:py-14 xl:w-2/5 xl:min-h-screen xl:justify-center xl:px-12 xl:py-12 2xl:px-16">
+        <div className="w-full max-w-[480px]">
+          <div className="mb-8 flex justify-center md:hidden">
+            <BrandMark siteName={siteName} siteLogo={siteLogo} className="h-12 w-48" />
           </div>
-        </section>
-      </div>
+
+          <div className="w-full rounded-2xl bg-white px-6 py-8 shadow-[0_24px_64px_-28px_rgba(38,36,33,0.28)] ring-1 ring-black/[0.04] sm:px-8 sm:py-10">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-paseo-dark">
+              Admin Portal
+            </p>
+            <h2 className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-foreground sm:text-[2.125rem]">
+              Welcome back
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed text-muted">
+              Sign in to access the CMS dashboard.
+            </p>
+
+            <div className="mt-8">{children}</div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

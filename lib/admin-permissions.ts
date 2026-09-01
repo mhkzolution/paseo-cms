@@ -20,6 +20,7 @@ export interface AdminModulePermission {
 export const ADMIN_MODULE_PERMISSIONS = [
   { id: "news", routePrefix: "/admin/posts", roles: CONTENT_EDITOR_ROLES },
   { id: "events", routePrefix: "/admin/events", roles: MARKETING_CONTENT_ROLES },
+  { id: "thepaseolife", routePrefix: "/admin/content/thepaseolife", roles: MARKETING_CONTENT_ROLES },
   { id: "promotions", routePrefix: "/admin/promotions", roles: MARKETING_CONTENT_ROLES },
   { id: "stores", routePrefix: "/admin/stores", roles: CONTENT_EDITOR_ROLES },
   { id: "branches", routePrefix: "/admin/branches", roles: CONTENT_EDITOR_ROLES },

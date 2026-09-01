@@ -6,6 +6,12 @@ import { ADMIN_NAV_SECTIONS, isNavLinkActive } from "@/lib/admin-navigation";
 import { validateAdminNavigationConfig } from "@/lib/admin-navigation-validation";
 
 describe("admin permissions registry", () => {
+  it("protects ThePaseoLife for marketing content roles", () => {
+    assert.deepEqual(getModuleRoles("thepaseolife"), ["SUPER_ADMIN", "ADMIN", "EDITOR", "MARKETING"]);
+    const permission = findModulePermissionForPathname("/admin/content/thepaseolife/new");
+    assert.equal(permission?.id, "thepaseolife");
+  });
+
   it("protects banner routes", () => {
     const permission = findModulePermissionForPathname("/admin/banners/site/new");
     assert.equal(permission?.id, "banners");

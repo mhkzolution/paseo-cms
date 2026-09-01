@@ -30,6 +30,10 @@ const API_ROUTE_REGISTRY: ApiRouteExpectation[] = [
   { file: "app/api/posts/[id]/route.ts", moduleId: "news", authPattern: "checkModuleAccess" },
   { file: "app/api/events/route.ts", moduleId: "events", authPattern: "checkModuleAccess" },
   { file: "app/api/events/[id]/route.ts", moduleId: "events", authPattern: "checkModuleAccess" },
+  { file: "app/api/thepaseolife/route.ts", authPattern: "framework" },
+  { file: "app/api/admin/thepaseolife/route.ts", moduleId: "thepaseolife", authPattern: "checkModuleAccess" },
+  { file: "app/api/admin/thepaseolife/[id]/route.ts", moduleId: "thepaseolife", authPattern: "checkModuleAccess" },
+  { file: "app/api/admin/thepaseolife/bulk/route.ts", moduleId: "thepaseolife", authPattern: "checkModuleAccess" },
   { file: "app/api/promotions/route.ts", moduleId: "promotions", authPattern: "checkModuleAccess" },
   { file: "app/api/promotions/[id]/route.ts", moduleId: "promotions", authPattern: "checkModuleAccess" },
   { file: "app/api/categories/route.ts", moduleId: "categories", authPattern: "checkModuleAccess" },
@@ -210,6 +214,7 @@ describe("API authorization registry coverage", () => {
     const expectedApiModules: AdminModuleId[] = [
       "news",
       "events",
+      "thepaseolife",
       "promotions",
       "categories",
       "tags",

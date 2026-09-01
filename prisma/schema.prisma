@@ -943,6 +943,25 @@ model Banner {
   @@map("banners")
 }
 
+model ThePaseoLifePost {
+  id           String    @id @default(uuid())
+  image        String    @db.VarChar(1024)
+  title        String
+  description  String?   @db.Text
+  linkUrl      String    @db.VarChar(2048)
+  openInNewTab Boolean   @default(false)
+  sortOrder    Int       @default(0)
+  isActive     Boolean   @default(true)
+  publishedAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+
+  @@index([isActive, sortOrder])
+  @@index([deletedAt, isActive])
+  @@map("thepaseolife_posts")
+}
+
 model BrandPartner {
   id            String    @id @default(uuid())
   name          String

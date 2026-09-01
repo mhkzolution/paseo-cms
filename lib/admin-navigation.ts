@@ -37,6 +37,7 @@ export const ADMIN_NAV_SECTIONS: NavSection[] = [
     items: [
       { id: "news", label: "ข่าวสาร", href: "/admin/posts" },
       { id: "events", label: "กิจกรรม", href: "/admin/events" },
+      { id: "thepaseolife", label: "ThePaseoLife", href: "/admin/content/thepaseolife" },
       { id: "promotions", label: "โปรโมชั่น", href: "/admin/promotions" },
     ],
   },

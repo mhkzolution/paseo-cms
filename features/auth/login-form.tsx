@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 import { loginSchema, type LoginInput } from "@/validators/auth.validator";
 
 const inputClassName =
-  "w-full rounded-lg border border-border bg-surface py-2.5 pl-10 pr-3 text-sm text-foreground outline-none transition-shadow placeholder:text-muted/70 focus-visible:border-paseo focus-visible:ring-2 focus-visible:ring-paseo/25";
+  "h-[52px] w-full rounded-lg border border-border bg-surface pl-11 pr-3 text-[15px] text-foreground outline-none transition-[border-color,box-shadow] placeholder:text-muted/70 focus-visible:border-paseo focus-visible:ring-[3px] focus-visible:ring-paseo/25";
 
 export function LoginForm() {
   const router = useRouter();
@@ -46,13 +46,13 @@ export function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
-      <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-2">
         <label htmlFor="email" className="text-sm font-medium text-foreground">
-          Email address
+          Email
         </label>
         <div className="relative">
           <Mail
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted"
+            className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted"
             aria-hidden="true"
           />
           <input
@@ -69,13 +69,13 @@ export function LoginForm() {
         ) : null}
       </div>
 
-      <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-2">
         <label htmlFor="password" className="text-sm font-medium text-foreground">
           Password
         </label>
         <div className="relative">
           <Lock
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted"
+            className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted"
             aria-hidden="true"
           />
           <input
@@ -85,7 +85,7 @@ export function LoginForm() {
             placeholder="Enter your password"
             className={cn(
               inputClassName,
-              "pr-10",
+              "pr-12",
               errors.password && "border-destructive focus-visible:ring-destructive/25",
             )}
             {...register("password")}
@@ -93,7 +93,7 @@ export function LoginForm() {
           <button
             type="button"
             onClick={() => setShowPassword((value) => !value)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted transition-colors hover:text-foreground"
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted transition-colors hover:text-foreground"
             aria-label={showPassword ? "Hide password" : "Show password"}
           >
             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -113,8 +113,12 @@ export function LoginForm() {
         </div>
       ) : null}
 
-      <Button type="submit" isLoading={isSubmitting} className="mt-1 h-11 w-full text-sm font-semibold">
-        Sign in
+      <Button
+        type="submit"
+        isLoading={isSubmitting}
+        className="mt-1 h-[52px] w-full rounded-lg text-[15px] font-semibold shadow-sm transition-colors hover:shadow-md"
+      >
+        Sign In
       </Button>
     </form>
   );
